@@ -5,21 +5,22 @@
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
-// Read access token provided by user, with fallback to environment variable
-const DEFAULT_ACCESS_TOKEN =
-  'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2NGIxZWVmZmMzYTQ0YTJjODA5ZWZkMjJjOWYwMmUxMyIsIm5iZiI6MTc5MTg4MzIzMS4xLCJzdWIiOiI2YWNkZjdkZjRlYmIxODVkZGUxMzVkMDQiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.txDvd-NUFtQK8gpJ8PS-GiNNz5rI_m_EUoF_kgRG2PU';
-
 const getAuthHeaders = (): Record<string, string> => {
   const token =
     (typeof import.meta !== 'undefined' &&
       import.meta.env &&
       import.meta.env.VITE_TMDB_API_READ_ACCESS_TOKEN) ||
-    DEFAULT_ACCESS_TOKEN;
+    '';
 
-  return {
-    Authorization: `Bearer ${token}`,
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json;charset=utf-8',
   };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
 };
 
 export interface TMDBMedia {

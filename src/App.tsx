@@ -1,0 +1,84 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { RouterProvider, useRouter } from './context/RouterContext';
+import { Navbar } from './components/Navbar';
+import { BottomNav } from './components/BottomNav';
+import { Footer } from './components/Footer';
+
+// Views
+import { HomeView } from './views/HomeView';
+import { DetailsView } from './views/DetailsView';
+import { WatchPlayerView } from './views/WatchPlayerView';
+import { ExploreView } from './views/ExploreView';
+import { CategoriesView } from './views/CategoriesView';
+import { SearchView } from './views/SearchView';
+import { PersonView } from './views/PersonView';
+import { MyListView } from './views/MyListView';
+
+const MainContent: React.FC = () => {
+  const { route } = useRouter();
+
+  const renderView = () => {
+    switch (route.type) {
+      case 'home':
+        return <HomeView />;
+      case 'movie':
+        return <DetailsView id={route.params.id || ''} mediaType="movie" />;
+      case 'tv':
+        return <DetailsView id={route.params.id || ''} mediaType="tv" />;
+      case 'watch-movie':
+        return <WatchPlayerView id={route.params.id || ''} mediaType="movie" />;
+      case 'watch-tv':
+        return (
+          <WatchPlayerView
+            id={route.params.id || ''}
+            mediaType="tv"
+            season={route.params.season}
+            episode={route.params.episode}
+          />
+        );
+      case 'explore':
+        return <ExploreView initialType={route.params.mediaType || 'movie'} />;
+      case 'categories':
+        return <CategoriesView />;
+      case 'search':
+        return <SearchView />;
+      case 'person':
+        return <PersonView id={route.params.id || ''} />;
+      case 'mylist':
+        return <MyListView />;
+      default:
+        return <HomeView />;
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-[100dvh] bg-[#07080a] text-slate-100 antialiased selection:bg-[#e50914] selection:text-white">
+      <Navbar />
+      <main className="flex-1 w-full relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={route.rawPath}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="w-full transform-gpu"
+          >
+            {renderView()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+      <Footer />
+      <BottomNav />
+    </div>
+  );
+};
+
+export default function App() {
+  return (
+    <RouterProvider>
+      <MainContent />
+    </RouterProvider>
+  );
+}

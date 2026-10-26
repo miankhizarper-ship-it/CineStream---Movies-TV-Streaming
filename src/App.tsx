@@ -19,6 +19,8 @@ import { MyListView } from './views/MyListView';
 const MainContent: React.FC = () => {
   const { route } = useRouter();
 
+  const isWatchPage = route.type === 'watch-movie' || route.type === 'watch-tv';
+
   const renderView = () => {
     switch (route.type) {
       case 'home':
@@ -55,7 +57,7 @@ const MainContent: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-[100dvh] w-full overflow-x-hidden bg-[#07080a] text-slate-100 antialiased selection:bg-[#e50914] selection:text-white">
-      <Navbar />
+      {!isWatchPage && <Navbar />}
       <main className="flex-1 w-full relative">
         <AnimatePresence mode="wait">
           <motion.div
@@ -70,8 +72,8 @@ const MainContent: React.FC = () => {
           </motion.div>
         </AnimatePresence>
       </main>
-      <Footer />
-      <BottomNav />
+      {!isWatchPage && <Footer />}
+      {!isWatchPage && <BottomNav />}
     </div>
   );
 };

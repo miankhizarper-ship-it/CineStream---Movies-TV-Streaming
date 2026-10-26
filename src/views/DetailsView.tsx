@@ -6,13 +6,10 @@ import {
   Star,
   Share2,
   ChevronLeft,
-  Tv,
 } from 'lucide-react';
 import {
   tmdb,
   MediaDetails,
-  TVSeasonDetails,
-  TVEpisode,
   getImageUrl,
   getBackdropUrl,
 } from '../lib/tmdb';
@@ -20,6 +17,7 @@ import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
 import { MovieCard } from '../components/MovieCard';
+import { EpisodeListSection } from '../components/episodes/EpisodeListSection';
 
 interface DetailsViewProps {
   id: string;
@@ -33,8 +31,6 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
 
   const [details, setDetails] = useState<MediaDetails | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
-  const [seasonData, setSeasonData] = useState<TVSeasonDetails | null>(null);
-  const [loadingSeason, setLoadingSeason] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,28 +68,6 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
       isMounted = false;
     };
   }, [id, mediaType]);
-
-  useEffect(() => {
-    if (mediaType !== 'tv') return;
-    let isMounted = true;
-
-    async function fetchSeason() {
-      try {
-        setLoadingSeason(true);
-        const sData = await tmdb.getTVSeason(id, selectedSeason);
-        if (isMounted) setSeasonData(sData);
-      } catch (err) {
-        console.error('Failed to fetch season:', err);
-      } finally {
-        if (isMounted) setLoadingSeason(false);
-      }
-    }
-
-    fetchSeason();
-    return () => {
-      isMounted = false;
-    };
-  }, [id, mediaType, selectedSeason]);
 
   if (loading) {
     return (
@@ -308,89 +282,19 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 mt-8 space-y-10">
-        {/* TV Series Season & Episode Picker */}
+        {/* TV Series Season & Episode Overhauled Section */}
         {mediaType === 'tv' && details.seasons && details.seasons.length > 0 && (
-          <section className="bg-[#12131a] rounded-2xl p-4 sm:p-6 border border-white/[0.08]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-              <div>
-                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                  <Tv className="w-4 h-4 text-[#e50914]" />
-                  <span>Episodes & Seasons</span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Select a season and tap any episode to play immediately.
-                </p>
-              </div>
-
-              {/* Season Dropdown */}
-              <select
-                value={selectedSeason}
-                onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                className="bg-[#181a26] border border-white/15 text-white text-xs font-semibold rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-[#e50914] self-start sm:self-auto"
-              >
-                {details.seasons
-                  .filter((s) => s.season_number > 0)
-                  .map((season) => (
-                    <option key={season.id} value={season.season_number}>
-                      {season.name || `Season ${season.season_number}`} ({season.episode_count} eps)
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            {/* Episode Grid */}
-            {loadingSeason ? (
-              <div className="py-8 flex justify-center text-slate-400 text-xs">
-                <div className="w-5 h-5 border-2 border-[#e50914] border-t-transparent rounded-full animate-spin mr-2" />
-                Loading season {selectedSeason} episodes...
-              </div>
-            ) : seasonData && seasonData.episodes && seasonData.episodes.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {seasonData.episodes.map((ep: TVEpisode) => (
-                  <div
-                    key={ep.id}
-                    onClick={() =>
-                      navigate(`/watch/tv/${id}/${selectedSeason}/${ep.episode_number}`)
-                    }
-                    className="group cursor-pointer rounded-xl overflow-hidden bg-[#161822] border border-white/5 active:border-[#e50914]/50 hover:border-white/20 transition-all active:scale-[0.98]"
-                  >
-                    <div className="aspect-video relative overflow-hidden bg-[#1c1f2e]">
-                      <img
-                        src={getImageUrl(ep.still_path || details.backdrop_path, 'w500')}
-                        alt={ep.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                        <div className="w-9 h-9 rounded-full bg-[#e50914] flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                          <Play className="w-3.5 h-3.5 fill-white text-white ml-0.5" />
-                        </div>
-                      </div>
-                      <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.2 rounded bg-black/80 text-[10px] font-bold text-white tabular-nums">
-                        EP {ep.episode_number}
-                      </span>
-                    </div>
-                    <div className="p-2.5">
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 mb-0.5">
-                        <span>{ep.air_date || `Episode ${ep.episode_number}`}</span>
-                        {ep.runtime && <span>{ep.runtime}m</span>}
-                      </div>
-                      <h4 className="text-xs font-bold text-white truncate">
-                        {ep.name || `Episode ${ep.episode_number}`}
-                      </h4>
-                      <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                        {ep.overview || 'No description available.'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 py-6 text-center">
-                No episodes found for this season.
-              </p>
-            )}
-          </section>
+          <EpisodeListSection
+            tvShowId={id}
+            seasons={details.seasons.map((s) => ({
+              id: s.id,
+              season_number: s.season_number,
+              name: s.name || `Season ${s.season_number}`,
+              episode_count: s.episode_count,
+            }))}
+            backdropFallback={details.backdrop_path}
+            initialSeason={selectedSeason}
+          />
         )}
 
         {/* Cast & Crew Horizontal Scroll */}

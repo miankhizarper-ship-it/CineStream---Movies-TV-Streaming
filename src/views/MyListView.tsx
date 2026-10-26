@@ -3,12 +3,14 @@ import { Bookmark, Trash2, Play, History } from 'lucide-react';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useRouter } from '../context/RouterContext';
+import { useToast } from '../context/ToastContext';
 import { getImageUrl, getBackdropUrl } from '../lib/tmdb';
 
 export const MyListView: React.FC = () => {
   const { navigate } = useRouter();
   const { bookmarks, removeBookmark, clearBookmarks } = useBookmarks();
   const { history, removeHistoryItem, clearHistory } = useWatchHistory();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'all' | 'movie' | 'tv' | 'history'>('all');
 
   const filteredBookmarks = bookmarks.filter((b) => {
@@ -17,6 +19,26 @@ export const MyListView: React.FC = () => {
     if (activeTab === 'tv') return b.media_type === 'tv';
     return true;
   });
+
+  const handleRemoveBookmark = (id: number, mediaType: 'movie' | 'tv', title: string) => {
+    removeBookmark(id, mediaType);
+    showToast(`Removed "${title}" from Watchlist`, 'bookmark');
+  };
+
+  const handleClearBookmarks = () => {
+    clearBookmarks();
+    showToast('Cleared all items from Watchlist', 'info');
+  };
+
+  const handleRemoveHistory = (id: number, mediaType: 'movie' | 'tv') => {
+    removeHistoryItem(id, mediaType);
+    showToast('Removed title from watch history', 'info');
+  };
+
+  const handleClearHistory = () => {
+    clearHistory();
+    showToast('Watch history cleared', 'info');
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-8 w-full pb-24">
@@ -36,7 +58,7 @@ export const MyListView: React.FC = () => {
         <div className="flex items-center gap-1 p-1 bg-[#12131a] rounded-xl border border-white/[0.08] self-start sm:self-auto overflow-x-auto scrollbar-none snap-x">
           <button
             onClick={() => setActiveTab('all')}
-            className={`snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`snap-start shrink-0 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               activeTab === 'all'
                 ? 'bg-[#e50914] text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -46,7 +68,7 @@ export const MyListView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('movie')}
-            className={`snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`snap-start shrink-0 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               activeTab === 'movie'
                 ? 'bg-[#e50914] text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -56,17 +78,17 @@ export const MyListView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('tv')}
-            className={`snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`snap-start shrink-0 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               activeTab === 'tv'
                 ? 'bg-[#e50914] text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            TV Shows
+            TV Series
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`snap-start shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`snap-start shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               activeTab === 'history'
                 ? 'bg-[#e50914] text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -87,7 +109,7 @@ export const MyListView: React.FC = () => {
             </span>
             {history.length > 0 && (
               <button
-                onClick={clearHistory}
+                onClick={handleClearHistory}
                 className="text-xs text-rose-400 hover:text-rose-300 font-semibold"
               >
                 Clear History
@@ -143,7 +165,7 @@ export const MyListView: React.FC = () => {
                       </p>
                     </div>
                     <button
-                      onClick={() => removeHistoryItem(item.id, item.media_type)}
+                      onClick={() => handleRemoveHistory(item.id, item.media_type)}
                       className="p-1 rounded text-slate-500 hover:text-rose-400 active:scale-90"
                       title="Remove from history"
                       aria-label="Remove item from history"
@@ -173,7 +195,7 @@ export const MyListView: React.FC = () => {
             </span>
             {bookmarks.length > 0 && (
               <button
-                onClick={clearBookmarks}
+                onClick={handleClearBookmarks}
                 className="text-xs text-rose-400 hover:text-rose-300 font-semibold"
               >
                 Clear All
@@ -186,7 +208,7 @@ export const MyListView: React.FC = () => {
               {filteredBookmarks.map((item) => (
                 <div
                   key={`bm-${item.media_type}-${item.id}`}
-                  className="group relative rounded-xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-[0.98] transition-all"
+                  className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-[0.98] transition-all hover:border-white/20"
                 >
                   <div
                     onClick={() => navigate(`/${item.media_type}/${item.id}`)}
@@ -195,7 +217,7 @@ export const MyListView: React.FC = () => {
                     <img
                       src={getImageUrl(item.poster_path, 'w500')}
                       alt={item.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
 
                     {/* Quick Play & Delete buttons */}
@@ -209,7 +231,7 @@ export const MyListView: React.FC = () => {
                             navigate(`/watch/movie/${item.id}`);
                           }
                         }}
-                        className="w-10 h-10 rounded-full bg-[#e50914] flex items-center justify-center shadow-lg"
+                        className="w-10 h-10 rounded-full bg-[#e50914] flex items-center justify-center shadow-lg active:scale-90 transition-transform"
                         title="Watch now"
                       >
                         <Play className="w-4 h-4 fill-white text-white ml-0.5" />
@@ -219,7 +241,7 @@ export const MyListView: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeBookmark(item.id, item.media_type);
+                        handleRemoveBookmark(item.id, item.media_type, item.title);
                       }}
                       className="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-black/75 hover:bg-[#e50914] text-white transition-colors z-20"
                       title="Remove from My List"
@@ -229,8 +251,8 @@ export const MyListView: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="p-2 sm:p-2.5">
-                    <h4 className="text-xs sm:text-sm font-semibold text-white truncate">{item.title}</h4>
+                  <div className="p-2.5">
+                    <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
                     <div className="flex items-center justify-between text-[10px] text-slate-400 mt-0.5">
                       <span className="capitalize">{item.media_type}</span>
                       <span>{(item.release_date || item.first_air_date || '').slice(0, 4)}</span>

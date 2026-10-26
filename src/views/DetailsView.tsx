@@ -4,8 +4,6 @@ import {
   Plus,
   Check,
   Star,
-  Clock,
-  Calendar,
   Share2,
   ChevronLeft,
   Tv,
@@ -20,6 +18,7 @@ import {
 } from '../lib/tmdb';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
+import { useToast } from '../context/ToastContext';
 import { MovieCard } from '../components/MovieCard';
 
 interface DetailsViewProps {
@@ -30,6 +29,7 @@ interface DetailsViewProps {
 export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
   const { navigate, goBack } = useRouter();
   const { isBookmarked, toggleBookmark } = useBookmarks();
+  const { showToast } = useToast();
 
   const [details, setDetails] = useState<MediaDetails | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
@@ -37,7 +37,6 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
   const [loadingSeason, setLoadingSeason] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -100,7 +99,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
     return (
       <div className="w-full min-h-[70dvh] flex flex-col items-center justify-center gap-3 text-slate-400">
         <div className="w-8 h-8 border-3 border-[#e50914]/30 border-t-[#e50914] rounded-full animate-spin" />
-        <p className="text-xs font-medium">Loading title details...</p>
+        <p className="text-xs font-semibold tracking-wider uppercase text-slate-500">Loading title details...</p>
       </div>
     );
   }
@@ -142,10 +141,22 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
     }
   };
 
+  const handleToggleBookmark = () => {
+    toggleBookmark(details, mediaType);
+    showToast(
+      saved ? `Removed "${title}" from Watchlist` : `Added "${title}" to Watchlist`,
+      'bookmark'
+    );
+  };
+
   const handleShare = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const url = window.location.href;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+      showToast(`Link for "${title}" copied to clipboard!`, 'share');
+    } else {
+      showToast(`Sharing "${title}"`, 'share');
+    }
   };
 
   return (
@@ -168,7 +179,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
           {/* Back button */}
           <button
             onClick={goBack}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white mb-4 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 active:scale-95 transition-all"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white mb-4 px-3 py-1.5 rounded-xl bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 active:scale-95 transition-all"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             <span>Back</span>
@@ -219,6 +230,10 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
                     <span>{runtimeDisplay}</span>
                   </>
                 )}
+                <span aria-hidden="true" className="text-slate-600">·</span>
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-white/10 text-slate-200 border border-white/10">
+                  4K HDR
+                </span>
               </div>
 
               {/* Genres */}
@@ -230,7 +245,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
                       onClick={() =>
                         navigate(`/explore/${mediaType}?genre=${genre.id}`)
                       }
-                      className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/[0.08] text-slate-300 active:bg-white/10"
+                      className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/[0.08] text-slate-300 active:bg-white/10 hover:text-white transition-colors"
                     >
                       {genre.name}
                     </button>
@@ -238,11 +253,11 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
                 </div>
               )}
 
-              {/* Action Buttons: Play full width on mobile screens */}
+              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-3">
                 <button
                   onClick={handlePlayNow}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-rose-950/60 active:scale-95 transition-all touch-manipulation"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-rose-950/60 active:scale-95 transition-all touch-manipulation"
                 >
                   <Play className="w-4 h-4 fill-white" />
                   <span>Watch Now</span>
@@ -250,11 +265,11 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => toggleBookmark(details, mediaType)}
-                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-xs sm:text-sm font-semibold transition-all active:scale-95 touch-manipulation ${
+                    onClick={handleToggleBookmark}
+                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all active:scale-95 touch-manipulation ${
                       saved
                         ? 'bg-[#e50914]/30 border-[#e50914] text-rose-300'
-                        : 'bg-white/10 border-white/20 text-white'
+                        : 'bg-white/10 border-white/20 text-white hover:bg-white/15'
                     }`}
                   >
                     {saved ? (
@@ -272,17 +287,12 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
 
                   <button
                     onClick={handleShare}
-                    className="p-3 rounded-xl bg-white/10 border border-white/20 text-white active:scale-95"
+                    className="p-3.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/15 active:scale-95 transition-all"
                     title="Share link"
                     aria-label="Share title link"
                   >
                     <Share2 className="w-4 h-4" />
                   </button>
-                  {copied && (
-                    <span className="text-[11px] text-rose-400 font-semibold animate-pulse">
-                      Copied!
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -316,7 +326,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
               <select
                 value={selectedSeason}
                 onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                className="bg-[#181a26] border border-white/15 text-white text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-[#e50914] self-start sm:self-auto"
+                className="bg-[#181a26] border border-white/15 text-white text-xs font-semibold rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-[#e50914] self-start sm:self-auto"
               >
                 {details.seasons
                   .filter((s) => s.season_number > 0)
@@ -342,17 +352,17 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
                     onClick={() =>
                       navigate(`/watch/tv/${id}/${selectedSeason}/${ep.episode_number}`)
                     }
-                    className="group cursor-pointer rounded-xl overflow-hidden bg-[#161822] border border-white/5 active:border-[#e50914]/50 transition-all active:scale-[0.98]"
+                    className="group cursor-pointer rounded-xl overflow-hidden bg-[#161822] border border-white/5 active:border-[#e50914]/50 hover:border-white/20 transition-all active:scale-[0.98]"
                   >
                     <div className="aspect-video relative overflow-hidden bg-[#1c1f2e]">
                       <img
                         src={getImageUrl(ep.still_path || details.backdrop_path, 'w500')}
                         alt={ep.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                       />
                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                        <div className="w-8 h-8 rounded-full bg-[#e50914] flex items-center justify-center shadow-md">
+                        <div className="w-9 h-9 rounded-full bg-[#e50914] flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                           <Play className="w-3.5 h-3.5 fill-white text-white ml-0.5" />
                         </div>
                       </div>
@@ -390,22 +400,22 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
               <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block" />
               Top Billed Cast
             </h2>
-            <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x touch-pan-x py-1">
+            <div className="flex gap-3.5 overflow-x-auto scrollbar-none snap-x touch-pan-x py-1">
               {details.credits.cast.slice(0, 16).map((actor) => (
                 <div
                   key={actor.id}
                   onClick={() => navigate(`/person/${actor.id}`)}
-                  className="snap-start shrink-0 w-24 sm:w-28 text-center cursor-pointer active:scale-95"
+                  className="snap-start shrink-0 w-24 sm:w-28 text-center cursor-pointer active:scale-95 group"
                 >
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-[#181a26] border border-white/10 mb-2">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-[#181a26] border border-white/10 mb-2 group-hover:border-[#e50914]/60 transition-colors">
                     <img
                       src={getImageUrl(actor.profile_path, 'w185')}
                       alt={actor.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       loading="lazy"
                     />
                   </div>
-                  <h4 className="text-xs font-bold text-white truncate">
+                  <h4 className="text-xs font-bold text-white truncate group-hover:text-rose-400 transition-colors">
                     {actor.name}
                   </h4>
                   <p className="text-[10px] text-slate-400 truncate mt-0.5">

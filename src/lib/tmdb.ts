@@ -1,6 +1,8 @@
 /**
- * TMDB API Client & Helper Service
+ * TMDB API Client & Helper Service with Caching and Extended Endpoints
  */
+
+import { getCachedData, setCachedData } from './cache';
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
@@ -86,6 +88,15 @@ export interface TVSeasonDetails {
   episodes: TVEpisode[];
 }
 
+export interface VideoResult {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+  official?: boolean;
+}
+
 export interface MediaDetails extends TMDBMedia {
   credits?: {
     cast: CastMember[];
@@ -106,13 +117,7 @@ export interface MediaDetails extends TMDBMedia {
     air_date?: string;
   }[];
   videos?: {
-    results: {
-      id: string;
-      key: string;
-      name: string;
-      site: string;
-      type: string;
-    }[];
+    results: VideoResult[];
   };
 }
 
@@ -137,14 +142,27 @@ export interface Genre {
 }
 
 /**
- * Fetch wrapper for TMDB with error handling and query string serialization
+ * Fetch wrapper for TMDB with Caching and Error Handling
  */
 async function fetchTMDB<T>(
   endpoint: string,
-  params: Record<string, string | number | boolean | undefined> = {}
+  params: Record<string, string | number | boolean | undefined> = {},
+  useCache: boolean = true
 ): Promise<T> {
+  const queryParts = Object.entries(params)
+    .filter(([_, val]) => val !== undefined && val !== null && val !== '')
+    .map(([key, val]) => `${key}=${encodeURIComponent(String(val))}`)
+    .sort()
+    .join('&');
+
+  const cacheKey = `${endpoint}?${queryParts}`;
+
+  if (useCache) {
+    const cached = getCachedData<T>(cacheKey);
+    if (cached) return cached;
+  }
+
   const url = new URL(`${TMDB_BASE_URL}${endpoint}`);
-  
   Object.entries(params).forEach(([key, val]) => {
     if (val !== undefined && val !== null && val !== '') {
       url.searchParams.append(key, String(val));
@@ -162,18 +180,23 @@ async function fetchTMDB<T>(
     );
   }
 
-  return response.json();
+  const data = await response.json();
+  if (useCache) {
+    setCachedData(cacheKey, data);
+  }
+
+  return data;
 }
 
 /**
- * Image URL Generator with size fallback
+ * Image URL Generator with size fallbacks
  */
 export function getImageUrl(
   path: string | null | undefined,
   size: 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original' = 'w500'
 ): string {
   if (!path) {
-    return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450"><rect fill="%2314161f" width="300" height="450"/><text fill="%23475569" font-family="sans-serif" font-size="16" x="50%" y="50%" text-anchor="middle">No Poster</text></svg>';
+    return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450"><rect fill="%2312131a" width="300" height="450"/><text fill="%23475569" font-family="sans-serif" font-size="16" x="50%" y="50%" text-anchor="middle">No Image</text></svg>';
   }
   return `${IMAGE_BASE_URL}/${size}${path}`;
 }
@@ -183,12 +206,12 @@ export function getBackdropUrl(
   size: 'w300' | 'w780' | 'w1280' | 'original' = 'w1280'
 ): string {
   if (!path) {
-    return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720"><rect fill="%230c0d12" width="1280" height="720"/><text fill="%23334155" font-family="sans-serif" font-size="24" x="50%" y="50%" text-anchor="middle">No Backdrop</text></svg>';
+    return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720"><rect fill="%2307080a" width="1280" height="720"/><text fill="%23334155" font-family="sans-serif" font-size="24" x="50%" y="50%" text-anchor="middle">No Backdrop</text></svg>';
   }
   return `${IMAGE_BASE_URL}/${size}${path}`;
 }
 
-// API methods
+// API Methods
 export const tmdb = {
   // Trending
   getTrending: async (
@@ -227,7 +250,6 @@ export const tmdb = {
   },
 
   getAnimeSeries: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number }> => {
-    // Animation genre ID is 16; filtering with original language Japanese yields high-quality anime
     return fetchTMDB('/discover/tv', {
       with_genres: 16,
       with_original_language: 'ja',
@@ -244,6 +266,22 @@ export const tmdb = {
 
   getTVSeason: async (tvId: number | string, seasonNumber: number): Promise<TVSeasonDetails> => {
     return fetchTMDB(`/tv/${tvId}/season/${seasonNumber}`);
+  },
+
+  // Videos (YouTube Trailers)
+  getVideos: async (
+    id: number | string,
+    type: 'movie' | 'tv' = 'movie'
+  ): Promise<{ results: VideoResult[] }> => {
+    return fetchTMDB(`/${type}/${id}/videos`);
+  },
+
+  // Recommendations based on a specific watched item
+  getRecommendations: async (
+    type: 'movie' | 'tv',
+    id: number | string
+  ): Promise<{ results: TMDBMedia[] }> => {
+    return fetchTMDB(`/${type}/${id}/recommendations`);
   },
 
   // Discover & Explore
@@ -269,11 +307,15 @@ export const tmdb = {
     query: string,
     page = 1
   ): Promise<{ results: (TMDBMedia & { known_for?: TMDBMedia[] })[]; total_pages: number; total_results: number }> => {
-    return fetchTMDB('/search/multi', {
-      query,
-      page,
-      include_adult: false,
-    });
+    return fetchTMDB(
+      '/search/multi',
+      {
+        query,
+        page,
+        include_adult: false,
+      },
+      false // do not cache search results
+    );
   },
 
   // Person Details
@@ -288,3 +330,13 @@ export const tmdb = {
     return fetchTMDB(`/genre/${type}/list`);
   },
 };
+
+/**
+ * Convenience search helper function
+ */
+export const searchMedia = async (query: string): Promise<TMDBMedia[]> => {
+  if (!query.trim()) return [];
+  const res = await tmdb.multiSearch(query);
+  return res.results || [];
+};
+

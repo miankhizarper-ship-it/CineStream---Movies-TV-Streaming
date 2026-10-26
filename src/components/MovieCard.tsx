@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Play, Plus, Check, Star, Info } from 'lucide-react';
+import { Play, Plus, Check, Star, Share2, Info } from 'lucide-react';
 import { TMDBMedia, getImageUrl } from '../lib/tmdb';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
+import { useToast } from '../context/ToastContext';
 
 interface MovieCardProps {
   media: TMDBMedia;
@@ -17,6 +18,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 }) => {
   const { navigate } = useRouter();
   const { isBookmarked, toggleBookmark } = useBookmarks();
+  const { showToast } = useToast();
   const [imageError, setImageError] = useState(false);
 
   const type: 'movie' | 'tv' =
@@ -27,6 +29,9 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const releaseYear = (media.release_date || media.first_air_date || '').slice(0, 4);
   const rating = media.vote_average ? media.vote_average.toFixed(1) : 'NR';
   const saved = isBookmarked(media.id, type);
+
+  // Match percentage simulation based on rating
+  const matchPercentage = Math.min(99, Math.max(78, Math.round((media.vote_average || 7.5) * 10)));
 
   const handleCardClick = () => {
     navigate(`/${type}/${media.id}`);
@@ -44,6 +49,21 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const handleBookmarkToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleBookmark(media, type);
+    showToast(
+      saved ? `Removed "${title}" from Watchlist` : `Added "${title}" to Watchlist`,
+      'bookmark'
+    );
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/#/${type}/${media.id}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+      showToast(`Link for "${title}" copied to clipboard!`, 'share');
+    } else {
+      showToast(`Sharing "${title}"`, 'share');
+    }
   };
 
   const imageSrc =
@@ -54,7 +74,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative cursor-pointer select-none rounded-xl overflow-hidden bg-[#12131a] border border-white/[0.08] transition-all duration-300 md:hover:scale-105 md:hover:shadow-2xl md:hover:shadow-rose-950/40 md:hover:border-[#e50914]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e50914] touch-manipulation active:scale-[0.98]"
+      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/[0.08] transition-all duration-300 md:hover:scale-105 md:hover:z-30 md:hover:shadow-2xl md:hover:shadow-rose-950/50 md:hover:border-rose-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 touch-manipulation active:scale-[0.98]"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -64,7 +84,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         }
       }}
     >
-      {/* Image container */}
+      {/* Image Container */}
       <div
         className={`w-full overflow-hidden bg-[#161822] relative ${
           aspect === 'backdrop' ? 'aspect-video' : 'aspect-[2/3]'
@@ -86,13 +106,18 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         )}
 
-        {/* Rating chip on card */}
-        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[10px] sm:text-[11px] font-semibold text-amber-400">
+        {/* Rating Badge on Card */}
+        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-black/75 backdrop-blur-md text-[10px] sm:text-[11px] font-bold text-amber-400 border border-white/10">
           <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
           <span className="tabular-nums">{rating}</span>
         </div>
 
-        {/* Quick Mobile Bookmark Button (Always accessible on touch without hover, 44x44px hitbox) */}
+        {/* 4K Badge */}
+        <div className="absolute top-2.5 right-2.5 z-10 hidden md:block px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-[9px] font-extrabold text-slate-300 border border-white/10 tracking-wider">
+          4K
+        </div>
+
+        {/* Mobile Bookmark Touch Button (44px target) */}
         <button
           onClick={handleBookmarkToggle}
           className="md:hidden absolute top-1 right-1 z-20 w-11 h-11 flex items-center justify-center rounded-full text-white drop-shadow-md touch-manipulation active:scale-90"
@@ -109,52 +134,64 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         </button>
 
-        {/* Desktop-Only Hover Gradient Overlay (hidden on mobile touch to prevent popping) */}
-        <div className="hidden md:flex absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-col justify-end p-3.5 z-20">
-          <h4 className="text-sm font-bold text-white line-clamp-2 leading-snug drop-shadow-md">
+        {/* Desktop-Only Hover Vignette & Micro-Actions */}
+        <div className="hidden md:flex absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-col justify-end p-3.5 z-20">
+          {/* Match % & Year */}
+          <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-400 mb-1">
+            <span>{matchPercentage}% Match</span>
+            <span className="text-slate-400 font-normal">·</span>
+            <span className="text-slate-300">{releaseYear}</span>
+          </div>
+
+          <h4 className="text-sm font-extrabold text-white line-clamp-2 leading-snug drop-shadow-md">
             {title}
           </h4>
 
-          <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-300">
-            {releaseYear && <span>{releaseYear}</span>}
-            {releaseYear && <span aria-hidden="true">·</span>}
-            <span className="capitalize">{type}</span>
-          </div>
-
-          {/* Quick Action buttons */}
-          <div className="flex items-center gap-2 mt-3 pt-2 border-t border-white/10">
+          {/* Action Row */}
+          <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-white/10">
             <button
               onClick={handlePlayClick}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-[#e50914] hover:bg-rose-500 text-white text-xs font-semibold shadow-md shadow-rose-950/50 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/60 transition-colors"
               title="Watch now"
               aria-label={`Play ${title}`}
             >
               <Play className="w-3.5 h-3.5 fill-white" />
-              <span>Watch</span>
+              <span>Play</span>
             </button>
 
             <button
               onClick={handleBookmarkToggle}
-              className={`p-1.5 rounded-lg border transition-colors ${
+              className={`p-2 rounded-xl border transition-colors ${
                 saved
-                  ? 'bg-[#e50914]/20 border-[#e50914] text-rose-400 hover:bg-[#e50914]/30'
+                  ? 'bg-[#e50914]/25 border-[#e50914] text-rose-400 hover:bg-[#e50914]/40'
                   : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
               }`}
               title={saved ? 'Remove from My List' : 'Add to My List'}
               aria-label={saved ? 'Remove from My List' : 'Add to My List'}
             >
-              {saved ? <Check className="w-4 h-4 text-rose-400" /> : <Plus className="w-4 h-4" />}
+              {saved ? <Check className="w-3.5 h-3.5 text-rose-400" /> : <Plus className="w-3.5 h-3.5" />}
+            </button>
+
+            <button
+              onClick={handleShare}
+              className="p-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
+              title="Share"
+              aria-label="Share media"
+            >
+              <Share2 className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Card Footer Details (Always visible on mobile below poster) */}
-      <div className="p-2 sm:p-2.5">
-        <h3 className="text-xs sm:text-sm font-semibold text-white truncate">{title}</h3>
-        <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
+      {/* Card Info Below Poster */}
+      <div className="p-2.5 sm:p-3">
+        <h3 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-rose-400 transition-colors">
+          {title}
+        </h3>
+        <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 mt-1">
           <span>{releaseYear || 'Cinema'}</span>
-          <span className="uppercase text-[9px] font-bold tracking-wider px-1 py-0.2 rounded bg-white/5 text-slate-300">
+          <span className="uppercase text-[9px] font-bold tracking-wider px-1.5 py-0.2 rounded-md bg-white/5 text-slate-300 border border-white/5">
             {type}
           </span>
         </div>

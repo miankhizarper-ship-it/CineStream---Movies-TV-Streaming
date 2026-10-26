@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RouterProvider, useRouter } from './context/RouterContext';
+import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { Footer } from './components/Footer';
@@ -53,7 +54,7 @@ const MainContent: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-[#07080a] text-slate-100 antialiased selection:bg-[#e50914] selection:text-white">
+    <div className="flex flex-col min-h-[100dvh] w-full overflow-x-hidden bg-[#07080a] text-slate-100 antialiased selection:bg-[#e50914] selection:text-white">
       <Navbar />
       <main className="flex-1 w-full relative">
         <AnimatePresence mode="wait">
@@ -77,8 +78,10 @@ const MainContent: React.FC = () => {
 
 export default function App() {
   return (
-    <RouterProvider>
-      <MainContent />
-    </RouterProvider>
+    <ToastProvider>
+      <RouterProvider>
+        <MainContent />
+      </RouterProvider>
+    </ToastProvider>
   );
 }

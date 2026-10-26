@@ -4,7 +4,7 @@ import { TMDBMedia } from '../lib/tmdb';
 import { MovieCard } from './MovieCard';
 
 interface MovieRowProps {
-  title: string;
+  title: React.ReactNode;
   items: TMDBMedia[];
   mediaType?: 'movie' | 'tv';
   aspect?: 'poster' | 'backdrop';
@@ -50,22 +50,30 @@ export const MovieRow: React.FC<MovieRowProps> = ({
   if (!items || items.length === 0) return null;
 
   return (
-    <section className="relative my-6 sm:my-8 px-4 sm:px-6 md:px-12 group/row">
+    <section className="relative my-5 sm:my-7 md:my-8 px-4 sm:px-6 md:px-12 group/row">
       {/* Row Header */}
-      <div className="flex items-baseline justify-between mb-2.5 sm:mb-3.5">
-        <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-          <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block" />
-          {title}
-        </h2>
-        {exploreLink && onExploreClick && (
-          <button
-            onClick={onExploreClick}
-            className="text-xs sm:text-sm font-semibold text-rose-400 hover:text-rose-300 transition-colors whitespace-nowrap active:scale-95"
-          >
-            See all →
-          </button>
-        )}
-      </div>
+      {title && (
+        <div className="flex items-baseline justify-between mb-2.5 sm:mb-3.5">
+          <div className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            {typeof title === 'string' ? (
+              <>
+                <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block shrink-0" />
+                <span>{title}</span>
+              </>
+            ) : (
+              title
+            )}
+          </div>
+          {exploreLink && onExploreClick && (
+            <button
+              onClick={onExploreClick}
+              className="text-xs sm:text-sm font-semibold text-rose-400 hover:text-rose-300 transition-colors whitespace-nowrap active:scale-95 shrink-0 ml-2"
+            >
+              See all →
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Relative container for row & arrow buttons */}
       <div className="relative">
@@ -80,19 +88,19 @@ export const MovieRow: React.FC<MovieRowProps> = ({
           </button>
         )}
 
-        {/* Touch-Optimized Carousel with snap-x snap-mandatory */}
+        {/* Touch-Optimized Horizontal Carousel */}
         <div
           ref={rowRef}
           onScroll={checkScroll}
-          className="flex gap-2.5 sm:gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory touch-pan-x py-1 scroll-smooth"
+          className="flex gap-2.5 sm:gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-1"
         >
           {items.map((item) => (
             <div
               key={`${item.media_type || mediaType || 'item'}-${item.id}`}
               className={`snap-start shrink-0 ${
                 aspect === 'backdrop'
-                  ? 'w-[220px] sm:w-[280px] md:w-[320px]'
-                  : 'w-[130px] sm:w-[170px] md:w-[210px]'
+                  ? 'w-[200px] sm:w-[260px] md:w-[300px]'
+                  : 'w-[125px] sm:w-[165px] md:w-[200px]'
               }`}
             >
               <MovieCard media={item} mediaType={mediaType} aspect={aspect} />

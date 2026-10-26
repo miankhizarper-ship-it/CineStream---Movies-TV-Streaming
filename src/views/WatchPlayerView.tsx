@@ -3,11 +3,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Tv,
-  Film,
   Server,
   Check,
   Bookmark,
-  Info,
   List,
   X,
   Play,
@@ -17,6 +15,7 @@ import { tmdb, MediaDetails, TVSeasonDetails, getImageUrl } from '../lib/tmdb';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
+import { useToast } from '../context/ToastContext';
 
 interface WatchPlayerViewProps {
   id: string;
@@ -32,10 +31,10 @@ interface ServerOption {
 }
 
 const SERVERS: ServerOption[] = [
-  { id: 'default', name: 'FMOV Auto', badge: 'Fastest' },
-  { id: 'vector', name: 'Vector', badge: '1080p' },
-  { id: 'core', name: 'Core', badge: 'Stable' },
-  { id: 'valence', name: 'Valence', badge: 'Multi-Sub' },
+  { id: 'default', name: 'FMOV Primary', badge: 'Fastest' },
+  { id: 'vector', name: 'Vector HD', badge: '1080p' },
+  { id: 'core', name: 'Core Server', badge: 'Stable' },
+  { id: 'valence', name: 'Valence Multi', badge: 'Multi-Sub' },
   { id: 'stream4k', name: '4K Ultra', badge: 'UHD' },
 ];
 
@@ -48,6 +47,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
   const { navigate } = useRouter();
   const { addOrUpdateHistory } = useWatchHistory();
   const { isBookmarked, toggleBookmark } = useBookmarks();
+  const { showToast } = useToast();
 
   const [details, setDetails] = useState<MediaDetails | null>(null);
   const [currentSeason, setCurrentSeason] = useState<number>(Number(initialSeason) || 1);
@@ -114,33 +114,6 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     });
   }, [details, mediaType, currentSeason, currentEpisode, addOrUpdateHistory]);
 
-  useEffect(() => {
-    const handlePlayerMessage = (event: MessageEvent) => {
-      try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data && (data.event === 'timeupdate' || data.type === 'playback_progress')) {
-          if (details && data.percentage) {
-            addOrUpdateHistory({
-              id: details.id,
-              media_type: mediaType,
-              title: details.title || details.name || 'Untitled',
-              poster_path: details.poster_path,
-              backdrop_path: details.backdrop_path,
-              season: mediaType === 'tv' ? currentSeason : undefined,
-              episode: mediaType === 'tv' ? currentEpisode : undefined,
-              progress: Math.round(data.percentage),
-            });
-          }
-        }
-      } catch {
-        // safely ignore
-      }
-    };
-
-    window.addEventListener('message', handlePlayerMessage);
-    return () => window.removeEventListener('message', handlePlayerMessage);
-  }, [details, mediaType, currentSeason, currentEpisode, addOrUpdateHistory]);
-
   const buildPlayerUrl = () => {
     const colorParam = 'color=e50914';
     const serverParam = currentServer !== 'default' ? `&server=${currentServer}` : '';
@@ -166,6 +139,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     setCurrentEpisode(epNum);
     setEpisodeDrawerOpen(false);
     navigate(`/watch/tv/${id}/${currentSeason}/${epNum}`);
+    showToast(`Loaded Episode ${epNum}`, 'info');
   };
 
   const handleNextEpisode = () => {
@@ -180,17 +154,31 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     }
   };
 
+  const handleSelectServer = (serverId: string, serverName: string) => {
+    setCurrentServer(serverId);
+    showToast(`Switched stream server to ${serverName}`, 'info');
+  };
+
+  const handleToggleBookmark = () => {
+    if (!details) return;
+    toggleBookmark(details, mediaType);
+    showToast(
+      saved ? `Removed "${title}" from Watchlist` : `Added "${title}" to Watchlist`,
+      'bookmark'
+    );
+  };
+
   return (
     <div
       className={`min-h-[100dvh] transition-colors duration-500 ${
         theaterMode ? 'bg-[#030305]' : 'bg-[#07080a]'
-      } text-white pb-12`}
+      } text-white pb-16`}
     >
       {/* Top Player Action Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-3 flex items-center justify-between gap-3">
         <button
           onClick={() => navigate(`/${mediaType}/${id}`)}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-white/5 active:bg-white/10 border border-white/[0.08] transition-colors"
+          className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 active:bg-white/10 border border-white/[0.08] transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Details</span>
@@ -200,7 +188,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
           <h2 className="text-xs sm:text-sm font-bold text-white truncate">{title}</h2>
           {mediaType === 'tv' && (
             <p className="text-[11px] text-rose-400 font-semibold">
-              S{currentSeason} · E{currentEpisode}
+              Season {currentSeason} · Episode {currentEpisode}
             </p>
           )}
         </div>
@@ -208,8 +196,11 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
         <div className="flex items-center gap-2">
           {/* Dim lights toggle */}
           <button
-            onClick={() => setTheaterMode(!theaterMode)}
-            className={`p-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-colors ${
+            onClick={() => {
+              setTheaterMode(!theaterMode);
+              showToast(theaterMode ? 'Theater dim disabled' : 'Theater dim enabled', 'info');
+            }}
+            className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-colors ${
               theaterMode
                 ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
                 : 'bg-white/5 border-white/[0.08] text-slate-300'
@@ -224,7 +215,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
           {mediaType === 'tv' && (
             <button
               onClick={() => setEpisodeDrawerOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#e50914]/20 border border-[#e50914]/40 text-rose-400 text-xs font-semibold"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-semibold transition-colors"
             >
               <List className="w-3.5 h-3.5" />
               <span>Episodes</span>
@@ -235,7 +226,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
 
       {/* Main Video Viewport Container: aspect-video w-full max-h-[40dvh] sm:max-h-[70vh] */}
       <div className="max-w-7xl mx-auto px-0 sm:px-6 md:px-12">
-        <div className="relative w-full aspect-video max-h-[40dvh] sm:max-h-[70vh] sm:rounded-2xl overflow-hidden bg-black shadow-2xl border-y sm:border border-white/10">
+        <div className="relative w-full aspect-video max-h-[40dvh] sm:max-h-[72vh] sm:rounded-2xl overflow-hidden bg-black shadow-2xl border-y sm:border border-white/10">
           <iframe
             ref={iframeRef}
             src={buildPlayerUrl()}
@@ -252,7 +243,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
             <button
               onClick={handlePrevEpisode}
               disabled={!hasPrev}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors ${
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border transition-colors ${
                 hasPrev
                   ? 'bg-white/5 border-white/10 text-white active:bg-white/10'
                   : 'opacity-40 border-transparent text-slate-500 cursor-not-allowed'
@@ -269,7 +260,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
             <button
               onClick={handleNextEpisode}
               disabled={!hasNext}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors ${
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border transition-colors ${
                 hasNext
                   ? 'bg-[#e50914] border-rose-500 text-white active:bg-rose-500'
                   : 'opacity-40 border-transparent text-slate-500 cursor-not-allowed'
@@ -282,13 +273,13 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
         )}
 
         {/* Server Switcher Controls: horizontal scrollable row of pill buttons */}
-        <div className="mt-4 sm:mt-6 mx-4 sm:mx-0 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#12131a] border border-white/[0.08]">
-          <div className="flex items-center justify-between mb-2">
+        <div className="mt-4 sm:mt-6 mx-4 sm:mx-0 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#12131a] border border-white/[0.08]">
+          <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-1.5 text-xs font-bold text-white">
               <Server className="w-3.5 h-3.5 text-[#e50914]" />
               <span>Stream Servers</span>
             </div>
-            <span className="text-[10px] text-emerald-400 font-medium">● Online</span>
+            <span className="text-[10px] text-emerald-400 font-medium">● Operational</span>
           </div>
 
           <div className="flex gap-2 overflow-x-auto scrollbar-none snap-x py-1">
@@ -297,11 +288,11 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
               return (
                 <button
                   key={server.id}
-                  onClick={() => setCurrentServer(server.id)}
-                  className={`snap-start shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                  onClick={() => handleSelectServer(server.id, server.name)}
+                  className={`snap-start shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border ${
                     active
                       ? 'bg-[#e50914] border-rose-500 text-white shadow-md'
-                      : 'bg-white/5 border-white/[0.08] text-slate-300 active:bg-white/10'
+                      : 'bg-white/5 border-white/[0.08] text-slate-300 hover:text-white active:bg-white/10'
                   }`}
                 >
                   <span>{server.name}</span>
@@ -322,11 +313,11 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
         {/* Media Details Summary Bar */}
         {details && (
           <div className="mt-4 mx-4 sm:mx-0 p-4 rounded-xl sm:rounded-2xl bg-[#12131a] border border-white/[0.08] flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-3.5 min-w-0">
               <img
                 src={getImageUrl(details.poster_path, 'w185')}
                 alt={title}
-                className="w-12 h-16 rounded-lg object-cover shrink-0"
+                className="w-12 h-16 rounded-xl object-cover shrink-0"
               />
               <div className="min-w-0">
                 <h3 className="text-sm font-bold text-white truncate">{title}</h3>
@@ -341,8 +332,8 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
             </div>
 
             <button
-              onClick={() => toggleBookmark(details, mediaType)}
-              className={`shrink-0 p-2.5 rounded-xl border transition-colors ${
+              onClick={handleToggleBookmark}
+              className={`shrink-0 p-3 rounded-xl border transition-colors ${
                 saved
                   ? 'bg-[#e50914]/20 border-[#e50914] text-rose-400'
                   : 'bg-white/5 border-white/[0.08] text-slate-200'
@@ -386,7 +377,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
                     setCurrentSeason(nextSeason);
                     goToEpisode(1);
                   }}
-                  className="w-full bg-[#181a26] border border-white/15 text-white text-xs font-semibold rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#e50914]"
+                  className="w-full bg-[#181a26] border border-white/15 text-white text-xs font-semibold rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-[#e50914]"
                 >
                   {details.seasons
                     .filter((s) => s.season_number > 0)
@@ -400,7 +391,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
             )}
 
             {/* Scrollable Episode List */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-none">
               {currentEpisodesList.map((ep) => {
                 const isSelected = ep.episode_number === currentEpisode;
                 return (

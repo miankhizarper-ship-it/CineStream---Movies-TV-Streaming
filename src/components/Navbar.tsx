@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Search, Bookmark, X, ArrowLeft, TrendingUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Film, Search, Bookmark, Command } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useRouter } from '../context/RouterContext';
 import { useBookmarks } from '../hooks/useBookmarks';
+import { CommandPalette } from './CommandPalette';
 
 export const Navbar: React.FC = () => {
   const { route, navigate } = useRouter();
   const { bookmarks } = useBookmarks();
-  const [desktopSearchOpen, setDesktopSearchOpen] = useState(false);
-  const [mobileSearchModalOpen, setMobileSearchModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -20,22 +19,28 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Global shortcut for Cmd+K or /
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
+      } else if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault();
+        setPaletteOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Movies', path: '/explore/movie' },
-    { label: 'TV Shows', path: '/explore/tv' },
+    { label: 'TV Series', path: '/explore/tv' },
     { label: 'Categories', path: '/categories' },
     { label: 'My List', path: '/mylist', count: bookmarks.length },
   ];
-
-  const handleSearchSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setDesktopSearchOpen(false);
-      setMobileSearchModalOpen(false);
-    }
-  };
 
   const isActive = (path: string) => {
     if (path === '/') return route.type === 'home';
@@ -45,8 +50,6 @@ export const Navbar: React.FC = () => {
     if (path === '/mylist') return route.type === 'mylist';
     return false;
   };
-
-  const quickSearches = ['Avengers', 'Stranger Things', 'Breaking Bad', 'Anime', 'Batman'];
 
   return (
     <>
@@ -61,10 +64,10 @@ export const Navbar: React.FC = () => {
           {/* Zone 1: Single Brand Wordmark */}
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-lg sm:text-xl font-black tracking-tight text-white whitespace-nowrap shrink-0 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg"
+            className="flex items-center gap-2.5 text-lg sm:text-xl font-black tracking-tight text-white whitespace-nowrap shrink-0 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg"
           >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-[#e50914] to-rose-500 flex items-center justify-center shadow-md shadow-rose-950/40 group-hover:scale-105 transition-transform">
-              <Film className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#e50914] to-rose-500 flex items-center justify-center shadow-md shadow-rose-950/50 group-hover:scale-105 transition-transform">
+              <Film className="w-4 h-4 text-white" />
             </div>
             <span className="font-extrabold tracking-tight bg-gradient-to-r from-white via-white to-slate-200 bg-clip-text text-transparent">
               CINE<span className="text-[#e50914]">STREAM</span>
@@ -101,54 +104,25 @@ export const Navbar: React.FC = () => {
 
           {/* Zone 3: Search & Actions */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Desktop Search Input */}
-            <div className="hidden md:block">
-              {desktopSearchOpen ? (
-                <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder="Search movies, shows, people..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-56 lg:w-64 px-3.5 py-1.5 pl-9 rounded-full bg-[#12131a] border border-white/[0.12] text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[#e50914]"
-                  />
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
-                  <button
-                    type="button"
-                    onClick={() => setDesktopSearchOpen(false)}
-                    className="absolute right-2.5 text-slate-400 hover:text-white"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </form>
-              ) : (
-                <button
-                  onClick={() => setDesktopSearchOpen(true)}
-                  className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-                  title="Search"
-                  aria-label="Open search input"
-                >
-                  <Search className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-
-            {/* Mobile Fullscreen Search Trigger (<768px) */}
+            {/* Command Palette Trigger Button */}
             <button
-              onClick={() => setMobileSearchModalOpen(true)}
-              className="md:hidden w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-300 active:bg-white/10"
-              aria-label="Open search"
+              onClick={() => setPaletteOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/[0.1] text-xs text-slate-300 transition-all group"
+              title="Search (Cmd+K)"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
+              <span className="hidden sm:inline-block font-medium">Search titles...</span>
+              <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.2 text-[10px] font-semibold text-slate-400 bg-white/10 rounded border border-white/10 ml-1">
+                <Command className="w-2.5 h-2.5" /> K
+              </kbd>
             </button>
 
             {/* Quick Watchlist on Desktop */}
             <button
               onClick={() => navigate('/mylist')}
-              className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/[0.08] text-xs font-semibold text-slate-200 transition-colors"
+              className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/[0.08] text-xs font-semibold text-slate-200 transition-colors active:scale-95"
             >
-              <Bookmark className="w-3.5 h-3.5 text-[#e50914]" />
+              <Bookmark className="w-3.5 h-3.5 text-[#e50914] fill-[#e50914]" />
               <span>Watchlist</span>
               {bookmarks.length > 0 && (
                 <span className="text-[10px] ml-1 px-1.5 py-0.2 rounded bg-[#e50914]/20 text-rose-300 font-bold tabular-nums">
@@ -160,81 +134,8 @@ export const Navbar: React.FC = () => {
         </div>
       </header>
 
-      {/* Full-Screen Dynamic Mobile Search Overlay (<768px) */}
-      <AnimatePresence>
-        {mobileSearchModalOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-[#07080a] flex flex-col p-4 pt-safe md:hidden"
-          >
-            {/* Search Top Bar */}
-            <div className="flex items-center gap-2 pb-3 border-b border-white/[0.08]">
-              <button
-                onClick={() => setMobileSearchModalOpen(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 active:text-white"
-                aria-label="Close search"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-
-              <form onSubmit={handleSearchSubmit} className="flex-1 relative">
-                <input
-                  type="text"
-                  autoFocus
-                  placeholder="Search movies, shows, people..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-11 pl-10 pr-9 rounded-xl bg-[#12131a] border border-white/[0.1] text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[#e50914]"
-                />
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </form>
-
-              <button
-                onClick={() => handleSearchSubmit()}
-                className="px-3.5 h-11 rounded-xl bg-[#e50914] text-white text-xs font-bold active:scale-95 transition-transform"
-              >
-                Go
-              </button>
-            </div>
-
-            {/* Quick Suggestions / Trending Tags */}
-            <div className="p-4 flex-1 overflow-y-auto">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                <TrendingUp className="w-3.5 h-3.5 text-[#e50914]" />
-                <span>Trending Searches</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {quickSearches.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => {
-                      setSearchQuery(tag);
-                      navigate(`/search?q=${encodeURIComponent(tag)}`);
-                      setMobileSearchModalOpen(false);
-                    }}
-                    className="px-3.5 py-2 rounded-xl bg-[#12131a] border border-white/[0.08] text-xs font-medium text-slate-300 active:bg-white/10"
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      {/* Global Command Palette */}
+      <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </>
   );
 };

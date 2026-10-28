@@ -329,6 +329,69 @@ export const HomeView: React.FC = () => {
         exploreLink="/explore/tv"
         onExploreClick={() => navigate('/explore/tv')}
       />
+
+      {/* Android App Download Banner (Visible on Large PC Screen View, Hidden on Mobile View) */}
+      <section className="my-10 px-4 sm:px-6 md:px-12 hidden lg:block">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-zinc-900 to-emerald-950/70 border border-emerald-500/20 p-6 sm:p-8 md:p-10 shadow-2xl">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="max-w-xl space-y-3 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                <span>Official Mobile App</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                Get CineStream on your <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Android Device</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Enjoy ultra-fast 4K streaming, offline episode downloads, customized episode selection drawers, and cinema dark mode on your phone or tablet.
+              </p>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
+                <button
+                  onClick={() => navigate('/download-app')}
+                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-emerald-950/80 active:scale-95 transition-all"
+                >
+                  Download APK (v1.0.0)
+                </button>
+                <button
+                  onClick={() => navigate('/download-app')}
+                  className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm border border-white/15 transition-all"
+                >
+                  View App Screenshots
+                </button>
+              </div>
+            </div>
+
+            {/* Android App Screenshots Preview Stack */}
+            <div
+              onClick={() => navigate('/download-app')}
+              className="cursor-pointer shrink-0 flex items-center justify-center gap-3 transition-transform hover:scale-105"
+            >
+              <div className="w-24 sm:w-28 rounded-2xl overflow-hidden border border-white/20 shadow-2xl -rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
+                <img
+                  src="/assets/aistudio/Screenshot_20261028-195444_aa60f844.png"
+                  alt="App Home Screen"
+                  className="w-full h-auto"
+                />
+              </div>
+              <div className="w-28 sm:w-32 rounded-2xl overflow-hidden border border-emerald-500/40 shadow-2xl z-10 bg-black">
+                <img
+                  src="/assets/aistudio/Screenshot_20261028-195624_93ee3be0.png"
+                  alt="App Video Player"
+                  className="w-full h-auto"
+                />
+              </div>
+              <div className="w-24 sm:w-28 rounded-2xl overflow-hidden border border-white/20 shadow-2xl rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
+                <img
+                  src="/assets/aistudio/Screenshot_20261028-195629_358acf96.png"
+                  alt="App Episode Selector"
+                  className="w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

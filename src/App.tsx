@@ -15,6 +15,7 @@ import { CategoriesView } from './views/CategoriesView';
 import { SearchView } from './views/SearchView';
 import { PersonView } from './views/PersonView';
 import { MyListView } from './views/MyListView';
+import { DownloadAppView } from './views/DownloadAppView';
 
 const MainContent: React.FC = () => {
   const { route } = useRouter();
@@ -50,6 +51,8 @@ const MainContent: React.FC = () => {
         return <PersonView id={route.params.id || ''} />;
       case 'mylist':
         return <MyListView />;
+      case 'download-app':
+        return <DownloadAppView />;
       default:
         return <HomeView />;
     }

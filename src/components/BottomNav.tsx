@@ -55,13 +55,17 @@ export const BottomNav: React.FC = () => {
               key={tab.id}
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate(tab.path)}
-              className="flex flex-col items-center justify-center h-full min-h-[48px] min-w-[48px] relative group text-center focus-visible:outline-none"
+              className="flex flex-col items-center justify-center h-full min-h-[48px] min-w-[40px] relative group text-center focus-visible:outline-none"
               aria-label={tab.label}
             >
               <div className="relative">
                 <Icon
                   className={`w-5 h-5 transition-colors duration-200 ${
-                    tab.isActive ? 'text-[#e50914] stroke-[2.5]' : 'text-slate-400'
+                    tab.isActive
+                      ? 'text-[#e50914] stroke-[2.5]'
+                      : tab.id === 'app'
+                      ? 'text-emerald-400'
+                      : 'text-slate-400'
                   }`}
                 />
                 {tab.badge !== undefined && (
@@ -72,7 +76,11 @@ export const BottomNav: React.FC = () => {
               </div>
               <span
                 className={`text-[10px] font-medium tracking-tight mt-1 transition-colors duration-200 ${
-                  tab.isActive ? 'text-[#e50914] font-semibold' : 'text-slate-400'
+                  tab.isActive
+                    ? 'text-[#e50914] font-semibold'
+                    : tab.id === 'app'
+                    ? 'text-emerald-400 font-semibold'
+                    : 'text-slate-400'
                 }`}
               >
                 {tab.label}

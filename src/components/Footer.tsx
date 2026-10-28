@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
   }
 
   return (
-    <footer className="w-full bg-[#050608] border-t border-white/[0.08] py-12 px-4 sm:px-6 md:px-12 mt-12 pb-28 md:pb-12 text-slate-400">
+    <footer className="hidden md:block w-full bg-[#050608] border-t border-white/[0.08] py-12 px-6 md:px-12 mt-12 text-slate-400">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start justify-between gap-8">
         {/* Brand statement */}
         <div className="max-w-md">
@@ -70,7 +70,7 @@ export const Footer: React.FC = () => {
 
           <div>
             <h5 className="font-semibold text-slate-200 mb-2.5 uppercase tracking-wider text-[10px]">
-              Library
+              Library & App
             </h5>
             <ul className="space-y-1.5">
               <li>
@@ -87,6 +87,15 @@ export const Footer: React.FC = () => {
                   className="hover:text-white transition-colors"
                 >
                   Search Database
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => navigate('/download-app')}
+                  className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors flex items-center gap-1.5"
+                >
+                  <span>Android App (v1.0.0 APK)</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">NEW</span>
                 </button>
               </li>
             </ul>

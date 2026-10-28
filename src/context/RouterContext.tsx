@@ -10,7 +10,8 @@ export type RouteType =
   | 'categories'
   | 'search'
   | 'person'
-  | 'mylist';
+  | 'mylist'
+  | 'download-app';
 
 export interface RouteState {
   type: RouteType;
@@ -132,6 +133,16 @@ function parsePath(fullPath: string): RouteState {
   if (segments[0] === 'mylist') {
     return {
       type: 'mylist',
+      params: {},
+      query,
+      rawPath: fullPath,
+    };
+  }
+
+  // /download-app, /download, /apk
+  if (segments[0] === 'download-app' || segments[0] === 'download' || segments[0] === 'apk') {
+    return {
+      type: 'download-app',
       params: {},
       query,
       rawPath: fullPath,

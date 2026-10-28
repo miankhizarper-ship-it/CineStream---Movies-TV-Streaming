@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Search, Bookmark, Command } from 'lucide-react';
+import { Film, Search, Bookmark, Command, Smartphone } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRouter } from '../context/RouterContext';
 import { useBookmarks } from '../hooks/useBookmarks';
@@ -48,6 +48,7 @@ export const Navbar: React.FC = () => {
     if (path === '/explore/tv') return route.type === 'explore' && route.params.mediaType === 'tv';
     if (path === '/categories') return route.type === 'categories';
     if (path === '/mylist') return route.type === 'mylist';
+    if (path === '/download-app') return route.type === 'download-app';
     return false;
   };
 
@@ -74,8 +75,8 @@ export const Navbar: React.FC = () => {
             </span>
           </button>
 
-          {/* Zone 2: Desktop 4–5 single-line clean text nav links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+          {/* Zone 2: Desktop clean text nav links */}
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium">
             {navLinks.map((link) => (
               <button
                 key={link.path}
@@ -104,6 +105,19 @@ export const Navbar: React.FC = () => {
 
           {/* Zone 3: Search & Actions */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Android APK Page Button (Visible on Large PC Screen View Only, Hidden on Mobile View) */}
+            <button
+              onClick={() => navigate('/download-app')}
+              className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 group ${
+                route.type === 'download-app'
+                  ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/80 border border-rose-400/40'
+                  : 'bg-white/10 hover:bg-white/15 text-white border border-white/15'
+              }`}
+              title="CineStream Android App (APK)"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform" />
+              <span>Android App</span>
+            </button>
             {/* Command Palette Trigger Button */}
             <button
               onClick={() => setPaletteOpen(true)}
@@ -120,7 +134,7 @@ export const Navbar: React.FC = () => {
             {/* Quick Watchlist on Desktop */}
             <button
               onClick={() => navigate('/mylist')}
-              className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/[0.08] text-xs font-semibold text-slate-200 transition-colors active:scale-95"
+              className="hidden xl:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/[0.08] text-xs font-semibold text-slate-200 transition-colors active:scale-95"
             >
               <Bookmark className="w-3.5 h-3.5 text-[#e50914] fill-[#e50914]" />
               <span>Watchlist</span>

@@ -369,21 +369,21 @@ export const HomeView: React.FC = () => {
             >
               <div className="w-24 sm:w-28 rounded-2xl overflow-hidden border border-white/20 shadow-2xl -rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
                 <img
-                  src="/assets/aistudio/Screenshot_20261028-195444_aa60f844.png"
+                  src="/assets/aistudio/Screenshot_20261029-202231_656e47f9.png"
                   alt="App Home Screen"
                   className="w-full h-auto"
                 />
               </div>
               <div className="w-28 sm:w-32 rounded-2xl overflow-hidden border border-emerald-500/40 shadow-2xl z-10 bg-black">
                 <img
-                  src="/assets/aistudio/Screenshot_20261028-195624_93ee3be0.png"
+                  src="/assets/aistudio/Screenshot_20261029-202241_80deb22a.png"
                   alt="App Video Player"
                   className="w-full h-auto"
                 />
               </div>
               <div className="w-24 sm:w-28 rounded-2xl overflow-hidden border border-white/20 shadow-2xl rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
                 <img
-                  src="/assets/aistudio/Screenshot_20261028-195629_358acf96.png"
+                  src="/assets/aistudio/Screenshot_20261029-202201_0fd8f2d7.png"
                   alt="App Episode Selector"
                   className="w-full h-auto"
                 />

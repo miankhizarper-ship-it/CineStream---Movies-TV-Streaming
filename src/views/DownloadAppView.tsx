@@ -6,10 +6,11 @@ import {
   Zap,
   Sparkles,
   X,
+  CheckCircle2,
   Maximize2,
+  Laptop,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
 
 interface AppScreenshot {
@@ -21,63 +22,67 @@ interface AppScreenshot {
 
 const APP_SCREENSHOTS: AppScreenshot[] = [
   {
-    id: 'hero',
-    title: 'Cinematic Home & Spotlight',
-    subtitle: '#1 Trending Movies & TV Series with ambient color bleed and instant play',
-    imagePath: '/assets/aistudio/Screenshot_20261028-195444_aa60f844.png',
+    id: 'screen1',
+    title: 'CineStream Home & Spotlight',
+    subtitle: 'Immersive cinematic hero banner with trending highlights and quick actions',
+    imagePath: '/assets/aistudio/Screenshot_20261029-202241_80deb22a.png',
   },
   {
-    id: 'player',
-    title: 'Ultra HD Video Player',
-    subtitle: 'Custom player controls, stream server switcher, and theater dim mode',
-    imagePath: '/assets/aistudio/Screenshot_20261028-195624_93ee3be0.png',
+    id: 'screen2',
+    title: 'Explore & Category Discovery',
+    subtitle: 'Curated genres, release year filters, and trending movie catalogs',
+    imagePath: '/assets/aistudio/Screenshot_20261029-202231_656e47f9.png',
   },
   {
-    id: 'episodes',
-    title: 'TV Episode Selector Drawer',
-    subtitle: 'Slide-up season selector and episode list with runtime and preview thumbnails',
-    imagePath: '/assets/aistudio/Screenshot_20261028-195629_358acf96.png',
-  },
-  {
-    id: 'explore',
-    title: 'Explore & Category Filters',
-    subtitle: 'Filter by genre chips, release year, ratings, and content type',
-    imagePath: '/assets/aistudio/Screenshot_20261028-195450_12f00357.png',
-  },
-  {
-    id: 'search',
+    id: 'screen3',
     title: 'Instant Multi-Search',
-    subtitle: 'Live predictive search with instant title, actor, and genre suggestions',
-    imagePath: '/assets/aistudio/Screenshot_20261028-195519_d258bab3.png',
+    subtitle: 'Lightning-fast predictive search for titles, actors, and directors',
+    imagePath: '/assets/aistudio/Screenshot_20261029-202201_0fd8f2d7.png',
   },
   {
-    id: 'details',
-    title: 'Title Overview & Details',
-    subtitle: 'Backdrop blur header, cast list, watch history, and similar recommendations',
-    imagePath: '/assets/aistudio/Screenshot_20261028-195545_30925539.png',
+    id: 'screen4',
+    title: 'My Watchlist & Library',
+    subtitle: 'Saved movie bookmarks and continue-watching history tracking',
+    imagePath: '/assets/aistudio/Screenshot_20261029-202156_048287d7.png',
   },
   {
-    id: 'watchlist',
-    title: 'My Library & Watchlist',
-    subtitle: 'Local bookmark storage and continue watching history with progress tracking',
-    imagePath: '/assets/aistudio/Screenshot_20261028-195523_df5bc4c6.png',
+    id: 'screen5',
+    title: 'Title Details & Overview',
+    subtitle: 'Comprehensive overview, cast list, and recommendations',
+    imagePath: '/assets/aistudio/Screenshot_20261029-202127_eba8bc51.png',
+  },
+  {
+    id: 'screen6',
+    title: 'Seasons & Episodes Selector',
+    subtitle: 'Compact season tabs and episode lists with thumbnails and durations',
+    imagePath: '/assets/aistudio/Screenshot_20261029-202120_1a30afd7.png',
+  },
+  {
+    id: 'screen7',
+    title: 'Ultra HD Video Player',
+    subtitle: 'Immersive streaming player with theater dim mode and server switcher',
+    imagePath: '/assets/aistudio/Screenshot_20261029-202143_d1713cf7.png',
   },
 ];
 
 export const DownloadAppView: React.FC = () => {
-  const { navigate } = useRouter();
   const { showToast } = useToast();
   const [downloading, setDownloading] = useState(false);
   const [modalScreenshot, setModalScreenshot] = useState<AppScreenshot | null>(null);
 
-  // If mobile view, redirect to home to keep mobile clean of APK mentions
+  // Prevent background scrolling when modal preview is open
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      navigate('/');
+    if (modalScreenshot) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
-  }, [navigate]);
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [modalScreenshot]);
 
-  const directApkUrl = '/apkfile/CineStream-1.0.0-debug.apk';
+  const directApkUrl = '/apkfile/cinestream.apk';
 
   const handleDirectDownload = () => {
     setDownloading(true);
@@ -85,7 +90,7 @@ export const DownloadAppView: React.FC = () => {
 
     const link = document.createElement('a');
     link.href = directApkUrl;
-    link.download = 'CineStream-1.0.0-debug.apk';
+    link.download = 'cinestream.apk';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -95,6 +100,23 @@ export const DownloadAppView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10 w-full pb-28 space-y-10">
+      {/* Desktop Notice Banner */}
+      <div className="hidden lg:flex items-center justify-between p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs sm:text-sm font-semibold gap-4 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-400">
+            <Laptop className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="font-extrabold text-amber-300 uppercase tracking-wider text-xs block mb-0.5">
+              Mobile & Tablet Device Notice
+            </span>
+            <p className="text-amber-200/90 font-medium">
+              The CineStream Android APK is designed for Android phones and tablets. Please visit this page on your mobile device or tablet for the optimal experience.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Hero Header Section */}
       <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#181926] via-[#101119] to-[#07080a] p-6 sm:p-10 border border-white/[0.1] shadow-2xl shadow-black/80">
         <div className="absolute top-0 right-0 w-96 h-96 bg-rose-600/15 rounded-full blur-[120px] pointer-events-none" />
@@ -118,7 +140,7 @@ export const DownloadAppView: React.FC = () => {
           <div className="flex flex-wrap gap-2 text-xs text-slate-300 font-semibold pt-1">
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>v1.0.0 Debug APK</span>
+              <span>v1.0.0 APK</span>
             </span>
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
               <Smartphone className="w-4 h-4 text-rose-400" />
@@ -130,7 +152,7 @@ export const DownloadAppView: React.FC = () => {
             </span>
           </div>
 
-          {/* Single Direct APK Download Button (GitHub button removed) */}
+          {/* Direct APK Download Button */}
           <div className="pt-2">
             <button
               onClick={handleDirectDownload}
@@ -138,7 +160,7 @@ export const DownloadAppView: React.FC = () => {
               className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-[#e50914] hover:bg-rose-500 text-white font-black text-sm sm:text-base shadow-xl shadow-rose-950/80 active:scale-95 transition-all touch-manipulation cursor-pointer"
             >
               <Download className={`w-5 h-5 ${downloading ? 'animate-bounce' : ''}`} />
-              <span>{downloading ? 'Downloading APK...' : 'Download Android APK'}</span>
+              <span>{downloading ? 'Downloading APK...' : 'Download cinestream.apk'}</span>
             </button>
           </div>
         </div>
@@ -177,7 +199,7 @@ export const DownloadAppView: React.FC = () => {
         </div>
       </div>
 
-      {/* Interactive App Screenshots Gallery (Clicking any image triggers Full Modal Preview with Title) */}
+      {/* Interactive App Screenshots Gallery */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -223,7 +245,7 @@ export const DownloadAppView: React.FC = () => {
         </div>
       </div>
 
-      {/* Full-Screen Lightbox Modal Preview with Title */}
+      {/* Full-Screen Lightbox Modal Preview with Title (Fixed on screen, scroll locked) */}
       <AnimatePresence>
         {modalScreenshot && (
           <motion.div
@@ -231,26 +253,27 @@ export const DownloadAppView: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setModalScreenshot(null)}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6 overflow-hidden"
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative max-w-2xl w-full max-h-[90dvh] flex flex-col items-center justify-center bg-[#12131a] border border-white/20 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-hidden"
+              className="relative max-w-lg w-full max-h-[85vh] flex flex-col items-center justify-center bg-[#12131a] border border-white/20 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-hidden"
             >
               {/* Close Button */}
               <button
                 onClick={() => setModalScreenshot(null)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-20"
+                className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-20 cursor-pointer"
                 aria-label="Close preview"
               >
                 <X className="w-5 h-5" />
               </button>
 
               {/* Modal Screenshot Image */}
-              <div className="relative max-h-[65dvh] w-auto aspect-[9/19] rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl my-2">
+              <div className="relative h-[55vh] sm:h-[60vh] w-auto aspect-[9/19] rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl my-1">
                 <img
                   src={modalScreenshot.imagePath}
                   alt={modalScreenshot.title}
@@ -259,12 +282,12 @@ export const DownloadAppView: React.FC = () => {
               </div>
 
               {/* Title & Description */}
-              <div className="text-center mt-3 max-w-lg space-y-1">
-                <span className="text-[10px] font-extrabold text-rose-400 uppercase tracking-wider bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20 inline-block">
+              <div className="text-center mt-2 max-w-md space-y-0.5">
+                <span className="text-[10px] font-extrabold text-rose-400 uppercase tracking-wider bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20 inline-block">
                   Android App View
                 </span>
-                <h3 className="text-base sm:text-lg font-black text-white">{modalScreenshot.title}</h3>
-                <p className="text-xs text-slate-300 leading-relaxed">{modalScreenshot.subtitle}</p>
+                <h3 className="text-sm sm:text-base font-black text-white">{modalScreenshot.title}</h3>
+                <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed line-clamp-2">{modalScreenshot.subtitle}</p>
               </div>
             </motion.div>
           </motion.div>
@@ -290,7 +313,7 @@ export const DownloadAppView: React.FC = () => {
             </span>
             <h4 className="text-xs font-bold text-white">Download APK</h4>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Tap the download button to download `CineStream-1.0.0-debug.apk`.
+              Tap the download button to download `cinestream.apk`.
             </p>
           </div>
 

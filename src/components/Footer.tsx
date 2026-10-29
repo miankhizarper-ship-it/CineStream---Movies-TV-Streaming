@@ -107,15 +107,7 @@ export const Footer: React.FC = () => {
             </h5>
             <p className="text-[11px] text-slate-500 leading-normal">
               Media metadata and imagery provided by{' '}
-              <a
-                href="https://www.themoviedb.org"
-                target="_blank"
-                rel="noreferrer"
-                className="text-slate-400 hover:text-white underline"
-              >
-                TMDB
-              </a>
-              .
+              <span className="text-slate-400">TMDB</span>.
             </p>
           </div>
         </div>

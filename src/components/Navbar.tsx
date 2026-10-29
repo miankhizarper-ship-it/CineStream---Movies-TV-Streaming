@@ -11,14 +11,28 @@ export const Navbar: React.FC = () => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showNavbar, setShowNavbar] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 15);
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 15);
+
+      if (currentScrollY < 30) {
+        setShowNavbar(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        // Scrolling down past threshold
+        setShowNavbar(false);
+      } else if (currentScrollY < lastScrollY - 5) {
+        // Scrolling up
+        setShowNavbar(true);
+      }
+      setLastScrollY(currentScrollY);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   // Global shortcut for Cmd+K or /
   useEffect(() => {
@@ -62,7 +76,9 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <header
-        className={`sticky top-0 z-40 w-full transition-all duration-300 transform-gpu ${
+        className={`fixed top-0 left-0 right-0 z-40 w-full transition-transform duration-300 transform-gpu ${
+          showNavbar ? 'translate-y-0' : '-translate-y-full'
+        } ${
           scrolled
             ? 'bg-[#07080a]/90 backdrop-blur-xl border-b border-white/[0.08] shadow-lg shadow-black/40'
             : 'bg-gradient-to-b from-[#07080a]/95 via-[#07080a]/70 to-transparent'

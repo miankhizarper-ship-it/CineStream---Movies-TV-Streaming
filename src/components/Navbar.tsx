@@ -10,14 +10,12 @@ export const Navbar: React.FC = () => {
   const { bookmarks } = useBookmarks();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      setScrolled(currentScrollY > 15);
 
       if (currentScrollY < 30) {
         setShowNavbar(true);
@@ -75,39 +73,40 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
+      {/* Modern Floating Pill / Island Navbar */}
       <header
-        className={`fixed top-0 left-0 right-0 z-40 w-full transition-transform duration-300 transform-gpu ${
-          showNavbar ? 'translate-y-0' : '-translate-y-full'
-        } ${
-          scrolled
-            ? 'bg-[#07080a]/90 backdrop-blur-xl border-b border-white/[0.08] shadow-lg shadow-black/40'
-            : 'bg-gradient-to-b from-[#07080a]/95 via-[#07080a]/70 to-transparent'
+        className={`fixed top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-5xl z-50 transition-transform duration-300 transform-gpu ${
+          showNavbar ? 'translate-y-0' : '-translate-y-24'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 h-14 md:h-20 flex items-center justify-between gap-4 md:gap-8">
+        <div className="bg-[#0a0b10]/80 backdrop-blur-2xl border border-white/[0.12] shadow-2xl shadow-black/80 rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
           {/* Brand Wordmark */}
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2.5 text-lg sm:text-xl font-black tracking-tight text-white whitespace-nowrap shrink-0 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg"
+            className="flex items-center gap-2 text-base sm:text-lg font-black tracking-tight text-white whitespace-nowrap shrink-0 group focus-visible:outline-none rounded-full cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#e50914] to-rose-500 flex items-center justify-center shadow-md shadow-rose-950/50 group-hover:scale-105 transition-transform">
-              <Film className="w-4 h-4 text-white" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex items-center justify-center shadow-md group-hover:scale-105 transition-transform bg-black/40">
+              <img src="/assets/aistudio/logo_1fdc68d7.png" alt="CineStream Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-extrabold tracking-tight bg-gradient-to-r from-white via-white to-slate-200 bg-clip-text text-transparent">
+            <span className="font-extrabold tracking-tight bg-gradient-to-r from-white via-white to-slate-200 bg-clip-text text-transparent hidden lg:inline">
               CINE<span className="text-[#e50914]">STREAM</span>
             </span>
           </button>
 
-          {/* Desktop Navigation Links (Visible on Medium screens and up) */}
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium">
+
+
+          {/* Desktop Navigation Links (Pill Style) */}
+          <nav className="hidden lg:flex items-center gap-1 text-xs font-medium">
             {navLinks.map((link) => {
               const active = isActive(link.path);
               return (
                 <button
                   key={link.path}
                   onClick={() => navigate(link.path)}
-                  className={`whitespace-nowrap shrink-0 transition-colors relative py-1 flex items-center gap-1.5 ${
-                    active ? 'text-white font-semibold' : 'text-slate-400 hover:text-slate-200'
+                  className={`whitespace-nowrap shrink-0 transition-all px-3.5 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer ${
+                    active
+                      ? 'bg-white text-slate-950 font-bold shadow-md shadow-black/30'
+                      : 'text-slate-300 hover:text-white hover:bg-white/10'
                   }`}
                 >
                   <span>{link.label}</span>
@@ -116,40 +115,30 @@ export const Navbar: React.FC = () => {
                       {link.count}
                     </span>
                   )}
-                  {active && (
-                    <motion.span
-                      layoutId="activeNavIndicator"
-                      className="absolute -bottom-[25px] left-0 right-0 h-0.5 bg-[#e50914] shadow-sm shadow-[#e50914]"
-                    />
-                  )}
                 </button>
               );
             })}
           </nav>
 
-          {/* Top Right Actions: Search Button & Mobile Hamburger Menu Icon */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Right-side Utilities & Icons */}
+          <div className="flex items-center gap-2 shrink-0">
             {/* Search Trigger Button */}
             <button
               onClick={() => setPaletteOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/[0.1] text-xs text-slate-300 transition-all group"
+              className="p-2.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center justify-center"
               title="Search titles (Cmd+K)"
               aria-label="Search titles"
             >
-              <Search className="w-4 h-4 text-slate-300 group-hover:text-white transition-colors" />
-              <span className="hidden sm:inline-block font-medium">Search</span>
-              <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.2 text-[10px] font-semibold text-slate-400 bg-white/10 rounded border border-white/10 ml-1">
-                <Command className="w-2.5 h-2.5" /> K
-              </kbd>
+              <Search className="w-4 h-4" />
             </button>
 
-            {/* Hamburger Menu Toggle Button (Visible on small screens only) */}
+            {/* Hamburger Menu Toggle (Mobile/Tablet) */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white transition-all active:scale-95"
+              className="lg:hidden p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white transition-all active:scale-95 cursor-pointer"
               aria-label="Open Navigation Menu"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -179,14 +168,14 @@ export const Navbar: React.FC = () => {
               {/* Drawer Header */}
               <div className="p-5 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2.5 text-base font-black text-white">
-                  <div className="w-7 h-7 rounded-lg bg-[#e50914] flex items-center justify-center">
-                    <Film className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center bg-black/40">
+                    <img src="/assets/aistudio/logo_1fdc68d7.png" alt="CineStream Logo" className="w-full h-full object-cover" />
                   </div>
                   <span>CINE<span className="text-[#e50914]">STREAM</span></span>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
                   aria-label="Close menu"
                 >
                   <X className="w-5 h-5" />
@@ -202,7 +191,7 @@ export const Navbar: React.FC = () => {
                     <button
                       key={link.path}
                       onClick={() => handleNavClick(link.path)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-semibold text-sm transition-all ${
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-semibold text-sm transition-all cursor-pointer ${
                         active
                           ? 'bg-[#e50914] text-white shadow-lg shadow-rose-950/50'
                           : 'text-slate-300 hover:bg-white/5 hover:text-white'
@@ -224,7 +213,7 @@ export const Navbar: React.FC = () => {
 
               {/* Drawer Footer Info */}
               <div className="p-4 border-t border-white/10 bg-black/40 text-[11px] text-slate-500 text-center">
-                CineStream v1.0.0 · Cinematic Streaming
+                CineStream v1.0.4 · Cinematic Streaming
               </div>
             </motion.div>
           </div>

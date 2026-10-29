@@ -15,8 +15,8 @@ export const Footer: React.FC = () => {
         {/* Brand statement */}
         <div className="max-w-md">
           <div className="flex items-center gap-2 text-base sm:text-lg font-bold text-white mb-2.5">
-            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-[#e50914] flex items-center justify-center">
-              <Film className="w-3.5 h-3.5 text-white" />
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden flex items-center justify-center bg-black/40">
+              <img src="/assets/aistudio/logo_1fdc68d7.png" alt="CineStream Logo" className="w-full h-full object-cover" />
             </div>
             <span>CINE<span className="text-[#e50914]">STREAM</span></span>
           </div>

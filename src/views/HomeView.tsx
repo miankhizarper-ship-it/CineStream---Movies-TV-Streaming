@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Play, Info, Plus, Check, Star, RefreshCw } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Play, Info, Plus, Check, Star, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tmdb, TMDBMedia, getBackdropUrl } from '../lib/tmdb';
 import { MovieRow } from '../components/MovieRow';
@@ -22,6 +22,33 @@ export const HomeView: React.FC = () => {
   const [anime, setAnime] = useState<TMDBMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const watchRowRef = useRef<HTMLDivElement>(null);
+  const [canScrollWatchLeft, setCanScrollWatchLeft] = useState(false);
+  const [canScrollWatchRight, setCanScrollWatchRight] = useState(true);
+
+  const checkWatchScroll = () => {
+    if (watchRowRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = watchRowRef.current;
+      setCanScrollWatchLeft(scrollLeft > 10);
+      setCanScrollWatchRight(scrollLeft + clientWidth < scrollWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkWatchScroll();
+    window.addEventListener('resize', checkWatchScroll);
+    return () => window.removeEventListener('resize', checkWatchScroll);
+  }, [history]);
+
+  const scrollWatch = (direction: 'left' | 'right') => {
+    if (watchRowRef.current) {
+      const clientWidth = watchRowRef.current.clientWidth;
+      const scrollAmount = direction === 'left' ? -clientWidth * 0.75 : clientWidth * 0.75;
+      watchRowRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      setTimeout(checkWatchScroll, 350);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -248,7 +275,7 @@ export const HomeView: React.FC = () => {
 
       {/* Continue Watching Row */}
       {history.length > 0 && (
-        <section className="my-6 sm:my-8 px-4 sm:px-6 md:px-12">
+        <section className="my-6 sm:my-8 px-4 sm:px-6 md:px-12 group/row">
           <div className="flex items-baseline justify-between mb-3 sm:mb-4">
             <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
               <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block" />
@@ -261,39 +288,65 @@ export const HomeView: React.FC = () => {
               View history →
             </button>
           </div>
-          <div className="flex gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-1">
-            {history.slice(0, 10).map((item) => (
-              <div
-                key={`history-${item.id}-${item.season || 0}-${item.episode || 0}`}
-                onClick={() => {
-                  if (item.media_type === 'tv') {
-                    navigate(`/watch/tv/${item.id}/${item.season || 1}/${item.episode || 1}`);
-                  } else {
-                    navigate(`/watch/movie/${item.id}`);
-                  }
-                }}
-                className="snap-start shrink-0 w-[200px] sm:w-[260px] group relative cursor-pointer rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-95 transition-all hover:border-white/20"
+          <div className="relative">
+            {canScrollWatchLeft && (
+              <button
+                onClick={() => scrollWatch('left')}
+                className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/80 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/10 shadow-xl cursor-pointer"
+                aria-label="Scroll left"
               >
-                <div className="aspect-video w-full relative overflow-hidden bg-[#161822]">
-                  <img
-                    src={getBackdropUrl(item.backdrop_path || item.poster_path, 'w780')}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-[#e50914] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                      <Play className="w-4 h-4 fill-white text-white ml-0.5" />
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+
+            <div
+              ref={watchRowRef}
+              onScroll={checkWatchScroll}
+              className="flex gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-1"
+            >
+              {history.slice(0, 10).map((item) => (
+                <div
+                  key={`history-${item.id}-${item.season || 0}-${item.episode || 0}`}
+                  onClick={() => {
+                    if (item.media_type === 'tv') {
+                      navigate(`/watch/tv/${item.id}/${item.season || 1}/${item.episode || 1}`);
+                    } else {
+                      navigate(`/watch/movie/${item.id}`);
+                    }
+                  }}
+                  className="snap-start shrink-0 w-[200px] sm:w-[260px] group relative cursor-pointer rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-95 transition-all hover:border-white/20"
+                >
+                  <div className="aspect-video w-full relative overflow-hidden bg-[#161822]">
+                    <img
+                      src={getBackdropUrl(item.backdrop_path || item.poster_path, 'w780')}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-[#e50914] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <Play className="w-4 h-4 fill-white text-white ml-0.5" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-2.5 sm:p-3">
+                    <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
+                    <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
+                      {item.media_type === 'tv' ? `S${item.season} · E${item.episode}` : 'Feature Film'}
                     </div>
                   </div>
                 </div>
-                <div className="p-2.5 sm:p-3">
-                  <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
-                  <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
-                    {item.media_type === 'tv' ? `S${item.season} · E${item.episode}` : 'Feature Film'}
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {canScrollWatchRight && (
+              <button
+                onClick={() => scrollWatch('right')}
+                className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/80 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/10 shadow-xl cursor-pointer"
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </section>
       )}

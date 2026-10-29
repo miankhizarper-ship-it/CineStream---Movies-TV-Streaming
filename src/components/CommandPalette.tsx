@@ -23,6 +23,22 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   const [activeFilter, setActiveFilter] = useState<'all' | 'movie' | 'tv'>('all');
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Stop background scrolling when the search modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, [isOpen]);
+
   // Auto focus on open
   useEffect(() => {
     if (isOpen) {
@@ -136,7 +152,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: -10 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="relative w-full max-w-2xl bg-[#0f1017] border border-white/[0.12] rounded-2xl shadow-2xl shadow-black/90 overflow-hidden flex flex-col max-h-[85vh] z-10"
+          className="relative w-full max-w-2xl bg-[#0f1017] border border-white/[0.12] rounded-2xl shadow-2xl shadow-black/90 overflow-hidden flex flex-col max-h-[85vh] z-10 overscroll-contain"
         >
           {/* Top Search Input Bar */}
           <div className="flex items-center px-4 py-3.5 border-b border-white/[0.08] bg-[#121420]/80 gap-3">
@@ -186,7 +202,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           )}
 
           {/* Content Scroll Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 scrollbar-none">
             {loading ? (
               <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
                 <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />

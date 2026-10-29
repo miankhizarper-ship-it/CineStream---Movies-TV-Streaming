@@ -47,6 +47,19 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Lock body scroll when mobile menu drawer is open
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, [mobileMenuOpen]);
+
   const navLinks = [
     { label: 'Home', path: '/', icon: Home },
     { label: 'Movies', path: '/explore/movie', icon: Film },
@@ -73,30 +86,28 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      {/* Modern Floating Pill / Island Navbar */}
+      {/* Modern Floating Navbar */}
       <header
-        className={`fixed top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-5xl z-50 transition-transform duration-300 transform-gpu ${
+        className={`fixed top-4 left-4 right-4 md:left-6 md:right-6 xl:left-1/2 xl:-translate-x-1/2 xl:max-w-5xl z-50 transition-transform duration-300 transform-gpu ${
           showNavbar ? 'translate-y-0' : '-translate-y-24'
         }`}
       >
-        <div className="bg-[#0a0b10]/80 backdrop-blur-2xl border border-white/[0.12] shadow-2xl shadow-black/80 rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-          {/* Brand Wordmark */}
+        <div className="bg-transparent border-0 shadow-none px-0 py-0 xl:bg-[#0a0b10]/80 xl:backdrop-blur-2xl xl:border xl:border-white/[0.12] xl:shadow-2xl xl:shadow-black/80 xl:rounded-full xl:px-6 xl:py-2.5 flex items-center justify-between gap-4">
+          {/* Brand Wordmark & Icon */}
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-base sm:text-lg font-black tracking-tight text-white whitespace-nowrap shrink-0 group focus-visible:outline-none rounded-full cursor-pointer"
+            className="flex items-center gap-2 text-base sm:text-lg font-black tracking-tight text-white whitespace-nowrap shrink-0 group focus-visible:outline-none cursor-pointer"
           >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex items-center justify-center shadow-md group-hover:scale-105 transition-transform bg-black/40">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 xl:w-8 xl:h-8 rounded-full overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform bg-black/60 xl:bg-black/40 backdrop-blur-xl xl:backdrop-blur-none border border-white/15 xl:border-transparent p-1 xl:p-0">
               <img src="/assets/aistudio/logo_1fdc68d7.png" alt="CineStream Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-extrabold tracking-tight bg-gradient-to-r from-white via-white to-slate-200 bg-clip-text text-transparent hidden lg:inline">
+            <span className="font-extrabold tracking-tight bg-gradient-to-r from-white via-white to-slate-200 bg-clip-text text-transparent inline-block text-sm sm:text-base xl:text-lg drop-shadow-md">
               CINE<span className="text-[#e50914]">STREAM</span>
             </span>
           </button>
 
-
-
           {/* Desktop Navigation Links (Pill Style) */}
-          <nav className="hidden lg:flex items-center gap-1 text-xs font-medium">
+          <nav className="hidden xl:flex items-center gap-1 text-xs font-medium">
             {navLinks.map((link) => {
               const active = isActive(link.path);
               return (
@@ -125,7 +136,7 @@ export const Navbar: React.FC = () => {
             {/* Search Trigger Button */}
             <button
               onClick={() => setPaletteOpen(true)}
-              className="p-2.5 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+              className="p-2.5 rounded-full bg-black/60 xl:bg-white/5 hover:bg-white/15 backdrop-blur-xl xl:backdrop-blur-none border border-white/15 xl:border-white/10 text-slate-200 hover:text-white transition-all cursor-pointer flex items-center justify-center shadow-lg xl:shadow-none"
               title="Search titles (Cmd+K)"
               aria-label="Search titles"
             >
@@ -135,7 +146,7 @@ export const Navbar: React.FC = () => {
             {/* Hamburger Menu Toggle (Mobile/Tablet) */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white transition-all active:scale-95 cursor-pointer"
+              className="xl:hidden p-2.5 rounded-full bg-black/60 hover:bg-white/15 backdrop-blur-xl border border-white/15 text-slate-200 hover:text-white transition-all active:scale-95 cursor-pointer shadow-lg"
               aria-label="Open Navigation Menu"
             >
               <Menu className="w-4 h-4" />
@@ -144,10 +155,10 @@ export const Navbar: React.FC = () => {
         </div>
       </header>
 
-      {/* Slide-out Navigation Drawer Menu (Mobile Screens) */}
+      {/* Slide-out Navigation Drawer Menu (Mobile & Tablet Screens) */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <div className="fixed inset-0 z-50 overflow-hidden md:hidden">
+          <div className="fixed inset-0 z-50 overflow-hidden xl:hidden">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}

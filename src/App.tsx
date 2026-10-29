@@ -4,6 +4,7 @@ import { RouterProvider, useRouter } from './context/RouterContext';
 import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { PhantomGhost } from './components/PhantomGhost';
 
 // Views
 import { HomeView } from './views/HomeView';
@@ -75,6 +76,7 @@ const MainContent: React.FC = () => {
         </AnimatePresence>
       </main>
       {!isWatchPage && <Footer />}
+      {!isWatchPage && <PhantomGhost />}
     </div>
   );
 };

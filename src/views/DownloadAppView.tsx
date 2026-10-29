@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Download,
   Smartphone,
   ShieldCheck,
   Zap,
   Sparkles,
-  X,
-  CheckCircle2,
   Maximize2,
   Laptop,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useToast } from '../context/ToastContext';
+import { ImageViewerModal, ImageViewerItem } from '../components/ImageViewerModal';
 
 interface AppScreenshot {
   id: string;
@@ -25,63 +23,50 @@ const APP_SCREENSHOTS: AppScreenshot[] = [
     id: 'screen1',
     title: 'CineStream Home & Spotlight',
     subtitle: 'Immersive cinematic hero banner with trending highlights and quick actions',
-    imagePath: '/assets/aistudio/Screenshot_20261029-202241_80deb22a.png',
+    imagePath: '/assets/aistudio/CineStream Home & Spotlight.png',
   },
   {
     id: 'screen2',
     title: 'Explore & Category Discovery',
     subtitle: 'Curated genres, release year filters, and trending movie catalogs',
-    imagePath: '/assets/aistudio/Screenshot_20261029-202231_656e47f9.png',
+    imagePath: '/assets/aistudio/Explore & Category Discovery.png',
   },
   {
     id: 'screen3',
     title: 'Instant Multi-Search',
     subtitle: 'Lightning-fast predictive search for titles, actors, and directors',
-    imagePath: '/assets/aistudio/Screenshot_20261029-202201_0fd8f2d7.png',
+    imagePath: '/assets/aistudio/Instant Multi-Search.png',
   },
   {
     id: 'screen4',
     title: 'My Watchlist & Library',
     subtitle: 'Saved movie bookmarks and continue-watching history tracking',
-    imagePath: '/assets/aistudio/Screenshot_20261029-202156_048287d7.png',
+    imagePath: '/assets/aistudio/My Watchlist & Library.png',
   },
   {
     id: 'screen5',
     title: 'Title Details & Overview',
     subtitle: 'Comprehensive overview, cast list, and recommendations',
-    imagePath: '/assets/aistudio/Screenshot_20261029-202127_eba8bc51.png',
+    imagePath: '/assets/aistudio/Title Details & Overview.png',
   },
   {
     id: 'screen6',
     title: 'Seasons & Episodes Selector',
     subtitle: 'Compact season tabs and episode lists with thumbnails and durations',
-    imagePath: '/assets/aistudio/Screenshot_20261029-202120_1a30afd7.png',
+    imagePath: '/assets/aistudio/Seasons & Episodes Selector.png',
   },
   {
     id: 'screen7',
     title: 'Ultra HD Video Player',
     subtitle: 'Immersive streaming player with theater dim mode and server switcher',
-    imagePath: '/assets/aistudio/Screenshot_20261029-202143_d1713cf7.png',
+    imagePath: '/assets/aistudio/Ultra HD Video Player.png',
   },
 ];
 
 export const DownloadAppView: React.FC = () => {
   const { showToast } = useToast();
   const [downloading, setDownloading] = useState(false);
-  const [modalScreenshot, setModalScreenshot] = useState<AppScreenshot | null>(null);
-
-  // Prevent background scrolling when modal preview is open
-  useEffect(() => {
-    if (modalScreenshot) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [modalScreenshot]);
-
+  const [modalScreenshot, setModalScreenshot] = useState<ImageViewerItem | null>(null);
   const directApkUrl = '/apkfile/cinestream.apk';
 
   const handleDirectDownload = () => {
@@ -245,54 +230,11 @@ export const DownloadAppView: React.FC = () => {
         </div>
       </div>
 
-      {/* Full-Screen Lightbox Modal Preview with Title (Fixed on screen, scroll locked) */}
-      <AnimatePresence>
-        {modalScreenshot && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setModalScreenshot(null)}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6 overflow-hidden"
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative max-w-lg w-full max-h-[85vh] flex flex-col items-center justify-center bg-[#12131a] border border-white/20 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-hidden"
-            >
-              {/* Close Button */}
-              <button
-                onClick={() => setModalScreenshot(null)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-20 cursor-pointer"
-                aria-label="Close preview"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {/* Modal Screenshot Image */}
-              <div className="relative h-[55vh] sm:h-[60vh] w-auto aspect-[9/19] rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl my-1">
-                <img
-                  src={modalScreenshot.imagePath}
-                  alt={modalScreenshot.title}
-                  className="h-full w-full object-contain"
-                />
-              </div>
-
-              {/* Title & Description */}
-              <div className="text-center mt-2 max-w-md space-y-0.5">
-                <span className="text-[10px] font-extrabold text-rose-400 uppercase tracking-wider bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20 inline-block">
-                  Android App View
-                </span>
-                <h3 className="text-sm sm:text-base font-black text-white">{modalScreenshot.title}</h3>
-                <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed line-clamp-2">{modalScreenshot.subtitle}</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Full-Screen Lightbox Modal Preview Component */}
+      <ImageViewerModal
+        item={modalScreenshot ? { ...modalScreenshot, badge: 'Android App View' } : null}
+        onClose={() => setModalScreenshot(null)}
+      />
 
       {/* How to Install APK Guide */}
       <div className="p-6 sm:p-8 rounded-3xl bg-[#12131a] border border-white/[0.08] space-y-5">

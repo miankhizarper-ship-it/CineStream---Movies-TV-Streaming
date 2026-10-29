@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Search, Bookmark, Command, Menu, X, Home, Compass, Tv, Layers, Smartphone } from 'lucide-react';
+import { Film, Search, Bookmark, Command, Menu, X, Home, Tv, Layers, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useRouter } from '../context/RouterContext';
 import { useBookmarks } from '../hooks/useBookmarks';
@@ -68,7 +68,7 @@ export const Navbar: React.FC = () => {
             : 'bg-gradient-to-b from-[#07080a]/95 via-[#07080a]/70 to-transparent'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 h-14 md:h-20 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 h-14 md:h-20 flex items-center justify-between gap-4 md:gap-8">
           {/* Brand Wordmark */}
           <button
             onClick={() => navigate('/')}
@@ -82,7 +82,36 @@ export const Navbar: React.FC = () => {
             </span>
           </button>
 
-          {/* Top Right Actions: Search Button & Hamburger Menu Icon */}
+          {/* Desktop Navigation Links (Visible on Medium screens and up) */}
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium">
+            {navLinks.map((link) => {
+              const active = isActive(link.path);
+              return (
+                <button
+                  key={link.path}
+                  onClick={() => navigate(link.path)}
+                  className={`whitespace-nowrap shrink-0 transition-colors relative py-1 flex items-center gap-1.5 ${
+                    active ? 'text-white font-semibold' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  {link.count !== undefined && link.count > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#e50914] text-white font-bold tabular-nums">
+                      {link.count}
+                    </span>
+                  )}
+                  {active && (
+                    <motion.span
+                      layoutId="activeNavIndicator"
+                      className="absolute -bottom-[25px] left-0 right-0 h-0.5 bg-[#e50914] shadow-sm shadow-[#e50914]"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Top Right Actions: Search Button & Mobile Hamburger Menu Icon */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Search Trigger Button */}
             <button
@@ -98,10 +127,10 @@ export const Navbar: React.FC = () => {
               </kbd>
             </button>
 
-            {/* Hamburger Menu Toggle Button */}
+            {/* Hamburger Menu Toggle Button (Visible on small screens only) */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white transition-all active:scale-95"
+              className="md:hidden p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white transition-all active:scale-95"
               aria-label="Open Navigation Menu"
             >
               <Menu className="w-5 h-5" />
@@ -110,10 +139,10 @@ export const Navbar: React.FC = () => {
         </div>
       </header>
 
-      {/* Slide-out Navigation Drawer Menu */}
+      {/* Slide-out Navigation Drawer Menu (Mobile Screens) */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <div className="fixed inset-0 z-50 overflow-hidden">
+          <div className="fixed inset-0 z-50 overflow-hidden md:hidden">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}

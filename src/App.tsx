@@ -61,7 +61,7 @@ const MainContent: React.FC = () => {
   return (
     <div className="flex flex-col min-h-[100dvh] w-full overflow-x-hidden bg-[#07080a] text-slate-100 antialiased selection:bg-[#e50914] selection:text-white">
       {!isWatchPage && <Navbar />}
-      <main className="flex-1 w-full relative">
+      <main className={`flex-1 w-full relative ${!isWatchPage ? 'mt-20 sm:mt-24' : ''}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={route.rawPath}

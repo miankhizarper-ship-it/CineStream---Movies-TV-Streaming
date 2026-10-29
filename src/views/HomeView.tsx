@@ -302,7 +302,7 @@ export const HomeView: React.FC = () => {
             <div
               ref={watchRowRef}
               onScroll={checkWatchScroll}
-              className="flex gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-1"
+              className="flex gap-3 overflow-x-auto overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-4 -my-3 sm:py-6 sm:-my-5 px-1 relative"
             >
               {history.slice(0, 10).map((item) => (
                 <div
@@ -314,7 +314,7 @@ export const HomeView: React.FC = () => {
                       navigate(`/watch/movie/${item.id}`);
                     }
                   }}
-                  className="snap-start shrink-0 w-[200px] sm:w-[260px] group relative cursor-pointer rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-95 transition-all hover:border-white/20"
+                  className="snap-start shrink-0 w-[200px] sm:w-[260px] group relative cursor-pointer rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-95 transition-all duration-300 hover:scale-105 hover:z-50 hover:border-rose-500/50 hover:shadow-2xl hover:shadow-black/90 transform-gpu"
                 >
                   <div className="aspect-video w-full relative overflow-hidden bg-[#161822]">
                     <img

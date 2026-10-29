@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { RouterProvider, useRouter } from './context/RouterContext';
 import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
-import { BottomNav } from './components/BottomNav';
 import { Footer } from './components/Footer';
 
 // Views
@@ -76,7 +75,6 @@ const MainContent: React.FC = () => {
         </AnimatePresence>
       </main>
       {!isWatchPage && <Footer />}
-      {!isWatchPage && <BottomNav />}
     </div>
   );
 };

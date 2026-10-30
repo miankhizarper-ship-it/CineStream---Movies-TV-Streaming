@@ -1,0 +1,75 @@
+<re-html>
+<re-head>
+    <re-title>
+        {{otp_code}} is your {{app.name}} verification code
+    </re-title>
+</re-head>
+<re-body background-color="#07080a" padding="48px 20px 48px 20px" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+    <re-preheader>
+        Your {{app.name}} verification code is {{otp_code}}
+    </re-preheader>
+    
+    <!-- CineStream Branded Header -->
+    <re-header padding="12px 24px 28px 24px" align="center">
+        <re-text font-size="20px" font-weight="900" line-height="28px" color="#ffffff" align="center">
+            {{> app_logo}}
+        </re-text>
+    </re-header>
+    
+    <!-- Main Card Container -->
+    <re-main background-color="#11131b" border-radius="16px" border="1px solid #232738">
+        <re-block border-radius="16px" align="left" padding="36px 32px 40px 32px" background-color="#11131b">
+            
+            <!-- Category Tag -->
+            <re-text margin="0px 0px 10px 0px" font-size="11px" font-weight="bold" color="#e50914" letter-spacing="1.5px">
+                SECURITY VERIFICATION
+            </re-text>
+
+            <!-- Main Heading -->
+            <re-heading margin="0" level="h1" align="left" color="#ffffff" font-size="24px" font-weight="800" line-height="32px">
+                Verify your account
+            </re-heading>
+            
+            <!-- Instructions -->
+            <re-text margin="16px 0px 0px 0px" align="left" font-size="14px" line-height="22px" color="#94a3b8">
+                Enter the following 6-digit verification code to sign in and continue streaming on {{app.name}}:
+            </re-text>
+            
+            <!-- Red-Bordered OTP Code Showcase Box -->
+            <re-block background-color="#08090f" border-radius="12px" border="1px solid #e50914" padding="22px 24px" margin="24px 0px 24px 0px" align="center">
+                <re-text font-size="38px" font-weight="900" line-height="42px" color="#ffffff" align="center" letter-spacing="6px" margin="0">
+                    <b>{{otp_code}}</b>
+                </re-text>
+            </re-block>
+            
+            <!-- Security Warning -->
+            <re-text margin="0px 0px 0px 0px" font-size="13px" line-height="20px" color="#94a3b8">
+                🔒 To protect your account, do not share this code with anyone. This code will expire shortly.
+            </re-text>
+            
+            <!-- Divider -->
+            <re-divider background-color="#232738" height="1px" margin="32px 0px 24px 0px"></re-divider>
+            
+            <!-- Request Context & Security Notice -->
+            <re-text margin="0px 0px 6px 0px" color="#cbd5e1" font-size="13px" font-weight="bold">
+                Didn't request this code?
+            </re-text>
+            
+            <re-text font-size="13px" margin="0px 0px 0px 0px" line-height="20px" color="#64748b">
+                This code was requested from <b>{{requested_from}}</b> at <b>{{requested_at}}</b>. If you didn't initiate this action, someone may have typed your email by mistake. You can safely ignore this email.
+            </re-text>
+        </re-block>
+    </re-main>
+    
+    <!-- Branded Footer -->
+    <re-footer padding="28px 24px 40px 24px" align="center">
+        <re-divider background-color="#1b1e2a" height="1px"></re-divider>
+        <re-text margin="20px 0px 0px 0px" font-size="12px" line-height="18px" color="#64748b" align="center">
+            © {{current_year}} {{app.name}}. All rights reserved.
+        </re-text>
+        <re-text margin="4px 0px 0px 0px" font-size="11px" line-height="16px" color="#475569" align="center">
+            Cinematic streaming on every device. This is an automated security email.
+        </re-text>
+    </re-footer>
+</re-body>
+</re-html>

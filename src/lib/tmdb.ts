@@ -108,6 +108,7 @@ export interface MediaDetails extends TMDBMedia {
   recommendations?: {
     results: TMDBMedia[];
   };
+  episode_run_time?: number[];
   seasons?: {
     id: number;
     name: string;

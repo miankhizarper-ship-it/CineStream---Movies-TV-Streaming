@@ -140,10 +140,10 @@ function parsePath(fullPath: string): RouteState {
     };
   }
 
-  // /profile
+  // /profile -> seamlessly route to /mylist
   if (segments[0] === 'profile') {
     return {
-      type: 'profile',
+      type: 'mylist',
       params: {},
       query,
       rawPath: fullPath,

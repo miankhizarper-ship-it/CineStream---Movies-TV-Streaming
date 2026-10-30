@@ -5,6 +5,7 @@ import { dark } from '@clerk/themes';
 import { RouterProvider, useRouter } from './context/RouterContext';
 import { ToastProvider } from './context/ToastContext';
 import { WatchlistProvider } from './context/WatchlistContext';
+import { WatchHistoryProvider } from './context/WatchHistoryContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { PhantomGhost } from './components/PhantomGhost';
@@ -20,7 +21,6 @@ import { SearchView } from './views/SearchView';
 import { PersonView } from './views/PersonView';
 import { MyListView } from './views/MyListView';
 import { DownloadAppView } from './views/DownloadAppView';
-import { ProfileView } from './views/ProfileView';
 
 const CLERK_PUBLISHABLE_KEY =
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
@@ -63,7 +63,7 @@ const MainContent: React.FC = () => {
       case 'download-app':
         return <DownloadAppView />;
       case 'profile':
-        return <ProfileView />;
+        return <MyListView />;
       default:
         return <HomeView />;
     }
@@ -110,9 +110,11 @@ export default function App() {
     >
       <ToastProvider>
         <WatchlistProvider>
-          <RouterProvider>
-            <MainContent />
-          </RouterProvider>
+          <WatchHistoryProvider>
+            <RouterProvider>
+              <MainContent />
+            </RouterProvider>
+          </WatchHistoryProvider>
         </WatchlistProvider>
       </ToastProvider>
     </ClerkProvider>

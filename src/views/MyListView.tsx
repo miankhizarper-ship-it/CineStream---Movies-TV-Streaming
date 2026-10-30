@@ -7,6 +7,17 @@ import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
 import { getImageUrl, getBackdropUrl } from '../lib/tmdb';
 
+function formatTime(seconds?: number): string {
+  if (!seconds || isNaN(seconds) || seconds < 0) return '0:00';
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  if (hrs > 0) {
+    return `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
 export const MyListView: React.FC = () => {
   const { isSignedIn, isLoaded } = useUser();
   const { navigate } = useRouter();
@@ -45,8 +56,8 @@ export const MyListView: React.FC = () => {
     showToast('Cleared all items from Watchlist', 'info');
   };
 
-  const handleRemoveHistory = (id: number, mediaType: 'movie' | 'tv') => {
-    removeHistoryItem(id, mediaType);
+  const handleRemoveHistory = (id: number, mediaType: 'movie' | 'tv', season?: number, episode?: number) => {
+    removeHistoryItem(id, mediaType, season, episode);
     showToast('Removed title from watch history', 'info');
   };
 
@@ -146,7 +157,7 @@ export const MyListView: React.FC = () => {
         <div>
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-slate-400">
-              Showing recent titles played on CineStream.
+              Showing recent titles played on CineStream. Progress is auto-saved locally and cloud-synced with Clerk.
             </span>
             {history.length > 0 && (
               <button
@@ -163,13 +174,13 @@ export const MyListView: React.FC = () => {
               {history.map((item) => (
                 <div
                   key={`history-card-${item.id}-${item.season || 0}-${item.episode || 0}`}
-                  className="group relative rounded-xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-[0.98] transition-all"
+                  className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-[0.98] transition-all hover:border-white/20 shadow-lg"
                 >
                   <div className="aspect-video relative overflow-hidden bg-[#161822]">
                     <img
                       src={getBackdropUrl(item.backdrop_path || item.poster_path, 'w780')}
                       alt={item.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <button
@@ -181,38 +192,74 @@ export const MyListView: React.FC = () => {
                           }
                         }}
                         className="w-11 h-11 rounded-full bg-[#e50914] flex items-center justify-center shadow-lg active:scale-90 transition-transform cursor-pointer"
+                        title="Resume playback"
                       >
                         <Play className="w-4 h-4 fill-white text-white ml-0.5" />
                       </button>
                     </div>
 
+                    {/* Progress Bar overlay */}
                     {item.progress !== undefined && item.progress > 0 && (
-                      <div className="absolute bottom-0 inset-x-0 h-1 bg-black/60">
+                      <div className="absolute bottom-0 inset-x-0 h-1.5 bg-black/70">
                         <div
-                          className="h-full bg-[#e50914]"
-                          style={{ width: `${item.progress}%` }}
+                          className="h-full bg-gradient-to-r from-rose-600 to-[#e50914]"
+                          style={{ width: `${Math.min(100, Math.max(2, item.progress))}%` }}
                         />
                       </div>
                     )}
                   </div>
 
-                  <div className="p-3 flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        {item.media_type === 'tv'
-                          ? `S${item.season} · E${item.episode}`
-                          : 'Feature Film'}
-                      </p>
+                  <div className="p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                          <span>
+                            {item.media_type === 'tv'
+                              ? `S${item.season} · E${item.episode}`
+                              : 'Feature Film'}
+                          </span>
+                          {item.progress !== undefined && item.progress > 0 && (
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <span className="text-rose-400 font-bold tabular-nums">
+                                {item.progress}%
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveHistory(item.id, item.media_type, item.season, item.episode)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-white/5 active:scale-90 cursor-pointer transition-colors shrink-0"
+                        title="Remove from history"
+                        aria-label="Remove item from history"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleRemoveHistory(item.id, item.media_type)}
-                      className="p-1 rounded text-slate-500 hover:text-rose-400 active:scale-90 cursor-pointer"
-                      title="Remove from history"
-                      aria-label="Remove item from history"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+
+                    {/* Exact timestamp & Resume action button */}
+                    <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/5 text-[10px]">
+                      <span className="text-slate-400 font-semibold tabular-nums">
+                        {item.currentTime && item.currentTime > 0
+                          ? `${formatTime(item.currentTime)}${item.duration ? ` / ${formatTime(item.duration)}` : ''}`
+                          : 'Just started'}
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (item.media_type === 'tv') {
+                            navigate(`/watch/tv/${item.id}/${item.season || 1}/${item.episode || 1}`);
+                          } else {
+                            navigate(`/watch/movie/${item.id}`);
+                          }
+                        }}
+                        className="text-rose-400 hover:text-white font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Resume</span>
+                        <Play className="w-2.5 h-2.5 fill-rose-400" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -222,7 +269,7 @@ export const MyListView: React.FC = () => {
               <History className="w-7 h-7 text-slate-500 mx-auto mb-2" />
               <p className="text-sm text-slate-300 font-semibold">No watch history yet</p>
               <p className="text-xs text-slate-500 mt-1">
-                Titles you stream will automatically appear here so you can resume anytime.
+                Titles you stream will automatically appear here with saved progress so you can resume anytime.
               </p>
             </div>
           )}

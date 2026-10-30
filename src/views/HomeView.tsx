@@ -327,11 +327,24 @@ export const HomeView: React.FC = () => {
                         <Play className="w-4 h-4 fill-white text-white ml-0.5" />
                       </div>
                     </div>
+
+                    {/* Progress Bar overlay */}
+                    {item.progress !== undefined && item.progress > 0 && (
+                      <div className="absolute bottom-0 inset-x-0 h-1.5 bg-black/70">
+                        <div
+                          className="h-full bg-gradient-to-r from-rose-600 to-[#e50914]"
+                          style={{ width: `${Math.min(100, Math.max(3, item.progress))}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="p-2.5 sm:p-3">
                     <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
-                    <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
-                      {item.media_type === 'tv' ? `S${item.season} · E${item.episode}` : 'Feature Film'}
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs text-slate-400 mt-0.5">
+                      <span>{item.media_type === 'tv' ? `S${item.season} · E${item.episode}` : 'Feature Film'}</span>
+                      {item.progress !== undefined && item.progress > 0 && (
+                        <span className="text-rose-400 font-bold tabular-nums">{item.progress}%</span>
+                      )}
                     </div>
                   </div>
                 </div>

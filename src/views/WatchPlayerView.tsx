@@ -475,9 +475,9 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     params.set('autoplay', '1');
 
     // 5. TV-specific parameters
+    params.set('episodeSelector', 'false');
     if (mediaType === 'tv') {
       params.set('autoplayNextEpisode', autoplayNextEpisode ? 'true' : 'false');
-      params.set('episodeSelector', inPlayerEpisodeSelector ? 'true' : 'false');
       params.set('nextEpisode', hasNext ? 'true' : 'false');
       if (upNextOverlay) {
         params.set('overlay', 'true');
@@ -557,35 +557,8 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
           )}
         </div>
 
-        {/* Right Actions: Dim, Settings & Episode Drawer */}
+        {/* Right Actions: Dim & Episode Drawer */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Subtitles Guide Button */}
-          <button
-            onClick={() => setSubtitlesHelpOpen(true)}
-            className="hidden sm:flex px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer"
-            title="Subtitles & Custom File Drag-and-Drop"
-          >
-            <Subtitles className="w-3.5 h-3.5 text-slate-400" />
-            <span className="hidden md:inline">Subtitles</span>
-          </button>
-
-          {/* Gestures & Smart TV Shortcuts Button */}
-          <button
-            onClick={() => setGesturesModalOpen(true)}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
-            title="Mobile Gestures & Smart TV Remote Navigation"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-          </button>
-
-          {/* Player Configuration Settings Button */}
-          <button
-            onClick={() => setSettingsDrawerOpen(true)}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
-            title="Player Configuration & Stream Settings"
-          >
-            <Settings className="w-3.5 h-3.5 text-slate-300" />
-          </button>
 
           {/* Functional Dim Toggle Button */}
           <button

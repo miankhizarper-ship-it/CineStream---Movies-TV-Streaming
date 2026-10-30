@@ -46,13 +46,14 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     }
   };
 
-  const handleBookmarkToggle = (e: React.MouseEvent) => {
+  const handleBookmarkToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    toggleBookmark(media, type);
-    showToast(
-      saved ? `Removed "${title}" from Watchlist` : `Added "${title}" to Watchlist`,
-      'bookmark'
-    );
+    const isNowSaved = await toggleBookmark(media, type);
+    if (isNowSaved) {
+      showToast(`Added "${title}" to Watchlist`, 'bookmark');
+    } else if (saved) {
+      showToast(`Removed "${title}" from Watchlist`, 'bookmark');
+    }
   };
 
   const handleShare = (e: React.MouseEvent) => {

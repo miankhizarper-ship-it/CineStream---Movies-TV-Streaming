@@ -1,7 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ClerkProvider } from '@clerk/clerk-react';
+import { dark } from '@clerk/themes';
 import { RouterProvider, useRouter } from './context/RouterContext';
 import { ToastProvider } from './context/ToastContext';
+import { WatchlistProvider } from './context/WatchlistContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { PhantomGhost } from './components/PhantomGhost';
@@ -17,6 +20,11 @@ import { SearchView } from './views/SearchView';
 import { PersonView } from './views/PersonView';
 import { MyListView } from './views/MyListView';
 import { DownloadAppView } from './views/DownloadAppView';
+import { ProfileView } from './views/ProfileView';
+
+const CLERK_PUBLISHABLE_KEY =
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+  'pk_test_b3B0aW1hbC1xdWFnZ2EtMzQ5NC5jbGVyay5hY2NvdW50cy5kZXYk';
 
 const MainContent: React.FC = () => {
   const { route } = useRouter();
@@ -54,6 +62,8 @@ const MainContent: React.FC = () => {
         return <MyListView />;
       case 'download-app':
         return <DownloadAppView />;
+      case 'profile':
+        return <ProfileView />;
       default:
         return <HomeView />;
     }
@@ -85,10 +95,26 @@ const MainContent: React.FC = () => {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <RouterProvider>
-        <MainContent />
-      </RouterProvider>
-    </ToastProvider>
+    <ClerkProvider
+      publishableKey={CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        baseTheme: dark,
+        variables: {
+          colorPrimary: '#e50914',
+          colorBackground: '#0d0e14',
+          colorInputBackground: '#161822',
+          colorText: '#f8fafc',
+          colorInputText: '#ffffff',
+        },
+      }}
+    >
+      <ToastProvider>
+        <WatchlistProvider>
+          <RouterProvider>
+            <MainContent />
+          </RouterProvider>
+        </WatchlistProvider>
+      </ToastProvider>
+    </ClerkProvider>
   );
 }

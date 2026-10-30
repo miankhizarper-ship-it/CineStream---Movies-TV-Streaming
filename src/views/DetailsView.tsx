@@ -115,12 +115,13 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
     }
   };
 
-  const handleToggleBookmark = () => {
-    toggleBookmark(details, mediaType);
-    showToast(
-      saved ? `Removed "${title}" from Watchlist` : `Added "${title}" to Watchlist`,
-      'bookmark'
-    );
+  const handleToggleBookmark = async () => {
+    const isNowSaved = await toggleBookmark(details, mediaType);
+    if (isNowSaved) {
+      showToast(`Added "${title}" to Watchlist`, 'bookmark');
+    } else if (saved) {
+      showToast(`Removed "${title}" from Watchlist`, 'bookmark');
+    }
   };
 
   const handleShare = () => {

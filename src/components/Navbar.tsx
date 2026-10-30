@@ -1,14 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Search, Bookmark, Command, Menu, X, Home, Tv, Layers, Smartphone } from 'lucide-react';
+import {
+  Film,
+  Search,
+  Bookmark,
+  Menu,
+  X,
+  Home,
+  Tv,
+  Layers,
+  Smartphone,
+  User,
+  LogIn,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+  useUser,
+} from '@clerk/clerk-react';
+import { dark } from '@clerk/themes';
 import { useRouter } from '../context/RouterContext';
-import { useBookmarks } from '../hooks/useBookmarks';
+import { useWatchlist } from '../context/WatchlistContext';
 import { CommandPalette } from './CommandPalette';
 import { PWAInstallButton } from './PWAInstallButton';
 
 export const Navbar: React.FC = () => {
   const { route, navigate } = useRouter();
-  const { bookmarks } = useBookmarks();
+  const { watchlist } = useWatchlist();
+  const { user } = useUser();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
@@ -21,10 +42,8 @@ export const Navbar: React.FC = () => {
       if (currentScrollY < 30) {
         setShowNavbar(true);
       } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        // Scrolling down past threshold
         setShowNavbar(false);
       } else if (currentScrollY < lastScrollY - 5) {
-        // Scrolling up
         setShowNavbar(true);
       }
       setLastScrollY(currentScrollY);
@@ -66,7 +85,7 @@ export const Navbar: React.FC = () => {
     { label: 'Movies', path: '/explore/movie', icon: Film },
     { label: 'TV Series', path: '/explore/tv', icon: Tv },
     { label: 'Categories', path: '/categories', icon: Layers },
-    { label: 'My List', path: '/mylist', icon: Bookmark, count: bookmarks.length },
+    { label: 'My List', path: '/mylist', icon: Bookmark, count: watchlist.length },
     { label: 'Android App', path: '/download-app', icon: Smartphone },
   ];
 
@@ -77,6 +96,7 @@ export const Navbar: React.FC = () => {
     if (path === '/categories') return route.type === 'categories';
     if (path === '/mylist') return route.type === 'mylist';
     if (path === '/download-app') return route.type === 'download-app';
+    if (path === '/profile') return route.type === 'profile';
     return false;
   };
 
@@ -132,8 +152,8 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Right-side Utilities & Icons */}
-          <div className="flex items-center gap-1.5 2xl:gap-2 shrink-0">
+          {/* Right-side Utilities & Authentication */}
+          <div className="flex items-center gap-2 xl:gap-2.5 shrink-0">
             {/* Search Trigger Button */}
             <button
               onClick={() => setPaletteOpen(true)}
@@ -143,6 +163,56 @@ export const Navbar: React.FC = () => {
             >
               <Search className="w-4 h-4" />
             </button>
+
+            {/* Clerk Authentication in Header */}
+            <SignedIn>
+              <button
+                onClick={() => navigate('/profile')}
+                className={`hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
+                  route.type === 'profile'
+                    ? 'bg-white text-slate-950 font-bold border-white shadow-md'
+                    : 'bg-white/5 hover:bg-white/15 text-slate-200 hover:text-white border-white/10'
+                }`}
+                title="View Profile & Watchlist"
+              >
+                <User className="w-3.5 h-3.5 text-[#e50914]" />
+                <span>Profile</span>
+              </button>
+
+              <div className="flex items-center">
+                <UserButton
+                  appearance={{
+                    baseTheme: dark,
+                    variables: {
+                      colorPrimary: '#e50914',
+                    },
+                    elements: {
+                      avatarBox: 'w-8 h-8 rounded-full border border-white/20 hover:border-[#e50914] transition-all',
+                    },
+                  }}
+                >
+                  <UserButton.MenuItems>
+                    <UserButton.Action
+                      label="My Profile & Watchlist"
+                      labelIcon={<User className="w-4 h-4" />}
+                      onClick={() => navigate('/profile')}
+                    />
+                  </UserButton.MenuItems>
+                </UserButton>
+              </div>
+            </SignedIn>
+
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button
+                  className="px-3.5 py-1.5 rounded-full bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                  title="Sign In with Clerk"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </button>
+              </SignInButton>
+            </SignedOut>
 
             {/* Hamburger Menu Toggle (Mobile/Tablet) */}
             <button
@@ -194,6 +264,49 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
 
+              {/* User Status Card in Drawer */}
+              <div className="p-4 border-b border-white/10 bg-black/30">
+                <SignedIn>
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      onClick={() => handleNavClick('/profile')}
+                      className="flex items-center gap-3 text-left flex-1 min-w-0"
+                    >
+                      <img
+                        src={user?.imageUrl}
+                        alt={user?.fullName || 'User'}
+                        className="w-10 h-10 rounded-full object-cover border border-white/20 shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-white truncate">
+                          {user?.fullName || user?.username || 'Member'}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate">
+                          {user?.primaryEmailAddress?.emailAddress}
+                        </div>
+                      </div>
+                    </button>
+                    <UserButton
+                      appearance={{
+                        baseTheme: dark,
+                        variables: { colorPrimary: '#e50914' },
+                      }}
+                    />
+                  </div>
+                </SignedIn>
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <button
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-rose-950/50 cursor-pointer"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>Sign In to CineStream</span>
+                    </button>
+                  </SignInButton>
+                </SignedOut>
+              </div>
+
               {/* Drawer Navigation Links */}
               <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
                 {navLinks.map((link) => {
@@ -221,6 +334,21 @@ export const Navbar: React.FC = () => {
                     </button>
                   );
                 })}
+
+                {/* Profile link for mobile */}
+                <SignedIn>
+                  <button
+                    onClick={() => handleNavClick('/profile')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm transition-all cursor-pointer ${
+                      isActive('/profile')
+                        ? 'bg-[#e50914] text-white shadow-lg shadow-rose-950/50'
+                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <User className="w-4 h-4 text-slate-400" />
+                    <span>My Profile & Settings</span>
+                  </button>
+                </SignedIn>
               </div>
 
               {/* Install PWA Prompt in Drawer */}

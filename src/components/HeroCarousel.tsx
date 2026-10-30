@@ -110,14 +110,13 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ items }) => {
     navigate(`/${type}/${currentItem.id}`);
   };
 
-  const handleBookmarkToggle = () => {
-    toggleBookmark(currentItem, type);
-    showToast(
-      saved
-        ? `Removed "${title}" from Watchlist`
-        : `Added "${title}" to Watchlist`,
-      'bookmark'
-    );
+  const handleBookmarkToggle = async () => {
+    const isNowSaved = await toggleBookmark(currentItem, type);
+    if (isNowSaved) {
+      showToast(`Added "${title}" to Watchlist`, 'bookmark');
+    } else if (saved) {
+      showToast(`Removed "${title}" from Watchlist`, 'bookmark');
+    }
   };
 
   return (

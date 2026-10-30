@@ -74,7 +74,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/[0.08] transition-all duration-300 hover:scale-105 hover:z-50 hover:shadow-2xl hover:shadow-black/90 hover:border-rose-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 touch-manipulation active:scale-[0.98] transform-gpu"
+      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/[0.08] transition-all duration-300 hover:scale-105 hover:z-30 hover:shadow-2xl hover:shadow-black/90 hover:border-rose-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 touch-manipulation active:scale-[0.98] transform-gpu"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {

@@ -53,7 +53,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({
     <section className="relative my-5 sm:my-7 md:my-8 px-4 sm:px-6 md:px-12 group/row">
       {/* Row Header */}
       {title && (
-        <div className="flex items-baseline justify-between mb-2.5 sm:mb-3.5">
+        <div className="flex items-center justify-between mb-2.5 sm:mb-3.5">
           <div className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
             {typeof title === 'string' ? (
               <>
@@ -67,7 +67,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({
           {exploreLink && onExploreClick && (
             <button
               onClick={onExploreClick}
-              className="text-xs sm:text-sm font-semibold text-rose-400 hover:text-rose-300 transition-colors whitespace-nowrap active:scale-95 shrink-0 ml-2"
+              className="text-xs sm:text-sm font-semibold text-rose-400 hover:text-rose-300 transition-colors whitespace-nowrap active:scale-95 shrink-0"
             >
               See all →
             </button>
@@ -77,14 +77,14 @@ export const MovieRow: React.FC<MovieRowProps> = ({
 
       {/* Relative container for row & arrow buttons */}
       <div className="relative">
-        {/* Left Arrow Button (hidden on mobile, visible on desktop hover) */}
+        {/* Left Arrow Button (top front layer z-50, never obscured by hovered cards) */}
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
-            className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/80 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/10 shadow-xl"
+            className="hidden md:flex absolute -left-3 lg:-left-5 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/90 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/20 shadow-2xl hover:scale-110 active:scale-95 cursor-pointer pointer-events-auto"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-6 h-6" />
           </button>
         )}
 
@@ -92,12 +92,12 @@ export const MovieRow: React.FC<MovieRowProps> = ({
         <div
           ref={rowRef}
           onScroll={checkScroll}
-          className="flex gap-2.5 sm:gap-4 overflow-x-auto overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-4 -my-3 sm:py-6 sm:-my-5 px-1 relative"
+          className="flex gap-2.5 sm:gap-4 overflow-x-auto overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-4 -my-3 sm:py-6 sm:-my-5 px-1 relative z-10"
         >
           {items.map((item) => (
             <div
               key={`${item.media_type || mediaType || 'item'}-${item.id}`}
-              className={`snap-start shrink-0 relative transition-all duration-300 hover:z-50 ${
+              className={`snap-start shrink-0 relative transition-all duration-300 hover:z-30 ${
                 aspect === 'backdrop'
                   ? 'w-[200px] sm:w-[260px] md:w-[300px]'
                   : 'w-[125px] sm:w-[165px] md:w-[200px]'
@@ -108,14 +108,14 @@ export const MovieRow: React.FC<MovieRowProps> = ({
           ))}
         </div>
 
-        {/* Right Arrow Button (hidden on mobile, visible on desktop hover) */}
+        {/* Right Arrow Button (top front layer z-50, never obscured by hovered cards) */}
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
-            className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/80 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/10 shadow-xl"
+            className="hidden md:flex absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/90 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/20 shadow-2xl hover:scale-110 active:scale-95 cursor-pointer pointer-events-auto"
             aria-label="Scroll right"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-6 h-6" />
           </button>
         )}
       </div>

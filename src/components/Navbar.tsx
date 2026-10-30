@@ -89,11 +89,11 @@ export const Navbar: React.FC = () => {
     <>
       {/* Modern Floating Navbar */}
       <header
-        className={`fixed top-4 left-4 right-4 md:left-6 md:right-6 xl:left-1/2 xl:-translate-x-1/2 xl:max-w-5xl z-50 transition-transform duration-300 transform-gpu ${
+        className={`fixed top-4 left-4 right-4 md:left-6 md:right-6 xl:left-1/2 xl:-translate-x-1/2 xl:w-[94%] xl:max-w-6xl 2xl:max-w-7xl z-50 transition-transform duration-300 transform-gpu ${
           showNavbar ? 'translate-y-0' : '-translate-y-24'
         }`}
       >
-        <div className="bg-transparent border-0 shadow-none px-0 py-0 xl:bg-[#0a0b10]/80 xl:backdrop-blur-2xl xl:border xl:border-white/[0.12] xl:shadow-2xl xl:shadow-black/80 xl:rounded-full xl:px-6 xl:py-2.5 flex items-center justify-between gap-4">
+        <div className="bg-transparent border-0 shadow-none px-0 py-0 xl:bg-[#0a0b10]/80 xl:backdrop-blur-2xl xl:border xl:border-white/[0.12] xl:shadow-2xl xl:shadow-black/80 xl:rounded-full xl:px-4 2xl:px-6 xl:py-2 flex items-center justify-between gap-2 xl:gap-3 2xl:gap-4 w-full">
           {/* Brand Wordmark & Icon */}
           <button
             onClick={() => navigate('/')}
@@ -108,14 +108,14 @@ export const Navbar: React.FC = () => {
           </button>
 
           {/* Desktop Navigation Links (Pill Style) */}
-          <nav className="hidden xl:flex items-center gap-1 text-xs font-medium">
+          <nav className="hidden xl:flex items-center gap-0.5 2xl:gap-1.5 text-xs font-medium">
             {navLinks.map((link) => {
               const active = isActive(link.path);
               return (
                 <button
                   key={link.path}
                   onClick={() => navigate(link.path)}
-                  className={`whitespace-nowrap shrink-0 transition-all px-3.5 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer ${
+                  className={`whitespace-nowrap shrink-0 transition-all px-2.5 2xl:px-3.5 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer text-xs font-semibold ${
                     active
                       ? 'bg-white text-slate-950 font-bold shadow-md shadow-black/30'
                       : 'text-slate-300 hover:text-white hover:bg-white/10'
@@ -133,16 +133,11 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Right-side Utilities & Icons */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Desktop Web App Install Button */}
-            <div className="hidden xl:block">
-              <PWAInstallButton variant="nav-desktop" />
-            </div>
-
+          <div className="flex items-center gap-1.5 2xl:gap-2 shrink-0">
             {/* Search Trigger Button */}
             <button
               onClick={() => setPaletteOpen(true)}
-              className="p-2.5 rounded-full bg-black/60 xl:bg-white/5 hover:bg-white/15 backdrop-blur-xl xl:backdrop-blur-none border border-white/15 xl:border-white/10 text-slate-200 hover:text-white transition-all cursor-pointer flex items-center justify-center shadow-lg xl:shadow-none"
+              className="p-2 xl:p-2.5 rounded-full bg-black/60 xl:bg-white/5 hover:bg-white/15 backdrop-blur-xl xl:backdrop-blur-none border border-white/15 xl:border-white/10 text-slate-200 hover:text-white transition-all cursor-pointer flex items-center justify-center shadow-lg xl:shadow-none shrink-0"
               title="Search titles (Cmd+K)"
               aria-label="Search titles"
             >

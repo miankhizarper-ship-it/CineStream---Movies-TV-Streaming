@@ -276,7 +276,7 @@ export const HomeView: React.FC = () => {
       {/* Continue Watching Row */}
       {history.length > 0 && (
         <section className="my-6 sm:my-8 px-4 sm:px-6 md:px-12 group/row">
-          <div className="flex items-baseline justify-between mb-3 sm:mb-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
               <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block" />
               Continue Watching
@@ -292,17 +292,17 @@ export const HomeView: React.FC = () => {
             {canScrollWatchLeft && (
               <button
                 onClick={() => scrollWatch('left')}
-                className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/80 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/10 shadow-xl cursor-pointer"
+                className="hidden md:flex absolute -left-3 lg:-left-5 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/90 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/20 shadow-2xl hover:scale-110 active:scale-95 cursor-pointer pointer-events-auto"
                 aria-label="Scroll left"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-6 h-6" />
               </button>
             )}
 
             <div
               ref={watchRowRef}
               onScroll={checkWatchScroll}
-              className="flex gap-3 overflow-x-auto overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-4 -my-3 sm:py-6 sm:-my-5 px-1 relative"
+              className="flex gap-3 overflow-x-auto overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-4 -my-3 sm:py-6 sm:-my-5 px-1 relative z-10"
             >
               {history.slice(0, 10).map((item) => (
                 <div
@@ -314,7 +314,7 @@ export const HomeView: React.FC = () => {
                       navigate(`/watch/movie/${item.id}`);
                     }
                   }}
-                  className="snap-start shrink-0 w-[200px] sm:w-[260px] group relative cursor-pointer rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-95 transition-all duration-300 hover:scale-105 hover:z-50 hover:border-rose-500/50 hover:shadow-2xl hover:shadow-black/90 transform-gpu"
+                  className="snap-start shrink-0 w-[200px] sm:w-[260px] group relative cursor-pointer rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-95 transition-all duration-300 hover:scale-105 hover:z-30 hover:border-rose-500/50 hover:shadow-2xl hover:shadow-black/90 transform-gpu"
                 >
                   <div className="aspect-video w-full relative overflow-hidden bg-[#161822]">
                     <img
@@ -341,10 +341,10 @@ export const HomeView: React.FC = () => {
             {canScrollWatchRight && (
               <button
                 onClick={() => scrollWatch('right')}
-                className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/80 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/10 shadow-xl cursor-pointer"
+                className="hidden md:flex absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/90 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/20 shadow-2xl hover:scale-110 active:scale-95 cursor-pointer pointer-events-auto"
                 aria-label="Scroll right"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-6 h-6" />
               </button>
             )}
           </div>

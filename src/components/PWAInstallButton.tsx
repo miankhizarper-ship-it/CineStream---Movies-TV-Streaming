@@ -44,11 +44,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
       <>
         <button
           onClick={handleClick}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-[#e50914] text-slate-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap group ${className}`}
+          className={`flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 rounded-full bg-white/5 hover:bg-[#e50914] text-slate-200 hover:text-white border border-white/10 hover:border-transparent text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap group shrink-0 ${className}`}
           title="Install CineStream Desktop Web App"
         >
-          <Monitor className="w-3.5 h-3.5 text-rose-500 group-hover:text-white transition-colors" />
-          <span>Install Web App</span>
+          <Monitor className="w-3.5 h-3.5 text-rose-500 group-hover:text-white transition-colors shrink-0" />
+          <span className="hidden xl:inline 2xl:hidden">Install App</span>
+          <span className="hidden 2xl:inline">Install Web App</span>
         </button>
         <DesktopInstallModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
       </>

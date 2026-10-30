@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { ImageViewerModal, ImageViewerItem } from '../components/ImageViewerModal';
-import { PWAInstallButton } from '../components/PWAInstallButton';
+import { DesktopInstallModal } from '../components/DesktopInstallModal';
 
 interface AppScreenshot {
   id: string;
@@ -68,6 +68,7 @@ export const DownloadAppView: React.FC = () => {
   const { showToast } = useToast();
   const [downloading, setDownloading] = useState(false);
   const [modalScreenshot, setModalScreenshot] = useState<ImageViewerItem | null>(null);
+  const [desktopModalOpen, setDesktopModalOpen] = useState(false);
   const directApkUrl = '/apkfile/cinestream.apk';
 
   const handleDirectDownload = () => {
@@ -87,9 +88,14 @@ export const DownloadAppView: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10 w-full pb-28 space-y-10">
       {/* Desktop Web App (PWA) Install Section */}
-      <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-[#12131e] via-[#0d0e15] to-[#140b0e] border border-white/[0.12] shadow-2xl shadow-black/80 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div
+        onClick={() => setDesktopModalOpen(true)}
+        className="p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-[#12131e] via-[#0d0e15] to-[#140b0e] border border-white/[0.12] shadow-2xl shadow-black/80 flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer group hover:border-rose-500/50 transition-all"
+        role="button"
+        tabIndex={0}
+      >
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0 text-rose-500 mt-0.5">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0 text-rose-500 mt-0.5 group-hover:scale-105 transition-transform">
             <Laptop className="w-6 h-6" />
           </div>
           <div className="space-y-1">
@@ -101,19 +107,17 @@ export const DownloadAppView: React.FC = () => {
                 Windows · macOS · Linux
               </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-black text-white">
+            <h2 className="text-lg sm:text-xl font-black text-white group-hover:text-rose-400 transition-colors">
               Install CineStream on Desktop
             </h2>
             <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
-              Experience CineStream in a dedicated, distraction-free desktop window with keyboard shortcuts, hardware video acceleration, and offline library access.
+              Experience CineStream in a dedicated, distraction-free desktop window with keyboard shortcuts, hardware video acceleration, and offline library access. Click to install.
             </p>
           </div>
         </div>
-
-        <div className="shrink-0 flex items-center gap-3">
-          <PWAInstallButton variant="hero" />
-        </div>
       </div>
+
+      <DesktopInstallModal isOpen={desktopModalOpen} onClose={() => setDesktopModalOpen(false)} />
 
       {/* Hero Header Section */}
       <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#181926] via-[#101119] to-[#07080a] p-6 sm:p-10 border border-white/[0.1] shadow-2xl shadow-black/80">

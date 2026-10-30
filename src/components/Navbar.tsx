@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useRouter } from '../context/RouterContext';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { CommandPalette } from './CommandPalette';
+import { PWAInstallButton } from './PWAInstallButton';
 
 export const Navbar: React.FC = () => {
   const { route, navigate } = useRouter();
@@ -133,6 +134,11 @@ export const Navbar: React.FC = () => {
 
           {/* Right-side Utilities & Icons */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Desktop Web App Install Button */}
+            <div className="hidden xl:block">
+              <PWAInstallButton variant="nav-desktop" />
+            </div>
+
             {/* Search Trigger Button */}
             <button
               onClick={() => setPaletteOpen(true)}
@@ -220,6 +226,11 @@ export const Navbar: React.FC = () => {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* Install PWA Prompt in Drawer */}
+              <div className="px-4 pb-3">
+                <PWAInstallButton variant="nav-mobile" />
               </div>
 
               {/* Drawer Footer Info */}

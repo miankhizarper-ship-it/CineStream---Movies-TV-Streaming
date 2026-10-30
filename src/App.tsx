@@ -5,6 +5,7 @@ import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { PhantomGhost } from './components/PhantomGhost';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 // Views
 import { HomeView } from './views/HomeView';
@@ -77,6 +78,7 @@ const MainContent: React.FC = () => {
       </main>
       {!isWatchPage && <Footer />}
       {!isWatchPage && <PhantomGhost />}
+      <OfflineIndicator />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Film, Shield } from 'lucide-react';
 import { useRouter } from '../context/RouterContext';
+import { PWAInstallButton } from './PWAInstallButton';
 
 export const Footer: React.FC = () => {
   const { navigate, route } = useRouter();
@@ -97,6 +98,9 @@ export const Footer: React.FC = () => {
                   <span>Android App (v1.0.0 APK)</span>
                   <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">NEW</span>
                 </button>
+              </li>
+              <li className="pt-1">
+                <PWAInstallButton variant="footer" />
               </li>
             </ul>
           </div>

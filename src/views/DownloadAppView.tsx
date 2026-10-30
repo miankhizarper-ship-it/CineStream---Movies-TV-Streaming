@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { ImageViewerModal, ImageViewerItem } from '../components/ImageViewerModal';
+import { PWAInstallButton } from '../components/PWAInstallButton';
 
 interface AppScreenshot {
   id: string;
@@ -85,20 +86,32 @@ export const DownloadAppView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10 w-full pb-28 space-y-10">
-      {/* Desktop Notice Banner */}
-      <div className="hidden lg:flex items-center justify-between p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs sm:text-sm font-semibold gap-4 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-400">
-            <Laptop className="w-5 h-5" />
+      {/* Desktop Web App (PWA) Install Section */}
+      <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-[#12131e] via-[#0d0e15] to-[#140b0e] border border-white/[0.12] shadow-2xl shadow-black/80 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0 text-rose-500 mt-0.5">
+            <Laptop className="w-6 h-6" />
           </div>
-          <div>
-            <span className="font-extrabold text-amber-300 uppercase tracking-wider text-xs block mb-0.5">
-              Mobile & Tablet Device Notice
-            </span>
-            <p className="text-amber-200/90 font-medium">
-              The CineStream Android APK is designed for Android phones and tablets. Please visit this page on your mobile device or tablet for the optimal experience.
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="font-black text-rose-400 uppercase tracking-wider text-xs">
+                Desktop Web App (PWA)
+              </span>
+              <span className="text-[10px] font-semibold text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                Windows · macOS · Linux
+              </span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-black text-white">
+              Install CineStream on Desktop
+            </h2>
+            <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+              Experience CineStream in a dedicated, distraction-free desktop window with keyboard shortcuts, hardware video acceleration, and offline library access.
             </p>
           </div>
+        </div>
+
+        <div className="shrink-0 flex items-center gap-3">
+          <PWAInstallButton variant="hero" />
         </div>
       </div>
 

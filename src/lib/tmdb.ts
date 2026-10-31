@@ -237,7 +237,8 @@ export const tmdb = {
 
   getMovieDetails: async (id: number | string): Promise<MediaDetails> => {
     return fetchTMDB(`/movie/${id}`, {
-      append_to_response: 'credits,similar,recommendations,videos',
+      append_to_response: 'credits,similar,recommendations,videos,images',
+      include_image_language: 'en,null',
     });
   },
 
@@ -261,7 +262,17 @@ export const tmdb = {
 
   getTVDetails: async (id: number | string): Promise<MediaDetails> => {
     return fetchTMDB(`/tv/${id}`, {
-      append_to_response: 'credits,similar,recommendations,videos',
+      append_to_response: 'credits,similar,recommendations,videos,images',
+      include_image_language: 'en,null',
+    });
+  },
+
+  getImages: async (
+    type: 'movie' | 'tv',
+    id: number | string
+  ): Promise<{ logos: any[]; posters: any[]; backdrops: any[] }> => {
+    return fetchTMDB(`/${type}/${id}/images`, {
+      include_image_language: 'en,null',
     });
   },
 

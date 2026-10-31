@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Play, Plus, Check, Star, Share2, Info } from 'lucide-react';
+import { Play, Plus, Check, Star, Share2 } from 'lucide-react';
 import { TMDBMedia, getImageUrl } from '../lib/tmdb';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
+import { MediaLogo } from './MediaLogo';
 
 interface MovieCardProps {
   media: TMDBMedia;
@@ -75,7 +76,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/[0.08] transition-all duration-300 hover:scale-105 hover:z-30 hover:shadow-2xl hover:shadow-black/90 hover:border-rose-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 touch-manipulation active:scale-[0.98] transform-gpu"
+      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/10 transition-all duration-300 ease-out hover:scale-105 hover:z-35 hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)] hover:border-rose-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 touch-manipulation active:scale-[0.98] transform-gpu will-change-transform"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -98,7 +99,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             loading="lazy"
             referrerPolicy="no-referrer"
             onError={() => setImageError(true)}
-            className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out md:group-hover:scale-110"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-b from-[#181a26] to-[#0f1017]">
@@ -108,51 +109,62 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         )}
 
         {/* Rating Badge on Card */}
-        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-black/75 backdrop-blur-md text-[10px] sm:text-[11px] font-bold text-amber-400 border border-white/10">
+        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[11px] font-bold text-amber-400 border border-white/10 shadow-lg">
           <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
           <span className="tabular-nums">{rating}</span>
         </div>
 
         {/* 4K Badge */}
-        <div className="absolute top-2.5 right-2.5 z-10 hidden md:block px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-[9px] font-extrabold text-slate-300 border border-white/10 tracking-wider">
-          4K
+        <div className="absolute top-2.5 right-2.5 z-10 hidden md:block px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-[10px] font-extrabold text-slate-300 border border-white/10 tracking-wider">
+          4K HDR
         </div>
 
-        {/* Mobile Bookmark Touch Button (44px target) */}
+        {/* Mobile Bookmark Touch Button */}
         <button
           onClick={handleBookmarkToggle}
-          className="md:hidden absolute top-1 right-1 z-20 w-11 h-11 flex items-center justify-center rounded-full text-white drop-shadow-md touch-manipulation active:scale-90"
+          className="md:hidden absolute top-2 right-2 z-20 w-11 h-11 flex items-center justify-center rounded-full text-white touch-manipulation active:scale-90"
           aria-label={saved ? 'Remove from My List' : 'Add to My List'}
         >
           <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-md border ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md border ${
               saved
                 ? 'bg-[#e50914] border-[#e50914] text-white shadow-md'
                 : 'bg-black/60 border-white/20 text-white'
             }`}
           >
-            {saved ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+            {saved ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           </div>
         </button>
 
-        {/* Desktop-Only Hover Vignette & Micro-Actions */}
-        <div className="hidden md:flex absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-col justify-end p-3.5 z-20">
-          {/* Match % & Year */}
-          <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-400 mb-1">
+        {/* Hover Vignette & Micro-Actions Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 z-20">
+          <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-400 mb-1.5">
             <span>{matchPercentage}% Match</span>
             <span className="text-slate-400 font-normal">·</span>
             <span className="text-slate-300">{releaseYear}</span>
           </div>
 
-          <h4 className="text-sm font-extrabold text-white line-clamp-2 leading-snug drop-shadow-md">
-            {title}
-          </h4>
+          <div className="h-7 flex items-center mb-1">
+            <MediaLogo
+              mediaId={media.id}
+              mediaType={type}
+              titleFallback={title}
+              imgClassName="max-h-6 w-auto object-contain drop-shadow"
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] text-slate-300 mb-3">
+            <span className="font-medium">{releaseYear || 'Cinema'}</span>
+            <span className="uppercase text-[9px] font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/10">
+              {type}
+            </span>
+          </div>
 
           {/* Action Row */}
-          <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-white/10">
+          <div className="flex items-center gap-2 pt-3 border-t border-white/10">
             <button
               onClick={handlePlayClick}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/60 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-950/70 transition-colors"
               title="Watch now"
               aria-label={`Play ${title}`}
             >
@@ -162,7 +174,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
             <button
               onClick={handleBookmarkToggle}
-              className={`p-2 rounded-xl border transition-colors ${
+              className={`p-2.5 rounded-xl border transition-colors ${
                 saved
                   ? 'bg-[#e50914]/25 border-[#e50914] text-rose-400 hover:bg-[#e50914]/40'
                   : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
@@ -170,31 +182,18 @@ export const MovieCard: React.FC<MovieCardProps> = ({
               title={saved ? 'Remove from My List' : 'Add to My List'}
               aria-label={saved ? 'Remove from My List' : 'Add to My List'}
             >
-              {saved ? <Check className="w-3.5 h-3.5 text-rose-400" /> : <Plus className="w-3.5 h-3.5" />}
+              {saved ? <Check className="w-4 h-4 text-rose-400" /> : <Plus className="w-4 h-4" />}
             </button>
 
             <button
               onClick={handleShare}
-              className="p-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
+              className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
               title="Share"
               aria-label="Share media"
             >
-              <Share2 className="w-3.5 h-3.5" />
+              <Share2 className="w-4 h-4" />
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Card Info Below Poster */}
-      <div className="p-2.5 sm:p-3">
-        <h3 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-rose-400 transition-colors">
-          {title}
-        </h3>
-        <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 mt-1">
-          <span>{releaseYear || 'Cinema'}</span>
-          <span className="uppercase text-[9px] font-bold tracking-wider px-1.5 py-0.2 rounded-md bg-white/5 text-slate-300 border border-white/5">
-            {type}
-          </span>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Play,
   Plus,
@@ -6,6 +6,7 @@ import {
   Star,
   Share2,
   ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   tmdb,
@@ -17,7 +18,9 @@ import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
 import { MovieCard } from '../components/MovieCard';
+import { MovieRow } from '../components/MovieRow';
 import { EpisodeListSection } from '../components/episodes/EpisodeListSection';
+import { MediaLogo } from '../components/MediaLogo';
 
 interface DetailsViewProps {
   id: string;
@@ -33,6 +36,33 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const castRowRef = useRef<HTMLDivElement>(null);
+  const [canScrollCastLeft, setCanScrollCastLeft] = useState(false);
+  const [canScrollCastRight, setCanScrollCastRight] = useState(true);
+
+  const checkCastScroll = () => {
+    if (castRowRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = castRowRef.current;
+      setCanScrollCastLeft(scrollLeft > 10);
+      setCanScrollCastRight(scrollLeft + clientWidth < scrollWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkCastScroll();
+    window.addEventListener('resize', checkCastScroll);
+    return () => window.removeEventListener('resize', checkCastScroll);
+  }, [details]);
+
+  const scrollCast = (direction: 'left' | 'right') => {
+    if (castRowRef.current) {
+      const clientWidth = castRowRef.current.clientWidth;
+      const scrollAmount = direction === 'left' ? -clientWidth * 0.75 : clientWidth * 0.75;
+      castRowRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      setTimeout(checkCastScroll, 350);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -181,9 +211,12 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tight">
-                {title}
-              </h1>
+              <MediaLogo
+                mediaId={id}
+                mediaType={mediaType}
+                titleFallback={title}
+                imgClassName="max-h-16 sm:max-h-20 md:max-h-28 w-auto object-contain drop-shadow-xl"
+              />
 
               {details.tagline && (
                 <p className="text-xs sm:text-sm italic text-slate-400 font-light line-clamp-2">
@@ -300,34 +333,60 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
 
         {/* Cast & Crew Horizontal Scroll */}
         {details.credits?.cast && details.credits.cast.length > 0 && (
-          <section>
+          <section className="group/row">
             <h2 className="text-base sm:text-lg font-bold text-white mb-3 flex items-center gap-2">
               <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block" />
               Top Billed Cast
             </h2>
-            <div className="flex gap-3.5 overflow-x-auto scrollbar-none snap-x touch-pan-x py-1">
-              {details.credits.cast.slice(0, 16).map((actor) => (
-                <div
-                  key={actor.id}
-                  onClick={() => navigate(`/person/${actor.id}`)}
-                  className="snap-start shrink-0 w-24 sm:w-28 text-center cursor-pointer active:scale-95 group"
+            <div className="relative">
+              {canScrollCastLeft && (
+                <button
+                  onClick={() => scrollCast('left')}
+                  className="hidden md:flex absolute -left-3 lg:-left-5 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/90 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/20 shadow-2xl hover:scale-110 active:scale-95 cursor-pointer pointer-events-auto"
+                  aria-label="Scroll left"
                 >
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-[#181a26] border border-white/10 mb-2 group-hover:border-[#e50914]/60 transition-colors">
-                    <img
-                      src={getImageUrl(actor.profile_path, 'w185')}
-                      alt={actor.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      loading="lazy"
-                    />
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+
+              <div
+                ref={castRowRef}
+                onScroll={checkCastScroll}
+                className="flex gap-3.5 overflow-x-auto scrollbar-none snap-x touch-pan-x py-1 relative z-10"
+              >
+                {details.credits.cast.slice(0, 16).map((actor) => (
+                  <div
+                    key={actor.id}
+                    onClick={() => navigate(`/person/${actor.id}`)}
+                    className="snap-start shrink-0 w-24 sm:w-28 text-center cursor-pointer active:scale-95 group"
+                  >
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-[#181a26] border border-white/10 mb-2 group-hover:border-[#e50914]/60 transition-colors">
+                      <img
+                        src={getImageUrl(actor.profile_path, 'w185')}
+                        alt={actor.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        loading="lazy"
+                      />
+                    </div>
+                    <h4 className="text-xs font-bold text-white truncate group-hover:text-rose-400 transition-colors">
+                      {actor.name}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                      {actor.character}
+                    </p>
                   </div>
-                  <h4 className="text-xs font-bold text-white truncate group-hover:text-rose-400 transition-colors">
-                    {actor.name}
-                  </h4>
-                  <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                    {actor.character}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
+
+              {canScrollCastRight && (
+                <button
+                  onClick={() => scrollCast('right')}
+                  className="hidden md:flex absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/90 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/20 shadow-2xl hover:scale-110 active:scale-95 cursor-pointer pointer-events-auto"
+                  aria-label="Scroll right"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
             </div>
           </section>
         )}
@@ -336,27 +395,15 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
         {((details.recommendations?.results &&
           details.recommendations.results.length > 0) ||
           (details.similar?.results && details.similar.results.length > 0)) && (
-          <section>
-            <h2 className="text-base sm:text-lg font-bold text-white mb-3 flex items-center gap-2">
-              <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block" />
-              More Like This
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-4">
-              {(
-                details.recommendations?.results?.length
-                  ? details.recommendations.results
-                  : details.similar?.results || []
-              )
-                .slice(0, 12)
-                .map((item) => (
-                  <MovieCard
-                    key={`similar-${item.id}`}
-                    media={item}
-                    mediaType={mediaType}
-                  />
-                ))}
-            </div>
-          </section>
+          <MovieRow
+            title="More Like This"
+            items={
+              details.recommendations?.results?.length
+                ? details.recommendations.results
+                : details.similar?.results || []
+            }
+            mediaType={mediaType}
+          />
         )}
       </div>
     </div>

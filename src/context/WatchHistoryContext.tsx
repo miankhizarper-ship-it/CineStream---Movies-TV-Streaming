@@ -248,9 +248,11 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
       );
 
       const updated = [entry, ...filtered].slice(0, 50);
-      setHistory(updated);
-      saveLocalHistory(updated);
-      queueClerkSync(updated, false);
+      setTimeout(() => {
+        setHistory(updated);
+        saveLocalHistory(updated);
+        queueClerkSync(updated, false);
+      }, 0);
     },
     [queueClerkSync]
   );
@@ -271,7 +273,6 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
       );
 
       if (targetIndex === -1) {
-        // If not yet in list, do nothing or wait for details
         return;
       }
 
@@ -294,9 +295,11 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const remaining = currentList.filter((_, idx) => idx !== targetIndex);
       const updatedList = [updatedItem, ...remaining].slice(0, 50);
 
-      setHistory(updatedList);
-      saveLocalHistory(updatedList);
-      queueClerkSync(updatedList, false);
+      setTimeout(() => {
+        setHistory(updatedList);
+        saveLocalHistory(updatedList);
+        queueClerkSync(updatedList, false);
+      }, 0);
     },
     [queueClerkSync]
   );

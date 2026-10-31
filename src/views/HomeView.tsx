@@ -3,6 +3,7 @@ import { Play, Info, Plus, Check, Star, RefreshCw, ChevronLeft, ChevronRight } f
 import { motion, AnimatePresence } from 'motion/react';
 import { tmdb, TMDBMedia, getBackdropUrl } from '../lib/tmdb';
 import { MovieRow } from '../components/MovieRow';
+import { MediaLogo } from '../components/MediaLogo';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useRouter } from '../context/RouterContext';
@@ -23,32 +24,7 @@ export const HomeView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const watchRowRef = useRef<HTMLDivElement>(null);
-  const [canScrollWatchLeft, setCanScrollWatchLeft] = useState(false);
-  const [canScrollWatchRight, setCanScrollWatchRight] = useState(true);
 
-  const checkWatchScroll = () => {
-    if (watchRowRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = watchRowRef.current;
-      setCanScrollWatchLeft(scrollLeft > 10);
-      setCanScrollWatchRight(scrollLeft + clientWidth < scrollWidth - 10);
-    }
-  };
-
-  useEffect(() => {
-    checkWatchScroll();
-    window.addEventListener('resize', checkWatchScroll);
-    return () => window.removeEventListener('resize', checkWatchScroll);
-  }, [history]);
-
-  const scrollWatch = (direction: 'left' | 'right') => {
-    if (watchRowRef.current) {
-      const clientWidth = watchRowRef.current.clientWidth;
-      const scrollAmount = direction === 'left' ? -clientWidth * 0.75 : clientWidth * 0.75;
-      watchRowRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      setTimeout(checkWatchScroll, 350);
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -210,9 +186,12 @@ export const HomeView: React.FC = () => {
               </div>
 
               {/* Title with responsive text balance */}
-              <h1 className="text-3xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.05] drop-shadow-2xl text-balance">
-                {heroTitle}
-              </h1>
+              <MediaLogo
+                mediaId={heroMedia.id}
+                mediaType={heroType}
+                titleFallback={heroTitle}
+                imgClassName="max-h-20 sm:max-h-28 md:max-h-36 w-auto object-contain drop-shadow-2xl"
+              />
 
               {/* Overview Excerpt */}
               <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 sm:line-clamp-3 md:line-clamp-4 leading-relaxed max-w-xl drop-shadow">
@@ -275,93 +254,24 @@ export const HomeView: React.FC = () => {
 
       {/* Continue Watching Row */}
       {history.length > 0 && (
-        <section className="my-6 sm:my-8 px-4 sm:px-6 md:px-12 group/row">
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block" />
-              Continue Watching
-            </h2>
-            <button
-              onClick={() => navigate('/mylist')}
-              className="text-xs sm:text-sm font-semibold text-rose-400 hover:text-rose-300 transition-colors"
-            >
-              View history →
-            </button>
-          </div>
-          <div className="relative">
-            {canScrollWatchLeft && (
-              <button
-                onClick={() => scrollWatch('left')}
-                className="hidden md:flex absolute -left-3 lg:-left-5 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/90 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/20 shadow-2xl hover:scale-110 active:scale-95 cursor-pointer pointer-events-auto"
-                aria-label="Scroll left"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-            )}
-
-            <div
-              ref={watchRowRef}
-              onScroll={checkWatchScroll}
-              className="flex gap-3 overflow-x-auto overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-4 -my-3 sm:py-6 sm:-my-5 px-1 relative z-10"
-            >
-              {history.slice(0, 10).map((item) => (
-                <div
-                  key={`history-${item.id}-${item.season || 0}-${item.episode || 0}`}
-                  onClick={() => {
-                    if (item.media_type === 'tv') {
-                      navigate(`/watch/tv/${item.id}/${item.season || 1}/${item.episode || 1}`);
-                    } else {
-                      navigate(`/watch/movie/${item.id}`);
-                    }
-                  }}
-                  className="snap-start shrink-0 w-[200px] sm:w-[260px] group relative cursor-pointer rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-95 transition-all duration-300 hover:scale-105 hover:z-30 hover:border-rose-500/50 hover:shadow-2xl hover:shadow-black/90 transform-gpu"
-                >
-                  <div className="aspect-video w-full relative overflow-hidden bg-[#161822]">
-                    <img
-                      src={getBackdropUrl(item.backdrop_path || item.poster_path, 'w780')}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <div className="w-10 h-10 rounded-full bg-[#e50914] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                        <Play className="w-4 h-4 fill-white text-white ml-0.5" />
-                      </div>
-                    </div>
-
-                    {/* Progress Bar overlay */}
-                    {item.progress !== undefined && item.progress > 0 && (
-                      <div className="absolute bottom-0 inset-x-0 h-1.5 bg-black/70">
-                        <div
-                          className="h-full bg-gradient-to-r from-rose-600 to-[#e50914]"
-                          style={{ width: `${Math.min(100, Math.max(3, item.progress))}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2.5 sm:p-3">
-                    <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs text-slate-400 mt-0.5">
-                      <span>{item.media_type === 'tv' ? `S${item.season} · E${item.episode}` : 'Feature Film'}</span>
-                      {item.progress !== undefined && item.progress > 0 && (
-                        <span className="text-rose-400 font-bold tabular-nums">{item.progress}%</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {canScrollWatchRight && (
-              <button
-                onClick={() => scrollWatch('right')}
-                className="hidden md:flex absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-black/90 hover:bg-[#e50914] text-white items-center justify-center backdrop-blur-md opacity-0 group-hover/row:opacity-100 transition-all duration-200 border border-white/20 shadow-2xl hover:scale-110 active:scale-95 cursor-pointer pointer-events-auto"
-                aria-label="Scroll right"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            )}
-          </div>
-        </section>
+        <MovieRow
+          title="Continue Watching"
+          items={history.map((item) => ({
+            id: item.id,
+            media_type: item.media_type,
+            title: item.title,
+            name: item.title,
+            poster_path: item.poster_path,
+            backdrop_path: item.backdrop_path,
+            vote_average: 8.0,
+            release_date: '',
+            first_air_date: '',
+            overview: '',
+          }))}
+          aspect="backdrop"
+          exploreLink="/mylist"
+          onExploreClick={() => navigate('/mylist')}
+        />
       )}
 
       {/* Horizontal Carousels */}

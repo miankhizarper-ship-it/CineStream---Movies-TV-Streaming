@@ -205,7 +205,16 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
   }, [id, mediaType, currentSeason, currentEpisode, details]);
 
   // Check saved progress and restore last timestamp automatically (Session Recovery)
+  const hasResumedRef = useRef(false);
+
   useEffect(() => {
+    hasResumedRef.current = false;
+  }, [id, mediaType, currentSeason, currentEpisode]);
+
+  useEffect(() => {
+    if (hasResumedRef.current) return;
+    hasResumedRef.current = true;
+
     const numericId = Number(id);
     const existing = getHistoryItem(
       numericId,
@@ -230,21 +239,24 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     }
   }, [id, mediaType, currentSeason, currentEpisode, getHistoryItem, showToast]);
 
-  // Ensure item exists in history immediately on viewing
+  // Ensure item exists in history immediately on viewing (deferred to prevent render-phase state update)
   useEffect(() => {
     if (!details) return;
     const title = details.title || details.name || 'Untitled';
-    addOrUpdateHistory({
-      id: details.id,
-      media_type: mediaType,
-      title,
-      poster_path: details.poster_path,
-      backdrop_path: details.backdrop_path,
-      season: mediaType === 'tv' ? currentSeason : undefined,
-      episode: mediaType === 'tv' ? currentEpisode : undefined,
-      currentTime: playbackPosition,
-      duration: duration,
-    });
+    const timer = setTimeout(() => {
+      addOrUpdateHistory({
+        id: details.id,
+        media_type: mediaType,
+        title,
+        poster_path: details.poster_path,
+        backdrop_path: details.backdrop_path,
+        season: mediaType === 'tv' ? currentSeason : undefined,
+        episode: mediaType === 'tv' ? currentEpisode : undefined,
+        currentTime: playbackPosition,
+        duration: duration,
+      });
+    }, 50);
+    return () => clearTimeout(timer);
   }, [details, mediaType, currentSeason, currentEpisode, addOrUpdateHistory]);
 
   const currentEpisodesList = seasonData?.episodes || [];
@@ -290,6 +302,18 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
           switch (data.event) {
             case 'ready':
               console.log('[FMOV] Player initialized and ready');
+              if (resumeTime && resumeTime > 15 && iframeRef.current?.contentWindow) {
+                try {
+                  iframeRef.current.contentWindow.postMessage(
+                    { source: 'fmov-parent', event: 'seek', time: resumeTime },
+                    '*'
+                  );
+                  iframeRef.current.contentWindow.postMessage(
+                    JSON.stringify({ source: 'fmov-parent', event: 'seek', time: resumeTime }),
+                    '*'
+                  );
+                } catch {}
+              }
               break;
             case 'play':
               console.log('[FMOV] Playback started');
@@ -486,7 +510,10 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
 
     // 6. Resume Timestamp
     if (resumeTime && resumeTime > 15) {
-      params.set('start', Math.floor(resumeTime).toString());
+      const tSec = Math.floor(resumeTime).toString();
+      params.set('start', tSec);
+      params.set('t', tSec);
+      params.set('time', tSec);
     }
 
     const queryString = params.toString();
@@ -494,6 +521,32 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
 
     return `${baseUrl}?${queryString}${hash}`;
   };
+
+  // Send postMessage seek command when player is loaded or resumes
+  useEffect(() => {
+    if (resumeTime && resumeTime > 15) {
+      const sendSeek = () => {
+        if (iframeRef.current?.contentWindow) {
+          try {
+            iframeRef.current.contentWindow.postMessage(
+              { source: 'fmov-parent', event: 'seek', time: resumeTime },
+              '*'
+            );
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ source: 'fmov-parent', event: 'seek', time: resumeTime }),
+              '*'
+            );
+          } catch {}
+        }
+      };
+      const t1 = setTimeout(sendSeek, 1200);
+      const t2 = setTimeout(sendSeek, 3000);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [resumeTime, server, currentSeason, currentEpisode]);
 
   const title = details?.title || details?.name || 'Streaming Media';
   const saved = details ? isBookmarked(details.id, mediaType) : false;

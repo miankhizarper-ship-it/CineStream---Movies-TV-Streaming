@@ -301,12 +301,15 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [queueClerkSync]
   );
 
+  const historyRef = useRef(history);
+  historyRef.current = history;
+
   // Retrieve progress/history item for a specific media
   const getHistoryItem = useCallback(
     (id: number, mediaType: 'movie' | 'tv', season?: number, episode?: number) => {
-      return history.find((h) => matchesItem(h, id, mediaType, season, episode));
+      return historyRef.current.find((h) => matchesItem(h, id, mediaType, season, episode));
     },
-    [history]
+    []
   );
 
   // Remove single item from history

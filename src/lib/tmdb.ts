@@ -213,11 +213,17 @@ export function getBackdropUrl(
   return `${IMAGE_BASE_URL}/${size}${path}`;
 }
 
+export interface TMDBKeyword {
+  id: number;
+  name: string;
+}
+
 export interface DiscoverParams {
   with_genres?: number | string;
   with_watch_providers?: number | string;
   watch_region?: string;
   with_networks?: number | string;
+  with_keywords?: number | string;
   sort_by?: string;
   page?: number;
   'vote_average.gte'?: number;
@@ -374,6 +380,11 @@ export const tmdb = {
       finalParams.first_air_date_year = params.first_air_date_year;
     }
 
+    // Keywords filter
+    if (params.with_keywords) {
+      finalParams.with_keywords = params.with_keywords;
+    }
+
     if (params.with_original_language) {
       finalParams.with_original_language = params.with_original_language;
     }
@@ -397,6 +408,50 @@ export const tmdb = {
     );
   },
 
+  searchTv: async (
+    query: string,
+    page = 1
+  ): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
+    return fetchTMDB(
+      '/search/tv',
+      {
+        query,
+        page,
+        include_adult: false,
+      },
+      false
+    );
+  },
+
+  searchMovie: async (
+    query: string,
+    page = 1
+  ): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
+    return fetchTMDB(
+      '/search/movie',
+      {
+        query,
+        page,
+        include_adult: false,
+      },
+      false
+    );
+  },
+
+  searchKeywords: async (
+    query: string,
+    page = 1
+  ): Promise<{ results: TMDBKeyword[]; total_pages: number; total_results: number }> => {
+    return fetchTMDB(
+      '/search/keyword',
+      {
+        query,
+        page,
+      },
+      false
+    );
+  },
+
   // Person Details
   getPersonDetails: async (id: number | string): Promise<PersonDetails> => {
     return fetchTMDB(`/person/${id}`, {
@@ -410,12 +465,15 @@ export const tmdb = {
   },
 };
 
+export * from './searchService';
+
 /**
- * Convenience search helper function
+ * Convenience search helper function with fuzzy fallback
  */
 export const searchMedia = async (query: string): Promise<TMDBMedia[]> => {
   if (!query.trim()) return [];
-  const res = await tmdb.multiSearch(query);
+  const { enhancedSearch } = await import('./searchService');
+  const res = await enhancedSearch(query);
   return res.results || [];
 };
 

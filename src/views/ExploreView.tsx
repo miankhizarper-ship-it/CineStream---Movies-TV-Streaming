@@ -382,13 +382,13 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             </button>
           )}
         </div>
-        <div className="flex overflow-x-auto py-1 scrollbar-none gap-2 snap-x">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 py-1">
           <button
             onClick={() => setSelectedGenreName('')}
-            className={`snap-start shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border cursor-pointer ${
+            className={`w-full py-2 px-3 rounded-xl text-xs font-semibold text-center truncate transition-all border cursor-pointer ${
               !selectedGenreName
-                ? 'bg-[#e50914] border-rose-500 text-white shadow-md'
-                : 'bg-[#12131a] border-white/[0.08] text-slate-300 hover:bg-white/10'
+                ? 'bg-[#e50914] border-rose-500 text-white shadow-md shadow-rose-950/40 ring-1 ring-rose-400/30'
+                : 'bg-[#12131a] border-white/[0.08] text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/20'
             }`}
           >
             All Genres
@@ -399,10 +399,11 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
               <button
                 key={g.name}
                 onClick={() => setSelectedGenreName(isSelected ? '' : g.name)}
-                className={`snap-start shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border cursor-pointer ${
+                title={g.name}
+                className={`w-full py-2 px-3 rounded-xl text-xs font-semibold text-center truncate transition-all border cursor-pointer ${
                   isSelected
-                    ? 'bg-[#e50914] border-rose-500 text-white shadow-md'
-                    : 'bg-[#12131a] border-white/[0.08] text-slate-300 hover:bg-white/10 hover:text-white'
+                    ? 'bg-[#e50914] border-rose-500 text-white shadow-md shadow-rose-950/40 ring-1 ring-rose-400/30'
+                    : 'bg-[#12131a] border-white/[0.08] text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/20'
                 }`}
               >
                 {g.name}

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, X, Play, Bookmark, Star, Sparkles, Command } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { tmdb, TMDBMedia, getImageUrl } from '../lib/tmdb';
+import { tmdb, TMDBMedia, getImageUrl, enhancedSearch, SearchMediaItem } from '../lib/tmdb';
 import { useRouter } from '../context/RouterContext';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useToast } from '../context/ToastContext';
@@ -17,7 +17,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   const { showToast } = useToast();
 
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<TMDBMedia[]>([]);
+  const [results, setResults] = useState<SearchMediaItem[]>([]);
+  const [didYouMean, setDidYouMean] = useState<string | null>(null);
   const [trending, setTrending] = useState<TMDBMedia[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'movie' | 'tv'>('all');
@@ -51,13 +52,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     } else {
       setQuery('');
       setResults([]);
+      setDidYouMean(null);
     }
   }, [isOpen]);
 
-  // Handle live search
+  // Handle live search with enhanced fuzzy matching
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
+      setDidYouMean(null);
       setLoading(false);
       return;
     }
@@ -65,17 +68,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const data = await tmdb.multiSearch(query.trim());
-        const filtered = (data.results || []).filter(
+        const searchRes = await enhancedSearch(query.trim());
+        const filtered = (searchRes.results || []).filter(
           (item) => item.media_type === 'movie' || item.media_type === 'tv'
         );
         setResults(filtered);
+        setDidYouMean(searchRes.didYouMean);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
-    }, 250);
+    }, 240);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -91,12 +95,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  const displayedResults = useMemo<SearchMediaItem[]>(() => {
+    const seen = new Set<string>();
+    return results.filter((item: SearchMediaItem): boolean => {
+      if (!item || !item.id) return false;
+      const type = item.media_type || (item.title ? 'movie' : 'tv');
+      const key = `${type}-${item.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      if (activeFilter === 'all') return true;
+      return type === activeFilter;
+    });
+  }, [results, activeFilter]);
 
-  const displayedResults = results.filter((item) => {
-    if (activeFilter === 'all') return true;
-    return item.media_type === activeFilter;
-  });
+  if (!isOpen) return null;
 
   const handleSelectMedia = (media: TMDBMedia) => {
     const type = media.media_type === 'tv' ? 'tv' : 'movie';
@@ -228,7 +240,30 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             ) : query.trim() ? (
               displayedResults.length > 0 ? (
                 <div className="space-y-2">
-                  {displayedResults.map((item) => {
+                  {didYouMean && (
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        <span className="text-slate-300">
+                          Did you mean{' '}
+                          <button
+                            onClick={() => setQuery(didYouMean)}
+                            className="font-bold text-rose-400 hover:underline cursor-pointer"
+                          >
+                            "{didYouMean}"
+                          </button>
+                          ?
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setQuery(didYouMean)}
+                        className="px-2.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold cursor-pointer transition-colors"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  )}
+                  {displayedResults.map((item, idx) => {
                     const type = item.media_type === 'tv' ? 'tv' : 'movie';
                     const title = item.title || item.name || 'Untitled';
                     const year = (item.release_date || item.first_air_date || '').slice(0, 4);
@@ -237,7 +272,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
 
                     return (
                       <div
-                        key={`${type}-${item.id}`}
+                        key={`${type}-${item.id}-${idx}`}
                         onClick={() => handleSelectMedia(item)}
                         className="group flex items-center gap-3 p-2.5 rounded-xl bg-[#141622]/60 hover:bg-white/10 border border-transparent hover:border-white/10 cursor-pointer transition-all"
                       >

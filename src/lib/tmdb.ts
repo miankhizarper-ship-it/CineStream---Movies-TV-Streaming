@@ -35,6 +35,7 @@ export interface TMDBMedia {
   poster_path: string | null;
   backdrop_path: string | null;
   profile_path?: string | null;
+  known_for_department?: string;
   media_type?: 'movie' | 'tv' | 'person';
   genre_ids?: number[];
   genres?: { id: number; name: string }[];
@@ -212,6 +213,23 @@ export function getBackdropUrl(
   return `${IMAGE_BASE_URL}/${size}${path}`;
 }
 
+export interface DiscoverParams {
+  with_genres?: number | string;
+  with_watch_providers?: number | string;
+  watch_region?: string;
+  with_networks?: number | string;
+  sort_by?: string;
+  page?: number;
+  'vote_average.gte'?: number;
+  'vote_average.lte'?: number;
+  'vote_count.gte'?: number;
+  primary_release_year?: number | string;
+  first_air_date_year?: number | string;
+  year?: number | string;
+  with_original_language?: string;
+  include_adult?: boolean;
+}
+
 // API Methods
 export const tmdb = {
   // Trending
@@ -296,22 +314,71 @@ export const tmdb = {
     return fetchTMDB(`/${type}/${id}/recommendations`);
   },
 
-  // Discover & Explore
+  // Discover & Explore with full filtering and sorting
   discoverMedia: async (
     type: 'movie' | 'tv',
-    params: {
-      with_genres?: number | string;
-      sort_by?: string;
-      page?: number;
-      'vote_average.gte'?: number;
-      year?: number;
-    } = {}
+    params: DiscoverParams = {}
   ): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
-    return fetchTMDB(`/discover/${type}`, {
-      ...params,
-      sort_by: params.sort_by || 'popularity.desc',
+    const finalParams: Record<string, string | number | boolean | undefined> = {
       include_adult: false,
-    });
+      page: params.page || 1,
+    };
+
+    // Sorting handling
+    let sortBy = params.sort_by || 'popularity.desc';
+    if (sortBy === 'release_date.desc') {
+      sortBy = type === 'movie' ? 'primary_release_date.desc' : 'first_air_date.desc';
+    } else if (sortBy === 'release_date.asc') {
+      sortBy = type === 'movie' ? 'primary_release_date.asc' : 'first_air_date.asc';
+    }
+    finalParams.sort_by = sortBy;
+
+    // Quality vote count threshold when sorting by rating
+    if (sortBy.includes('vote_average')) {
+      finalParams['vote_count.gte'] = params['vote_count.gte'] ?? (type === 'movie' ? 200 : 80);
+      if (params['vote_average.gte']) {
+        finalParams['vote_average.gte'] = params['vote_average.gte'];
+      }
+    } else if (params['vote_count.gte'] !== undefined) {
+      finalParams['vote_count.gte'] = params['vote_count.gte'];
+    }
+
+    // Genres filter
+    if (params.with_genres) {
+      finalParams.with_genres = params.with_genres;
+    }
+
+    // Streaming Platforms / Watch Providers
+    if (params.with_watch_providers) {
+      finalParams.with_watch_providers = params.with_watch_providers;
+      finalParams.watch_region = params.watch_region || 'US';
+    }
+
+    // Networks (TV specific)
+    if (params.with_networks) {
+      finalParams.with_networks = params.with_networks;
+    }
+
+    // Year filters
+    if (params.year) {
+      if (type === 'movie') {
+        finalParams.primary_release_year = params.year;
+      } else {
+        finalParams.first_air_date_year = params.year;
+      }
+    }
+    if (params.primary_release_year && type === 'movie') {
+      finalParams.primary_release_year = params.primary_release_year;
+    }
+    if (params.first_air_date_year && type === 'tv') {
+      finalParams.first_air_date_year = params.first_air_date_year;
+    }
+
+    if (params.with_original_language) {
+      finalParams.with_original_language = params.with_original_language;
+    }
+
+    return fetchTMDB(`/discover/${type}`, finalParams);
   },
 
   // Search

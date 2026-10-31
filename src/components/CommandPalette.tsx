@@ -162,7 +162,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search movies, TV series, actors, genres..."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && query.trim()) {
+                  e.preventDefault();
+                  navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+                  onClose();
+                }
+              }}
+              placeholder="Search movies, TV series, actors, genres (Press Enter for full results)..."
               className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none"
             />
             {query && (
@@ -178,26 +185,36 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             </kbd>
           </div>
 
-          {/* Filter Bar (When searching) */}
+          {/* Filter Bar & Full Search Page Action */}
           {query.trim() && (
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-white/[0.06] bg-[#0c0d14]">
-              <span className="text-xs text-slate-400 font-medium mr-1">Filter:</span>
-              {(['all', 'movie', 'tv'] as const).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setActiveFilter(type)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
-                    activeFilter === type
-                      ? 'bg-[#e50914] text-white shadow-md'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {type === 'all' ? 'All Types' : type === 'movie' ? 'Movies' : 'TV Series'}
-                </button>
-              ))}
-              <span className="ml-auto text-xs text-slate-500 tabular-nums">
-                {displayedResults.length} results
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-white/[0.06] bg-[#0c0d14]">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-slate-400 font-medium mr-1">Filter:</span>
+                {(['all', 'movie', 'tv'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setActiveFilter(type)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                      activeFilter === type
+                        ? 'bg-[#e50914] text-white shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {type === 'all' ? 'All Types' : type === 'movie' ? 'Movies' : 'TV Series'}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+                  onClose();
+                }}
+                className="text-xs font-bold text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span>Full Search Page</span>
+                <span className="text-[10px] bg-rose-500/20 px-1.5 py-0.5 rounded font-mono">↵</span>
+              </button>
             </div>
           )}
 
@@ -359,9 +376,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           </div>
 
           {/* Footer Bar */}
-          <div className="px-4 py-2.5 bg-[#090a10] border-t border-white/[0.08] flex items-center justify-between text-[11px] text-slate-500">
-            <span>Press <kbd className="px-1.5 py-0.5 bg-white/10 text-slate-300 rounded">Esc</kbd> to close</span>
-            <span>Search powered by TMDB</span>
+          <div className="px-4 py-2.5 bg-[#090a10] border-t border-white/[0.08] flex items-center justify-between text-[11px] text-slate-400">
+            <span>Press <kbd className="px-1.5 py-0.5 bg-white/10 text-slate-300 rounded font-mono">Enter ↵</kbd> for full search page</span>
+            <span>Press <kbd className="px-1.5 py-0.5 bg-white/10 text-slate-300 rounded font-mono">Esc</kbd> to close</span>
           </div>
         </motion.div>
       </div>

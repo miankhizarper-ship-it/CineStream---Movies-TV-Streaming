@@ -1,7 +1,7 @@
 {
-  "latest_version": "1.0.5",
-  "min_supported_version": "1.0.4",
+  "latest_version": "1.0.6",
+  "min_supported_version": "1.0.5",
   "force_update": false,
   "apk_url": "https://raw.githubusercontent.com/miankhizarper-ship-it/CineStream---Movies-TV-Streaming/refs/heads/main/public/apkfile/cinestream.apk",
-  "release_notes": "In-App Update System , No Internet Screen , Auto-Rotating Hero , Pagination System"
+  "release_notes": "Guests browse freely and Login With Clerk Features"
 }

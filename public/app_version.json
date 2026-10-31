@@ -1,6 +1,6 @@
 {
-  "latest_version": "1.0.10",
-  "min_supported_version": "1.0.6",
+  "latest_version": "1.0.11",
+  "min_supported_version": "1.0.8",
   "force_update": false,
   "apk_url": "https://raw.githubusercontent.com/miankhizarper-ship-it/CineStream---Movies-TV-Streaming/refs/heads/main/public/apkfile/cinestream.apk",
   "release_notes": "Watch History feature"

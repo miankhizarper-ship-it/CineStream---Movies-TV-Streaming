@@ -139,11 +139,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   };
 
   const quickGenres = [
-    { name: 'Anime', path: '/explore/anime' },
     { name: 'Action', path: '/explore/movie?genre=28' },
     { name: 'Sci-Fi', path: '/explore/movie?genre=878' },
     { name: 'Comedy', path: '/explore/movie?genre=35' },
     { name: 'Drama', path: '/explore/movie?genre=18' },
+    { name: 'Animation', path: '/explore/movie?genre=16' },
   ];
 
   return (

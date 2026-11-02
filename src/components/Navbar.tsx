@@ -10,7 +10,6 @@ import {
   Layers,
   Smartphone,
   LogIn,
-  Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -84,7 +83,6 @@ export const Navbar: React.FC = () => {
     { label: 'Home', path: '/', icon: Home },
     { label: 'Movies', path: '/explore/movie', icon: Film },
     { label: 'TV Series', path: '/explore/tv', icon: Tv },
-    { label: 'Anime', path: '/explore/anime', icon: Sparkles },
     { label: 'Categories', path: '/categories', icon: Layers },
     { label: 'Android App', path: '/download-app', icon: Smartphone },
   ];
@@ -93,7 +91,6 @@ export const Navbar: React.FC = () => {
     if (path === '/') return route.type === 'home';
     if (path === '/explore/movie') return route.type === 'explore' && route.params.mediaType === 'movie';
     if (path === '/explore/tv') return route.type === 'explore' && route.params.mediaType === 'tv';
-    if (path === '/explore/anime') return route.type === 'explore-anime' || route.type === 'anime';
     if (path === '/categories') return route.type === 'categories';
     if (path === '/mylist') return route.type === 'mylist';
     if (path === '/download-app') return route.type === 'download-app';

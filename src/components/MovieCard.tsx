@@ -10,14 +10,12 @@ interface MovieCardProps {
   media: TMDBMedia;
   mediaType?: 'movie' | 'tv';
   aspect?: 'poster' | 'backdrop';
-  isAnime?: boolean;
 }
 
 export const MovieCard: React.FC<MovieCardProps> = ({
   media,
   mediaType: explicitType,
   aspect = 'poster',
-  isAnime = false,
 }) => {
   const { navigate } = useRouter();
   const { isBookmarked, toggleBookmark } = useBookmarks();
@@ -37,18 +35,12 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const matchPercentage = Math.min(99, Math.max(78, Math.round((media.vote_average || 7.5) * 10)));
 
   const handleCardClick = () => {
-    if (isAnime) {
-      navigate(`/anime/${media.id}`);
-    } else {
-      navigate(`/${type}/${media.id}`);
-    }
+    navigate(`/${type}/${media.id}`);
   };
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isAnime) {
-      navigate(`/watch/anime/${media.id}/1/1`);
-    } else if (type === 'tv') {
+    if (type === 'tv') {
       navigate(`/watch/tv/${media.id}/1/1`);
     } else {
       navigate(`/watch/movie/${media.id}`);
@@ -152,13 +144,12 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             <span className="text-slate-300">{releaseYear}</span>
           </div>
 
-          <div className="h-7 flex items-center mb-1 max-w-[150px] sm:max-w-[180px]">
+          <div className="h-7 flex items-center mb-1">
             <MediaLogo
               mediaId={media.id}
               mediaType={type}
               titleFallback={title}
               imgClassName="max-h-6 w-auto object-contain drop-shadow"
-              titleClassName="text-[11px] sm:text-xs font-bold text-white truncate max-w-full"
             />
           </div>
 

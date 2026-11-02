@@ -200,9 +200,6 @@ export function getImageUrl(
   if (!path) {
     return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450"><rect fill="%2312131a" width="300" height="450"/><text fill="%23475569" font-family="sans-serif" font-size="16" x="50%" y="50%" text-anchor="middle">No Image</text></svg>';
   }
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
   return `${IMAGE_BASE_URL}/${size}${path}`;
 }
 
@@ -212,9 +209,6 @@ export function getBackdropUrl(
 ): string {
   if (!path) {
     return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720"><rect fill="%2307080a" width="1280" height="720"/><text fill="%23334155" font-family="sans-serif" font-size="24" x="50%" y="50%" text-anchor="middle">No Backdrop</text></svg>';
-  }
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
   }
   return `${IMAGE_BASE_URL}/${size}${path}`;
 }

@@ -247,11 +247,7 @@ export const CategoriesView: React.FC = () => {
   };
 
   const handleExploreFullCollection = (genreId: number) => {
-    if (previewGenre?.name.toLowerCase() === 'animation') {
-      navigate('/explore/anime');
-    } else {
-      navigate(`/explore/${activeTab}?genre=${genreId}`);
-    }
+    navigate(`/explore/${activeTab}?genre=${genreId}`);
     setPreviewGenre(null);
   };
 

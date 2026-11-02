@@ -3,8 +3,8 @@ import { useUser, useClerk } from '@clerk/clerk-react';
 import { TMDBMedia } from '../lib/tmdb';
 
 export interface BookmarkItem {
-  id: number | string;
-  media_type: 'movie' | 'tv' | 'anime';
+  id: number;
+  media_type: 'movie' | 'tv';
   title: string;
   poster_path: string | null;
   backdrop_path: string | null;
@@ -13,17 +13,16 @@ export interface BookmarkItem {
   first_air_date?: string;
   overview?: string;
   savedAt: number;
-  isAnime?: boolean;
 }
 
 export interface WatchlistContextType {
   watchlist: BookmarkItem[];
   bookmarks: BookmarkItem[]; // Alias for backward compatibility
-  isBookmarked: (id: number | string, mediaType?: 'movie' | 'tv' | 'anime') => boolean;
-  toggleWatchlist: (media: any, forcedType?: 'movie' | 'tv' | 'anime') => Promise<boolean>;
-  toggleBookmark: (media: any, forcedType?: 'movie' | 'tv' | 'anime') => Promise<boolean>;
-  removeFromWatchlist: (id: number | string, mediaType?: 'movie' | 'tv' | 'anime') => Promise<void>;
-  removeBookmark: (id: number | string, mediaType?: 'movie' | 'tv' | 'anime') => Promise<void>;
+  isBookmarked: (id: number, mediaType?: 'movie' | 'tv') => boolean;
+  toggleWatchlist: (media: TMDBMedia, forcedType?: 'movie' | 'tv') => Promise<boolean>;
+  toggleBookmark: (media: TMDBMedia, forcedType?: 'movie' | 'tv') => Promise<boolean>;
+  removeFromWatchlist: (id: number, mediaType: 'movie' | 'tv') => Promise<void>;
+  removeBookmark: (id: number, mediaType: 'movie' | 'tv') => Promise<void>;
   clearWatchlist: () => Promise<void>;
   clearBookmarks: () => Promise<void>;
   isSyncing: boolean;
@@ -52,46 +51,6 @@ function saveLocalWatchlist(items: BookmarkItem[]) {
     console.error('Failed to write local watchlist:', err);
   }
 }
-
-function prepareClerkWatchlist(list: BookmarkItem[]): BookmarkItem[] {
-  let trimmed: BookmarkItem[] = list.map((item) => ({
-    id: item.id,
-    media_type: item.media_type,
-    title: item.title ? item.title.slice(0, 35) : 'Untitled',
-    poster_path: item.poster_path,
-    backdrop_path: item.backdrop_path,
-    vote_average: item.vote_average,
-    release_date: item.release_date,
-    first_air_date: item.first_air_date,
-    savedAt: item.savedAt,
-  }));
-
-  if (trimmed.length > 20) {
-    trimmed = trimmed.slice(0, 20);
-  }
-
-  while (JSON.stringify(trimmed).length > 3500 && trimmed.length > 2) {
-    trimmed.pop();
-  }
-
-  return trimmed;
-}
-
-const syncToClerk = async (userObj: any, list: BookmarkItem[]) => {
-  if (!userObj) return;
-  try {
-    const existing = { ...(userObj.unsafeMetadata || {}) };
-    delete existing.watchlist;
-    await userObj.update({
-      unsafeMetadata: {
-        ...existing,
-        watchlist: prepareClerkWatchlist(list),
-      },
-    });
-  } catch (err) {
-    console.warn('Clerk metadata sync limit notice:', err);
-  }
-};
 
 export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isSignedIn, user, isLoaded } = useUser();
@@ -150,8 +109,13 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setWatchlist(mergedList);
           saveLocalWatchlist(mergedList);
 
-          // Persist to Clerk user unsafeMetadata safely
-          await syncToClerk(user, mergedList);
+          // Persist to Clerk user unsafeMetadata
+          await user.update({
+            unsafeMetadata: {
+              ...user.unsafeMetadata,
+              watchlist: mergedList,
+            },
+          });
         } else {
           // If no migration needed or already migrated, populate from Clerk metadata
           setWatchlist(clerkWatchlist);
@@ -184,9 +148,9 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Check if a media is saved
   const isBookmarked = useCallback(
-    (id: number | string, mediaType?: 'movie' | 'tv' | 'anime') => {
+    (id: number, mediaType?: 'movie' | 'tv') => {
       return watchlist.some(
-        (b) => String(b.id) === String(id) && (!mediaType || b.media_type === mediaType || (mediaType === 'anime' && b.isAnime))
+        (b) => b.id === id && (!mediaType || b.media_type === mediaType)
       );
     },
     [watchlist]
@@ -194,19 +158,19 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Toggle saving to watchlist
   const toggleWatchlist = useCallback(
-    async (media: any, forcedType?: 'movie' | 'tv' | 'anime'): Promise<boolean> => {
+    async (media: TMDBMedia, forcedType?: 'movie' | 'tv'): Promise<boolean> => {
       // 1. Guest Mode Check: Require authentication
       if (!isSignedIn || !user) {
         openSignInForWatchlist();
         return false;
       }
 
-      const isAnime = Boolean(media.isAnime || forcedType === 'anime' || media.media_type === 'anime');
-      const mediaType: 'movie' | 'tv' | 'anime' =
-        forcedType || (isAnime ? 'anime' : (media.media_type === 'tv' || media.first_air_date || media.number_of_seasons ? 'tv' : 'movie'));
+      const mediaType: 'movie' | 'tv' =
+        forcedType ||
+        (media.media_type === 'tv' || media.first_air_date || media.number_of_seasons ? 'tv' : 'movie');
 
       const existingIndex = watchlist.findIndex(
-        (b) => String(b.id) === String(media.id) && (b.media_type === mediaType || (isAnime && (b.isAnime || b.media_type === 'anime')))
+        (b) => b.id === media.id && b.media_type === mediaType
       );
 
       let updatedList: BookmarkItem[];
@@ -222,14 +186,13 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           id: media.id,
           media_type: mediaType,
           title: media.title || media.name || 'Untitled',
-          poster_path: media.poster_path || media.image || null,
-          backdrop_path: media.backdrop_path || media.bannerImage || media.poster_path || media.image || null,
-          vote_average: typeof media.vote_average === 'number' ? media.vote_average : 8.0,
-          release_date: media.release_date || media.first_air_date,
-          first_air_date: media.first_air_date || media.release_date,
+          poster_path: media.poster_path,
+          backdrop_path: media.backdrop_path,
+          vote_average: media.vote_average,
+          release_date: media.release_date,
+          first_air_date: media.first_air_date,
           overview: media.overview,
           savedAt: Date.now(),
-          isAnime: isAnime || mediaType === 'anime',
         };
         updatedList = [newItem, ...watchlist];
         isNowSaved = true;
@@ -239,8 +202,17 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setWatchlist(updatedList);
       saveLocalWatchlist(updatedList);
 
-      // Async write to Clerk user unsafeMetadata safely
-      await syncToClerk(user, updatedList);
+      // Async write to Clerk user unsafeMetadata
+      try {
+        await user.update({
+          unsafeMetadata: {
+            ...user.unsafeMetadata,
+            watchlist: updatedList,
+          },
+        });
+      } catch (err) {
+        console.error('Failed to update Clerk watchlist metadata:', err);
+      }
 
       return isNowSaved;
     },
@@ -249,15 +221,24 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Remove single item
   const removeFromWatchlist = useCallback(
-    async (id: number | string, mediaType?: 'movie' | 'tv' | 'anime') => {
+    async (id: number, mediaType: 'movie' | 'tv') => {
       const updatedList = watchlist.filter(
-        (b) => !(String(b.id) === String(id) && (!mediaType || b.media_type === mediaType))
+        (b) => !(b.id === id && b.media_type === mediaType)
       );
       setWatchlist(updatedList);
       saveLocalWatchlist(updatedList);
 
       if (isSignedIn && user) {
-        await syncToClerk(user, updatedList);
+        try {
+          await user.update({
+            unsafeMetadata: {
+              ...user.unsafeMetadata,
+              watchlist: updatedList,
+            },
+          });
+        } catch (err) {
+          console.error('Failed to remove item from Clerk metadata:', err);
+        }
       }
     },
     [isSignedIn, user, watchlist]

@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useUser } from '@clerk/clerk-react';
 
 export interface WatchHistoryItem {
-  id: number;
-  media_type: 'movie' | 'tv';
+  id: number | string;
+  media_type: 'movie' | 'tv' | 'anime';
   title: string;
   poster_path: string | null;
   backdrop_path: string | null;
@@ -14,26 +14,27 @@ export interface WatchHistoryItem {
   currentTime?: number; // playback position in seconds
   duration?: number; // total duration in seconds
   progress?: number; // 0 to 100 percentage
+  isAnime?: boolean;
 }
 
 export interface WatchHistoryContextType {
   history: WatchHistoryItem[];
   addOrUpdateHistory: (item: Omit<WatchHistoryItem, 'lastWatched'> & { lastWatched?: number }) => Promise<void>;
   updateProgress: (
-    id: number,
-    mediaType: 'movie' | 'tv',
+    id: number | string,
+    mediaType: 'movie' | 'tv' | 'anime',
     currentTime: number,
     duration?: number,
     season?: number,
     episode?: number
   ) => Promise<void>;
   getHistoryItem: (
-    id: number,
-    mediaType: 'movie' | 'tv',
+    id: number | string,
+    mediaType: 'movie' | 'tv' | 'anime',
     season?: number,
     episode?: number
   ) => WatchHistoryItem | undefined;
-  removeHistoryItem: (id: number, mediaType: 'movie' | 'tv', season?: number, episode?: number) => Promise<void>;
+  removeHistoryItem: (id: number | string, mediaType: 'movie' | 'tv' | 'anime', season?: number, episode?: number) => Promise<void>;
   clearHistory: () => Promise<void>;
   isSyncing: boolean;
 }
@@ -63,13 +64,13 @@ function saveLocalHistory(items: WatchHistoryItem[]) {
 
 function matchesItem(
   a: WatchHistoryItem,
-  id: number,
-  mediaType: 'movie' | 'tv',
+  id: number | string,
+  mediaType: 'movie' | 'tv' | 'anime',
   season?: number,
   episode?: number
 ): boolean {
-  if (a.id !== id || a.media_type !== mediaType) return false;
-  if (mediaType === 'tv') {
+  if (String(a.id) !== String(id) || (a.media_type !== mediaType && !(mediaType === 'anime' && (a.media_type === 'anime' || a.isAnime)))) return false;
+  if (mediaType === 'tv' || mediaType === 'anime') {
     if (season !== undefined && a.season !== undefined && a.season !== season) return false;
     if (episode !== undefined && a.episode !== undefined && a.episode !== episode) return false;
   }
@@ -260,8 +261,8 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // High-performance progress updater for playback ticks
   const updateProgress = useCallback(
     async (
-      id: number,
-      mediaType: 'movie' | 'tv',
+      id: number | string,
+      mediaType: 'movie' | 'tv' | 'anime',
       currentTime: number,
       duration?: number,
       season?: number,
@@ -309,7 +310,7 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Retrieve progress/history item for a specific media
   const getHistoryItem = useCallback(
-    (id: number, mediaType: 'movie' | 'tv', season?: number, episode?: number) => {
+    (id: number | string, mediaType: 'movie' | 'tv' | 'anime', season?: number, episode?: number) => {
       return historyRef.current.find((h) => matchesItem(h, id, mediaType, season, episode));
     },
     []
@@ -317,7 +318,7 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Remove single item from history
   const removeHistoryItem = useCallback(
-    async (id: number, mediaType: 'movie' | 'tv', season?: number, episode?: number) => {
+    async (id: number | string, mediaType: 'movie' | 'tv' | 'anime', season?: number, episode?: number) => {
       const currentList = getLocalHistory();
       const updated = currentList.filter(
         (h) => !matchesItem(h, id, mediaType, season, episode)

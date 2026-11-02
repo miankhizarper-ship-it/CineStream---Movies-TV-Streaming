@@ -3,9 +3,11 @@ import { Bookmark, Trash2, Play, History, LogIn, Sparkles, RefreshCw } from 'luc
 import { useUser, SignInButton } from '@clerk/clerk-react';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useWatchHistory } from '../hooks/useWatchHistory';
+import { useAnime } from '../context/AnimeContext';
 import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
 import { getImageUrl, getBackdropUrl } from '../lib/tmdb';
+import { AnimeCard } from '../components/AnimeCard';
 
 function formatTime(seconds?: number): string {
   if (!seconds || isNaN(seconds) || seconds < 0) return '0:00';
@@ -29,24 +31,71 @@ export const MyListView: React.FC = () => {
     openSignInForWatchlist,
   } = useWatchlist();
   const { history, removeHistoryItem, clearHistory } = useWatchHistory();
+  const {
+    animeWatchlist,
+    animeHistory,
+    removeAnimeWatchlist,
+    clearAnimeWatchlist,
+    removeAnimeHistoryItem,
+    clearAnimeHistory,
+  } = useAnime();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'all' | 'movie' | 'tv' | 'history'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'movie' | 'tv' | 'anime' | 'history' | 'anime-history'>('all');
 
   // Trigger Clerk sign-in modal if guest tries to view the Watchlist page
   useEffect(() => {
-    if (isLoaded && !isSignedIn && activeTab !== 'history') {
+    if (isLoaded && !isSignedIn && (activeTab === 'all' || activeTab === 'movie' || activeTab === 'tv')) {
       openSignInForWatchlist();
     }
   }, [isLoaded, isSignedIn, activeTab, openSignInForWatchlist]);
 
   const filteredBookmarks = watchlist.filter((b) => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'movie') return b.media_type === 'movie';
-    if (activeTab === 'tv') return b.media_type === 'tv';
+    if (activeTab === 'movie') return b.media_type === 'movie' && !b.isAnime;
+    if (activeTab === 'tv') return b.media_type === 'tv' && !b.isAnime;
+    if (activeTab === 'anime') return b.media_type === 'anime' || b.isAnime === true;
     return true;
   });
 
-  const handleRemoveBookmark = (id: number, mediaType: 'movie' | 'tv', title: string) => {
+  const combinedAnimeWatchlistMap = new Map<string, any>();
+  watchlist.filter((b) => b.media_type === 'anime' || b.isAnime === true).forEach((item) => {
+    combinedAnimeWatchlistMap.set(String(item.id), {
+      id: item.id,
+      title: item.title,
+      image: item.poster_path,
+      bannerImage: item.backdrop_path,
+      rating: item.vote_average ? item.vote_average * 10 : undefined,
+      savedAt: item.savedAt,
+    });
+  });
+  animeWatchlist.forEach((item) => {
+    if (!combinedAnimeWatchlistMap.has(String(item.id))) {
+      combinedAnimeWatchlistMap.set(String(item.id), item);
+    }
+  });
+  const combinedAnimeWatchlist = Array.from(combinedAnimeWatchlistMap.values());
+  const totalAnimeCount = combinedAnimeWatchlist.length;
+
+  const combinedAnimeHistoryMap = new Map<string, any>();
+  history.filter((h) => h.media_type === 'anime' || (h as any).isAnime).forEach((item) => {
+    combinedAnimeHistoryMap.set(String(item.id), {
+      id: String(item.id),
+      title: item.title,
+      image: item.poster_path || '',
+      bannerImage: item.backdrop_path || '',
+      episode: item.episode || 1,
+      lastWatched: item.lastWatched,
+      progress: item.progress,
+    });
+  });
+  animeHistory.forEach((item) => {
+    if (!combinedAnimeHistoryMap.has(String(item.id))) {
+      combinedAnimeHistoryMap.set(String(item.id), item);
+    }
+  });
+  const combinedAnimeHistory = Array.from(combinedAnimeHistoryMap.values());
+
+  const handleRemoveBookmark = (id: number | string, mediaType: 'movie' | 'tv' | 'anime', title: string) => {
     removeBookmark(id, mediaType);
     showToast(`Removed "${title}" from Watchlist`, 'bookmark');
   };
@@ -56,7 +105,7 @@ export const MyListView: React.FC = () => {
     showToast('Cleared all items from Watchlist', 'info');
   };
 
-  const handleRemoveHistory = (id: number, mediaType: 'movie' | 'tv', season?: number, episode?: number) => {
+  const handleRemoveHistory = (id: number | string, mediaType: 'movie' | 'tv' | 'anime', season?: number, episode?: number) => {
     removeHistoryItem(id, mediaType, season, episode);
     showToast('Removed title from watch history', 'info');
   };
@@ -86,7 +135,7 @@ export const MyListView: React.FC = () => {
         <div className="flex items-center gap-1 p-1 bg-[#12131a] rounded-xl border border-white/[0.08] self-start sm:self-auto overflow-x-auto scrollbar-none snap-x">
           <button
             onClick={() => setActiveTab('all')}
-            className={`snap-start shrink-0 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            className={`snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'all'
                 ? 'bg-[#e50914] text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -96,7 +145,7 @@ export const MyListView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('movie')}
-            className={`snap-start shrink-0 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            className={`snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'movie'
                 ? 'bg-[#e50914] text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -106,7 +155,7 @@ export const MyListView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('tv')}
-            className={`snap-start shrink-0 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            className={`snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'tv'
                 ? 'bg-[#e50914] text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -115,8 +164,19 @@ export const MyListView: React.FC = () => {
             TV Series
           </button>
           <button
+            onClick={() => setActiveTab('anime')}
+            className={`snap-start shrink-0 flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'anime'
+                ? 'bg-purple-600 text-white shadow-md ring-1 ring-purple-400'
+                : 'text-purple-300 hover:text-white hover:bg-purple-950/40'
+            }`}
+          >
+            <Sparkles className="w-3 h-3 text-amber-300" />
+            <span>Anime Watchlist ({totalAnimeCount})</span>
+          </button>
+          <button
             onClick={() => setActiveTab('history')}
-            className={`snap-start shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            className={`snap-start shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'history'
                 ? 'bg-[#e50914] text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -124,6 +184,17 @@ export const MyListView: React.FC = () => {
           >
             <History className="w-3.5 h-3.5" />
             <span>History ({history.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('anime-history')}
+            className={`snap-start shrink-0 flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'anime-history'
+                ? 'bg-purple-600 text-white shadow-md ring-1 ring-purple-400'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <History className="w-3.5 h-3.5 text-purple-400" />
+            <span>Anime History ({animeHistory.length})</span>
           </button>
         </div>
       </div>
@@ -271,6 +342,164 @@ export const MyListView: React.FC = () => {
               <p className="text-xs text-slate-500 mt-1">
                 Titles you stream will automatically appear here with saved progress so you can resume anytime.
               </p>
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'anime-history' ? (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-slate-400">
+              Recent anime episodes played.
+            </span>
+            {combinedAnimeHistory.length > 0 && (
+              <button
+                onClick={() => {
+                  clearAnimeHistory();
+                  history.filter(h => h.media_type === 'anime' || (h as any).isAnime).forEach(h => removeHistoryItem(h.id, h.media_type, h.season, h.episode));
+                }}
+                className="text-xs text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
+              >
+                Clear Anime History
+              </button>
+            )}
+          </div>
+
+          {combinedAnimeHistory.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {combinedAnimeHistory.map((item) => (
+                <div
+                  key={`anime-hist-${item.id}`}
+                  className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] hover:border-rose-500/50 transition-all shadow-lg"
+                >
+                  <div className="aspect-video relative overflow-hidden bg-slate-900">
+                    <img
+                      src={item.bannerImage || item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <button
+                        onClick={() => navigate(`/watch/anime/${item.id}/1/${item.episode || 1}`)}
+                        className="w-11 h-11 rounded-full bg-[#e50914] hover:bg-rose-500 text-white flex items-center justify-center shadow-lg cursor-pointer"
+                      >
+                        <Play className="w-4 h-4 fill-white text-white ml-0.5" />
+                      </button>
+                    </div>
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-bold text-rose-300 border border-[#e50914]/30">
+                      Ep {item.episode || 1}
+                    </div>
+                  </div>
+
+                  <div className="p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
+                        <p className="text-[11px] text-rose-400">Episode {item.episode || 1}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          removeAnimeHistoryItem(item.id);
+                          removeHistoryItem(Number(item.id) || 0, 'anime', 1, item.episode || 1);
+                        }}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-[#12131a] rounded-2xl border border-white/[0.08]">
+              <History className="w-7 h-7 text-rose-400 mx-auto mb-2" />
+              <p className="text-sm text-slate-300 font-semibold">No anime watch history</p>
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'anime' ? (
+        /* Anime Watchlist Tab */
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-slate-400">
+              {combinedAnimeWatchlist.length} saved anime title{combinedAnimeWatchlist.length === 1 ? '' : 's'}
+            </span>
+            {combinedAnimeWatchlist.length > 0 && (
+              <button
+                onClick={() => {
+                  clearAnimeWatchlist();
+                  watchlist.filter(b => b.media_type === 'anime' || b.isAnime).forEach(b => removeBookmark(b.id, b.media_type));
+                }}
+                className="text-xs text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
+              >
+                Clear Anime Watchlist
+              </button>
+            )}
+          </div>
+
+          {combinedAnimeWatchlist.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {combinedAnimeWatchlist.map((item) => (
+                <div
+                  key={`anime-bm-${item.id}`}
+                  className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] hover:border-rose-500/40 transition-all"
+                >
+                  <div
+                    onClick={() => navigate(`/anime/${item.id}`)}
+                    className="aspect-[2/3] w-full relative overflow-hidden bg-slate-900 cursor-pointer"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/watch/anime/${item.id}/1/1`);
+                        }}
+                        className="w-10 h-10 rounded-full bg-[#e50914] text-white flex items-center justify-center shadow-lg"
+                      >
+                        <Play className="w-4 h-4 fill-white ml-0.5" />
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeAnimeWatchlist(String(item.id));
+                        removeBookmark(item.id, 'anime');
+                        showToast(`Removed "${item.title}" from Anime Watchlist`, 'bookmark');
+                      }}
+                      className="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-black/75 hover:bg-rose-600 text-white transition-colors z-20 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="p-2.5">
+                    <h4 className="text-xs font-bold text-white truncate">{item.title}</h4>
+                    <p className="text-[10px] text-rose-400">
+                      {item.totalEpisodes ? `${item.totalEpisodes} episodes` : 'Anime Series'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 bg-[#12131a] rounded-2xl border border-white/[0.08] max-w-md mx-auto p-6">
+              <Sparkles className="w-8 h-8 text-rose-400 mx-auto mb-2.5" />
+              <h3 className="text-base text-white font-bold mb-1">Your Anime Watchlist is empty</h3>
+              <p className="text-xs text-slate-400 mb-5">
+                Explore popular and trending anime, then tap the plus icon to save titles here.
+              </p>
+              <button
+                onClick={() => navigate('/explore/anime')}
+                className="px-5 py-2.5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-lg cursor-pointer"
+              >
+                Browse Anime Explore
+              </button>
             </div>
           )}
         </div>

@@ -59,7 +59,7 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
   ];
 
   const uniqueCredits: TMDBMedia[] = [];
-  const seenIds = new Set<number>();
+  const seenIds = new Set<number | string>();
   for (const c of allCredits) {
     if (c.id && !seenIds.has(c.id) && (c.poster_path || c.backdrop_path)) {
       seenIds.add(c.id);

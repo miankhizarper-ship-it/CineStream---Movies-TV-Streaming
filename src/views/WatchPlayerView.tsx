@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tmdb, MediaDetails, TVSeasonDetails, getImageUrl } from '../lib/tmdb';
+import { anilistApi } from '../lib/anilist';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
@@ -31,7 +32,7 @@ import { useToast } from '../context/ToastContext';
 
 interface WatchPlayerViewProps {
   id: string;
-  mediaType: 'movie' | 'tv';
+  mediaType: 'movie' | 'tv' | 'anime';
   season?: string;
   episode?: string;
 }
@@ -83,6 +84,8 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { showToast } = useToast();
 
+  const historyMediaType: 'movie' | 'tv' = mediaType === 'movie' ? 'movie' : 'tv';
+
   const [details, setDetails] = useState<MediaDetails | null>(null);
   const [currentSeason, setCurrentSeason] = useState<number>(Number(initialSeason) || 1);
   const [currentEpisode, setCurrentEpisode] = useState<number>(Number(initialEpisode) || 1);
@@ -108,6 +111,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
 
   // Player Configuration Preferences (saved to localStorage)
   const [server, setServer] = useState<string>(() => {
+    if (mediaType === 'anime') return 'core';
     return localStorage.getItem('fmov_server') || 'auto';
   });
   const [accentColor, setAccentColor] = useState<string>(() => {
@@ -148,6 +152,58 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     let isMounted = true;
     async function loadDetails() {
       try {
+        if (mediaType === 'anime') {
+          const anilistItem = await anilistApi.getAnimeInfo(id);
+          if (isMounted) {
+            const tmdbCompatible = anilistApi.toTMDBMedia(anilistItem);
+            setDetails(tmdbCompatible);
+            setAnimeMode(true);
+            setDuration((anilistItem.duration || 24) * 60);
+
+            const totalEps =
+              anilistItem.totalEpisodes ||
+              anilistItem.currentEpisode ||
+              (anilistItem.episodes?.length) ||
+              12;
+
+            const generatedEpisodes =
+              anilistItem.episodes && anilistItem.episodes.length > 0
+                ? anilistItem.episodes.map((ep, idx) => ({
+                    id: idx + 1,
+                    episode_number: ep.number || idx + 1,
+                    name: ep.title || `Episode ${ep.number || idx + 1}`,
+                    overview: ep.description || `Episode ${ep.number || idx + 1} of ${tmdbCompatible.title}`,
+                    still_path: ep.image || anilistItem.image || null,
+                    season_number: 1,
+                    air_date: ep.airDate || '',
+                    vote_average: anilistItem.rating ? anilistItem.rating / 10 : 8.5,
+                    runtime: anilistItem.duration || 24,
+                  }))
+                : Array.from({ length: totalEps }, (_, idx) => ({
+                    id: idx + 1,
+                    episode_number: idx + 1,
+                    name: `Episode ${idx + 1}`,
+                    overview: `Episode ${idx + 1} of ${tmdbCompatible.title}`,
+                    still_path: anilistItem.image || null,
+                    season_number: 1,
+                    air_date: '',
+                    vote_average: 8.5,
+                    runtime: anilistItem.duration || 24,
+                  }));
+
+            setSeasonData({
+              _id: `anime-${id}`,
+              id: Number(id) || 1,
+              name: 'Season 1',
+              overview: tmdbCompatible.overview,
+              poster_path: anilistItem.image || null,
+              season_number: 1,
+              episodes: generatedEpisodes,
+            });
+          }
+          return;
+        }
+
         const data =
           mediaType === 'tv'
             ? await tmdb.getTVDetails(id)
@@ -218,9 +274,9 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     const numericId = Number(id);
     const existing = getHistoryItem(
       numericId,
-      mediaType,
-      mediaType === 'tv' ? currentSeason : undefined,
-      mediaType === 'tv' ? currentEpisode : undefined
+      historyMediaType,
+      historyMediaType === 'tv' ? currentSeason : undefined,
+      historyMediaType === 'tv' ? currentEpisode : undefined
     );
 
     if (existing && existing.currentTime && existing.currentTime > 15) {
@@ -237,7 +293,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
       setResumeTime(null);
       setPlaybackPosition(0);
     }
-  }, [id, mediaType, currentSeason, currentEpisode, getHistoryItem, showToast]);
+  }, [id, mediaType, historyMediaType, currentSeason, currentEpisode, getHistoryItem, showToast]);
 
   // Ensure item exists in history immediately on viewing (deferred to prevent render-phase state update)
   useEffect(() => {
@@ -246,18 +302,18 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     const timer = setTimeout(() => {
       addOrUpdateHistory({
         id: details.id,
-        media_type: mediaType,
+        media_type: historyMediaType,
         title,
         poster_path: details.poster_path,
         backdrop_path: details.backdrop_path,
-        season: mediaType === 'tv' ? currentSeason : undefined,
-        episode: mediaType === 'tv' ? currentEpisode : undefined,
+        season: historyMediaType === 'tv' ? currentSeason : undefined,
+        episode: historyMediaType === 'tv' ? currentEpisode : undefined,
         currentTime: playbackPosition,
         duration: duration,
       });
     }, 50);
     return () => clearTimeout(timer);
-  }, [details, mediaType, currentSeason, currentEpisode, addOrUpdateHistory]);
+  }, [details, mediaType, historyMediaType, currentSeason, currentEpisode, addOrUpdateHistory]);
 
   const currentEpisodesList = seasonData?.episodes || [];
   const currentEpIndex = currentEpisodesList.findIndex(
@@ -272,10 +328,14 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
       setCurrentEpisode(epNum);
       setEpisodeDrawerOpen(false);
       setUpNextCountdown(null);
-      navigate(`/watch/tv/${id}/${currentSeason}/${epNum}`);
+      if (mediaType === 'anime') {
+        navigate(`/watch/anime/${id}/${currentSeason}/${epNum}`);
+      } else {
+        navigate(`/watch/tv/${id}/${currentSeason}/${epNum}`);
+      }
       showToast(`Loaded Episode ${epNum}`, 'info');
     },
-    [id, currentSeason, navigate, showToast]
+    [id, mediaType, currentSeason, navigate, showToast]
   );
 
   const handleNextEpisode = useCallback(() => {
@@ -324,11 +384,11 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
                 setPlaybackPosition(pauseTime);
                 updateProgress(
                   Number(id),
-                  mediaType,
+                  historyMediaType,
                   pauseTime,
                   durationRef.current,
-                  mediaType === 'tv' ? currentSeason : undefined,
-                  mediaType === 'tv' ? currentEpisode : undefined
+                  historyMediaType === 'tv' ? currentSeason : undefined,
+                  historyMediaType === 'tv' ? currentEpisode : undefined
                 );
               }
               break;
@@ -341,11 +401,11 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
 
                 updateProgress(
                   Number(id),
-                  mediaType,
+                  historyMediaType,
                   cur,
                   dur,
-                  mediaType === 'tv' ? currentSeason : undefined,
-                  mediaType === 'tv' ? currentEpisode : undefined
+                  historyMediaType === 'tv' ? currentSeason : undefined,
+                  historyMediaType === 'tv' ? currentEpisode : undefined
                 );
               }
               break;
@@ -355,15 +415,15 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
               if (durationRef.current > 0) {
                 updateProgress(
                   Number(id),
-                  mediaType,
+                  historyMediaType,
                   durationRef.current,
                   durationRef.current,
-                  mediaType === 'tv' ? currentSeason : undefined,
-                  mediaType === 'tv' ? currentEpisode : undefined
+                  historyMediaType === 'tv' ? currentSeason : undefined,
+                  historyMediaType === 'tv' ? currentEpisode : undefined
                 );
               }
-              // Auto transition to next episode if TV
-              if (mediaType === 'tv' && hasNext && autoplayNextEpisode) {
+              // Auto transition to next episode if TV/Anime
+              if ((mediaType === 'tv' || mediaType === 'anime') && hasNext && autoplayNextEpisode) {
                 showToast('Next episode starting automatically...', 'info');
                 handleNextEpisode();
               }
@@ -391,11 +451,11 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
 
           updateProgress(
             Number(id),
-            mediaType,
+            historyMediaType,
             validTime,
             dur || durationRef.current,
-            mediaType === 'tv' ? currentSeason : undefined,
-            mediaType === 'tv' ? currentEpisode : undefined
+            historyMediaType === 'tv' ? currentSeason : undefined,
+            historyMediaType === 'tv' ? currentEpisode : undefined
           );
         }
       } catch {
@@ -408,6 +468,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
   }, [
     id,
     mediaType,
+    historyMediaType,
     currentSeason,
     currentEpisode,
     hasNext,
@@ -426,11 +487,11 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
         if (next % 5 === 0) {
           updateProgress(
             Number(id),
-            mediaType,
+            historyMediaType,
             next,
             durationRef.current,
-            mediaType === 'tv' ? currentSeason : undefined,
-            mediaType === 'tv' ? currentEpisode : undefined
+            historyMediaType === 'tv' ? currentSeason : undefined,
+            historyMediaType === 'tv' ? currentEpisode : undefined
           );
         }
         return next;
@@ -438,7 +499,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [id, mediaType, currentSeason, currentEpisode, updateProgress]);
+  }, [id, mediaType, historyMediaType, currentSeason, currentEpisode, updateProgress]);
 
   // Save latest progress on tab unload or component unmount
   useEffect(() => {
@@ -448,11 +509,11 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
       if (finalPos > 0) {
         updateProgress(
           Number(id),
-          mediaType,
+          historyMediaType,
           finalPos,
           finalDur,
-          mediaType === 'tv' ? currentSeason : undefined,
-          mediaType === 'tv' ? currentEpisode : undefined
+          historyMediaType === 'tv' ? currentSeason : undefined,
+          historyMediaType === 'tv' ? currentEpisode : undefined
         );
       }
     };
@@ -462,7 +523,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
       window.removeEventListener('beforeunload', commitFinalProgress);
       commitFinalProgress();
     };
-  }, [id, mediaType, currentSeason, currentEpisode, updateProgress]);
+  }, [id, mediaType, historyMediaType, currentSeason, currentEpisode, updateProgress]);
 
   // Build FMOV embed URL matching documentation specifications
   const buildPlayerUrl = () => {
@@ -470,7 +531,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     let baseUrl: string;
     if (mediaType === 'movie') {
       baseUrl = `https://fmov.my/embed/movie/${id}`;
-    } else if (animeMode) {
+    } else if (mediaType === 'anime' || animeMode) {
       // FMOV Anime route: /embed/anime/{id}/{season}/{episode}
       baseUrl = `https://fmov.my/embed/anime/${id}/${currentSeason}/${currentEpisode}`;
     } else {
@@ -480,12 +541,16 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
 
     const params = new URLSearchParams();
 
-    // 1. Accent Color
-    params.set('color', accentColor);
+    // 1. Accent Color (defaults to requested Cyber Teal 14b8a6 for anime)
+    const effectiveColor = (mediaType === 'anime' && accentColor === 'e50914') ? '14b8a6' : accentColor;
+    params.set('color', effectiveColor);
 
-    // 2. Server Pinning (omit for 'auto' intelligent priority)
-    if (server && server !== 'auto') {
-      params.set('server', server);
+    // 2. Server Pinning: Default to 'core' server for anime
+    const effectiveServer = mediaType === 'anime'
+      ? (server && server !== 'auto' ? server : 'core')
+      : (server && server !== 'auto' ? server : null);
+    if (effectiveServer) {
+      params.set('server', effectiveServer);
     }
 
     // 3. Custom Watermark Logo & Click-through link
@@ -498,13 +563,15 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     // 4. Autoplay (1 or 0)
     params.set('autoplay', '1');
 
-    // 5. TV-specific parameters
+    // 5. Episode & Series/Anime parameters
     params.set('episodeSelector', 'false');
-    if (mediaType === 'tv') {
+    if (mediaType === 'tv' || mediaType === 'anime') {
       params.set('autoplayNextEpisode', autoplayNextEpisode ? 'true' : 'false');
-      params.set('nextEpisode', hasNext ? 'true' : 'false');
+      params.set('nextEpisode', hasNext ? 'true' : 'true');
       if (upNextOverlay) {
         params.set('overlay', 'true');
+      } else {
+        params.set('overlay', 'false');
       }
     }
 
@@ -549,7 +616,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
   }, [resumeTime, server, currentSeason, currentEpisode]);
 
   const title = details?.title || details?.name || 'Streaming Media';
-  const saved = details ? isBookmarked(details.id, mediaType) : false;
+  const saved = details ? isBookmarked(details.id, historyMediaType) : false;
 
   const handleSelectServer = (serverId: string, serverName: string) => {
     setServer(serverId);
@@ -559,7 +626,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
 
   const handleToggleBookmark = () => {
     if (!details) return;
-    toggleBookmark(details, mediaType);
+    toggleBookmark(details, historyMediaType);
     showToast(
       saved ? `Removed "${title}" from Watchlist` : `Added "${title}" to Watchlist`,
       'bookmark'

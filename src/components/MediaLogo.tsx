@@ -7,6 +7,7 @@ interface MediaLogoProps {
   titleFallback: string;
   className?: string;
   imgClassName?: string;
+  titleClassName?: string;
 }
 
 export function getBestLogoPath(imagesObj?: { logos?: any[] }): string | null {
@@ -31,6 +32,7 @@ export const MediaLogo: React.FC<MediaLogoProps> = ({
   titleFallback,
   className = '',
   imgClassName = 'max-h-16 md:max-h-24 w-auto object-contain drop-shadow-lg',
+  titleClassName,
 }) => {
   const [logoPath, setLogoPath] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -56,6 +58,7 @@ export const MediaLogo: React.FC<MediaLogoProps> = ({
   }, [mediaId, mediaType]);
 
   const logoUrl = logoPath ? getImageUrl(logoPath, 'w500') : null;
+  const headingClasses = titleClassName || 'text-2xl sm:text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-2xl';
 
   if (logoUrl) {
     return (
@@ -71,7 +74,7 @@ export const MediaLogo: React.FC<MediaLogoProps> = ({
           loading="eager"
         />
         {!loaded && (
-          <h1 className="text-2xl sm:text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-2xl">
+          <h1 className={`${headingClasses} ${className}`}>
             {titleFallback}
           </h1>
         )}
@@ -80,9 +83,7 @@ export const MediaLogo: React.FC<MediaLogoProps> = ({
   }
 
   return (
-    <h1
-      className={`text-2xl sm:text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-2xl ${className}`}
-    >
+    <h1 className={`${headingClasses} ${className}`}>
       {titleFallback}
     </h1>
   );

@@ -10,6 +10,7 @@ interface MovieRowProps {
   aspect?: 'poster' | 'backdrop';
   exploreLink?: string;
   onExploreClick?: () => void;
+  isAnime?: boolean;
 }
 
 export const MovieRow: React.FC<MovieRowProps> = ({
@@ -19,6 +20,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({
   aspect = 'poster',
   exploreLink,
   onExploreClick,
+  isAnime,
 }) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -103,7 +105,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({
                   : 'w-[125px] sm:w-[165px] md:w-[200px]'
               }`}
             >
-              <MovieCard media={item} mediaType={mediaType} aspect={aspect} />
+              <MovieCard media={item} mediaType={mediaType} aspect={aspect} isAnime={isAnime} />
             </div>
           ))}
         </div>

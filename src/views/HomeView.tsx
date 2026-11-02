@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Play, Info, Plus, Check, Star, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tmdb, TMDBMedia, getBackdropUrl } from '../lib/tmdb';
-import { anilistApi } from '../lib/anilist';
 import { MovieRow } from '../components/MovieRow';
 import { MediaLogo } from '../components/MediaLogo';
 import { useBookmarks } from '../hooks/useBookmarks';
@@ -21,11 +20,8 @@ export const HomeView: React.FC = () => {
   const [trending, setTrending] = useState<TMDBMedia[]>([]);
   const [popularMovies, setPopularMovies] = useState<TMDBMedia[]>([]);
   const [topRatedTV, setTopRatedTV] = useState<TMDBMedia[]>([]);
-  const [anime, setAnime] = useState<TMDBMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-
 
   useEffect(() => {
     let isMounted = true;
@@ -33,19 +29,6 @@ export const HomeView: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-
-        // Fetch trending anime from Consumet AniList API as requested
-        let animeList: TMDBMedia[] = [];
-        try {
-          const anilistTrending = await anilistApi.getTrending(1, 20);
-          if (anilistTrending.results && anilistTrending.results.length > 0) {
-            animeList = anilistTrending.results.map((item) => anilistApi.toTMDBMedia(item));
-          }
-        } catch (animeErr) {
-          console.warn('AniList trending fetch fallback to TMDB anime:', animeErr);
-          const fallbackAnime = await tmdb.getAnimeSeries(1);
-          animeList = fallbackAnime.results || [];
-        }
 
         const [trendRes, popMovRes, topTvRes] = await Promise.all([
           tmdb.getTrending('all', 'day'),
@@ -59,7 +42,6 @@ export const HomeView: React.FC = () => {
         setTrending(trendList);
         setPopularMovies(popMovRes.results || []);
         setTopRatedTV(topTvRes.results || []);
-        setAnime(animeList);
 
         const heroes = trendList.filter((item) => item.backdrop_path && item.overview).slice(0, 5);
         setHeroList(heroes.length > 0 ? heroes : trendList.slice(0, 5));
@@ -101,151 +83,110 @@ export const HomeView: React.FC = () => {
 
   if (error) {
     return (
-      <div className="max-w-xl mx-auto my-16 px-4">
-        <div className="p-6 rounded-2xl bg-[#12131a] border border-white/[0.08] text-center">
-          <h3 className="text-lg font-bold text-white mb-2">Connection Notice</h3>
-          <p className="text-xs text-slate-400 mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-semibold transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Retry Connection
-          </button>
-        </div>
+      <div className="w-full min-h-[60dvh] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <p className="text-sm text-rose-400 font-semibold">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 rounded-xl bg-[#e50914] text-white text-xs font-bold shadow-lg"
+        >
+          Retry Connection
+        </button>
       </div>
     );
   }
 
-  const heroType: 'movie' | 'tv' =
-    heroMedia?.media_type === 'tv' || heroMedia?.first_air_date ? 'tv' : 'movie';
-  const heroTitle = heroMedia?.title || heroMedia?.name || 'Featured Title';
-  const heroSaved = heroMedia ? isBookmarked(heroMedia.id, heroType) : false;
-
-  const handleHeroPlay = () => {
-    if (!heroMedia) return;
-    if (heroType === 'tv') {
-      navigate(`/watch/tv/${heroMedia.id}/1/1`);
-    } else {
-      navigate(`/watch/movie/${heroMedia.id}`);
-    }
-  };
-
-  const handleHeroDetails = () => {
-    if (!heroMedia) return;
-    navigate(`/${heroType}/${heroMedia.id}`);
-  };
-
-  const handleToggleHeroBookmark = () => {
-    if (!heroMedia) return;
-    toggleBookmark(heroMedia, heroType);
-    showToast(
-      heroSaved ? `Removed "${heroTitle}" from Watchlist` : `Added "${heroTitle}" to Watchlist`,
-      'bookmark'
-    );
-  };
-
   return (
-    <div className="w-full pb-24 space-y-4">
-      {/* Mobile-Optimized Hero Spotlight Banner with Ambient Glow */}
+    <div className="w-full flex flex-col pb-24 overflow-x-hidden">
+      {/* Hero Showcase Spotlight */}
       {heroMedia && (
-        <div className="relative w-full h-[72dvh] sm:h-[82vh] min-h-[480px] max-h-[850px] overflow-hidden bg-[#07080a]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={heroMedia.id}
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.7, ease: 'easeOut' }}
-              className="absolute inset-0"
-            >
-              {/* Backdrop Image */}
-              <img
-                src={getBackdropUrl(heroMedia.backdrop_path, 'original')}
-                alt={heroTitle}
-                className="w-full h-full object-cover object-center"
-              />
-            </motion.div>
-          </AnimatePresence>
+        <div className="relative w-full h-[65vh] sm:h-[75vh] md:h-[85vh] max-h-[900px] overflow-hidden select-none">
+          {/* Backdrop Image & Vignette Gradients */}
+          <div className="absolute inset-0 bg-[#07080a]">
+            <img
+              src={getBackdropUrl(heroMedia.backdrop_path || heroMedia.poster_path, 'original')}
+              alt={heroMedia.title || heroMedia.name || 'Hero'}
+              className="w-full h-full object-cover object-center scale-105 animate-fade-in"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/40 to-black/60" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#07080a] via-transparent to-[#07080a]/80" />
+          </div>
 
-          {/* Radial-to-Linear OLED Black Vignette Scrim Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#07080a] via-[#07080a]/80 to-transparent md:w-3/4" />
-          <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-[#07080a]/90 to-transparent" />
-
-          {/* Ambient Glow Bleed */}
-          <div className="absolute top-1/3 left-10 w-96 h-96 bg-rose-600/15 rounded-full blur-[140px] pointer-events-none" />
-
-          {/* Hero Content Container */}
-          <div className="absolute bottom-6 sm:bottom-12 md:bottom-16 inset-x-0 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 z-10">
+          {/* Hero Content Details */}
+          <div className="absolute inset-0 z-10 flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-12 sm:pb-16 md:pb-20">
             <div className="max-w-2xl space-y-3 sm:space-y-4">
-              {/* Metadata Badges */}
-              <div className="flex items-center flex-wrap gap-2 text-xs font-semibold text-slate-300">
-                <span className="flex items-center gap-1 text-amber-400 px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span className="tabular-nums">
-                    {heroMedia.vote_average ? heroMedia.vote_average.toFixed(1) : 'NR'}
-                  </span>
+              {/* Media Title / Logo */}
+              <div className="min-h-[48px] sm:min-h-[64px] flex items-center">
+                <MediaLogo
+                  mediaId={heroMedia.id}
+                  mediaType={heroMedia.media_type === 'tv' ? 'tv' : 'movie'}
+                  titleFallback={heroMedia.title || heroMedia.name || 'Featured Title'}
+                />
+              </div>
+
+              {/* Meta Info Bar */}
+              <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-semibold text-slate-300">
+                {heroMedia.vote_average ? (
+                  <div className="flex items-center gap-1 text-amber-400 font-bold bg-black/40 px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/10">
+                    <Star className="w-4 h-4 fill-amber-400" />
+                    <span>{heroMedia.vote_average.toFixed(1)}</span>
+                  </div>
+                ) : null}
+                <span className="bg-white/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/10 uppercase text-[11px] font-bold">
+                  {heroMedia.media_type || 'movie'}
                 </span>
-                <span className="uppercase text-[#e50914] font-extrabold tracking-wider text-[11px] px-2 py-0.5 rounded-lg bg-[#e50914]/20 border border-[#e50914]/40">
-                  #1 Trending Today
-                </span>
-                <span className="text-slate-300 text-xs font-medium">
-                  {(heroMedia.release_date || heroMedia.first_air_date || '').slice(0, 4)}
-                </span>
-                <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-white/10 text-slate-200 border border-white/10">
-                  4K Ultra HD
+                <span>{(heroMedia.release_date || heroMedia.first_air_date || '').slice(0, 4)}</span>
+                <span className="px-2 py-0.5 rounded border border-white/20 text-[10px] uppercase text-slate-300">
+                  HD 4K
                 </span>
               </div>
 
-              {/* Title with responsive text balance */}
-              <MediaLogo
-                mediaId={heroMedia.id}
-                mediaType={heroType}
-                titleFallback={heroTitle}
-                imgClassName="max-h-20 sm:max-h-28 md:max-h-36 w-auto object-contain drop-shadow-2xl"
-              />
-
-              {/* Overview Excerpt */}
-              <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 sm:line-clamp-3 md:line-clamp-4 leading-relaxed max-w-xl drop-shadow">
+              {/* Overview Paragraph */}
+              <p className="text-xs sm:text-sm md:text-base text-slate-300 line-clamp-3 leading-relaxed drop-shadow-md">
                 {heroMedia.overview}
               </p>
 
-              {/* Action Row */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button
-                  onClick={handleHeroPlay}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-rose-950/70 active:scale-95 transition-all touch-manipulation"
+                  onClick={() => {
+                    const mType = heroMedia.media_type === 'tv' ? 'tv' : 'movie';
+                    if (mType === 'tv') {
+                      navigate(`/watch/tv/${heroMedia.id}/1/1`);
+                    } else {
+                      navigate(`/watch/movie/${heroMedia.id}`);
+                    }
+                  }}
+                  className="px-6 sm:px-8 py-3 rounded-2xl bg-[#e50914] hover:bg-rose-500 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-rose-950/70 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <Play className="w-5 h-5 fill-white" />
+                  <Play className="w-4 h-4 fill-white text-white ml-0.5" />
                   <span>Play Now</span>
                 </button>
 
-                <div className="flex items-center gap-2.5">
-                  <button
-                    onClick={handleHeroDetails}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 backdrop-blur-md text-white font-semibold text-xs sm:text-sm border border-white/20 active:scale-95 transition-all touch-manipulation"
-                  >
-                    <Info className="w-4 h-4" />
-                    <span>More Info</span>
-                  </button>
+                <button
+                  onClick={() => {
+                    const mType = heroMedia.media_type === 'tv' ? 'tv' : 'movie';
+                    navigate(`/${mType}/${heroMedia.id}`);
+                  }}
+                  className="px-5 sm:px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm backdrop-blur-xl border border-white/15 active:scale-95 transition-all flex items-center gap-2 cursor-pointer shadow-lg"
+                >
+                  <Info className="w-4 h-4" />
+                  <span>More Info</span>
+                </button>
 
-                  <button
-                    onClick={handleToggleHeroBookmark}
-                    className={`p-3.5 rounded-xl border backdrop-blur-md active:scale-95 transition-all touch-manipulation ${
-                      heroSaved
-                        ? 'bg-[#e50914]/30 border-[#e50914] text-rose-300'
-                        : 'bg-white/10 hover:bg-white/15 border-white/20 text-white'
-                    }`}
-                    title={heroSaved ? 'Remove from My List' : 'Add to My List'}
-                    aria-label={heroSaved ? 'Remove from My List' : 'Add to My List'}
-                  >
-                    {heroSaved ? <Check className="w-5 h-5 text-rose-400" /> : <Plus className="w-5 h-5" />}
-                  </button>
-                </div>
+                <button
+                  onClick={() => toggleBookmark(heroMedia)}
+                  className={`p-3 rounded-2xl backdrop-blur-xl border transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
+                    isBookmarked(heroMedia.id)
+                      ? 'bg-rose-600/90 border-rose-500 text-white shadow-lg'
+                      : 'bg-black/50 border-white/15 text-slate-200 hover:text-white hover:bg-white/10'
+                  }`}
+                  title={isBookmarked(heroMedia.id) ? 'Remove from My List' : 'Add to My List'}
+                >
+                  {isBookmarked(heroMedia.id) ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                </button>
               </div>
 
-              {/* Slide Indicator Dots */}
+              {/* Carousel Indicators */}
               {heroList.length > 1 && (
                 <div className="flex items-center gap-2 pt-4">
                   {heroList.map((_, idx) => (
@@ -309,15 +250,6 @@ export const HomeView: React.FC = () => {
         mediaType="tv"
         exploreLink="/explore/tv"
         onExploreClick={() => navigate('/explore/tv')}
-      />
-
-      <MovieRow
-        title="Anime & Animation (AniList Trending)"
-        items={anime}
-        mediaType="tv"
-        isAnime={true}
-        exploreLink="/explore/anime"
-        onExploreClick={() => navigate('/explore/anime')}
       />
 
       {/* Android App Download Banner (Visible on Large PC Screen View, Hidden on Mobile View) */}

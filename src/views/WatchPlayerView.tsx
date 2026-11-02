@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tmdb, MediaDetails, TVSeasonDetails, getImageUrl } from '../lib/tmdb';
-import { anilistApi } from '../lib/anilist';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
@@ -152,58 +151,6 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     let isMounted = true;
     async function loadDetails() {
       try {
-        if (mediaType === 'anime') {
-          const anilistItem = await anilistApi.getAnimeInfo(id);
-          if (isMounted) {
-            const tmdbCompatible = anilistApi.toTMDBMedia(anilistItem);
-            setDetails(tmdbCompatible);
-            setAnimeMode(true);
-            setDuration((anilistItem.duration || 24) * 60);
-
-            const totalEps =
-              anilistItem.totalEpisodes ||
-              anilistItem.currentEpisode ||
-              (anilistItem.episodes?.length) ||
-              12;
-
-            const generatedEpisodes =
-              anilistItem.episodes && anilistItem.episodes.length > 0
-                ? anilistItem.episodes.map((ep, idx) => ({
-                    id: idx + 1,
-                    episode_number: ep.number || idx + 1,
-                    name: ep.title || `Episode ${ep.number || idx + 1}`,
-                    overview: ep.description || `Episode ${ep.number || idx + 1} of ${tmdbCompatible.title}`,
-                    still_path: ep.image || anilistItem.image || null,
-                    season_number: 1,
-                    air_date: ep.airDate || '',
-                    vote_average: anilistItem.rating ? anilistItem.rating / 10 : 8.5,
-                    runtime: anilistItem.duration || 24,
-                  }))
-                : Array.from({ length: totalEps }, (_, idx) => ({
-                    id: idx + 1,
-                    episode_number: idx + 1,
-                    name: `Episode ${idx + 1}`,
-                    overview: `Episode ${idx + 1} of ${tmdbCompatible.title}`,
-                    still_path: anilistItem.image || null,
-                    season_number: 1,
-                    air_date: '',
-                    vote_average: 8.5,
-                    runtime: anilistItem.duration || 24,
-                  }));
-
-            setSeasonData({
-              _id: `anime-${id}`,
-              id: Number(id) || 1,
-              name: 'Season 1',
-              overview: tmdbCompatible.overview,
-              poster_path: anilistItem.image || null,
-              season_number: 1,
-              episodes: generatedEpisodes,
-            });
-          }
-          return;
-        }
-
         const data =
           mediaType === 'tv'
             ? await tmdb.getTVDetails(id)

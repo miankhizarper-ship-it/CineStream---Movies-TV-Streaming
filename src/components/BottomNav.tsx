@@ -26,7 +26,7 @@ export const BottomNav: React.FC = () => {
       label: 'Explore',
       path: '/explore/movie',
       icon: Compass,
-      isActive: route.type === 'explore' || route.type === 'categories',
+      isActive: route.type === 'explore',
     },
     {
       id: 'search',

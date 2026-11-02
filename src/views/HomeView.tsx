@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Play, Info, Plus, Check, Star, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tmdb, TMDBMedia, getBackdropUrl } from '../lib/tmdb';
+import { anilistApi } from '../lib/anilist';
 import { MovieRow } from '../components/MovieRow';
 import { MediaLogo } from '../components/MediaLogo';
 import { useBookmarks } from '../hooks/useBookmarks';
@@ -33,11 +34,23 @@ export const HomeView: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const [trendRes, popMovRes, topTvRes, animeRes] = await Promise.all([
+        // Fetch trending anime from Consumet AniList API as requested
+        let animeList: TMDBMedia[] = [];
+        try {
+          const anilistTrending = await anilistApi.getTrending(1, 20);
+          if (anilistTrending.results && anilistTrending.results.length > 0) {
+            animeList = anilistTrending.results.map((item) => anilistApi.toTMDBMedia(item));
+          }
+        } catch (animeErr) {
+          console.warn('AniList trending fetch fallback to TMDB anime:', animeErr);
+          const fallbackAnime = await tmdb.getAnimeSeries(1);
+          animeList = fallbackAnime.results || [];
+        }
+
+        const [trendRes, popMovRes, topTvRes] = await Promise.all([
           tmdb.getTrending('all', 'day'),
           tmdb.getPopularMovies(1),
           tmdb.getTopRatedTV(1),
-          tmdb.getAnimeSeries(1),
         ]);
 
         if (!isMounted) return;
@@ -46,7 +59,7 @@ export const HomeView: React.FC = () => {
         setTrending(trendList);
         setPopularMovies(popMovRes.results || []);
         setTopRatedTV(topTvRes.results || []);
-        setAnime(animeRes.results || []);
+        setAnime(animeList);
 
         const heroes = trendList.filter((item) => item.backdrop_path && item.overview).slice(0, 5);
         setHeroList(heroes.length > 0 ? heroes : trendList.slice(0, 5));
@@ -299,11 +312,12 @@ export const HomeView: React.FC = () => {
       />
 
       <MovieRow
-        title="Anime & Animation"
+        title="Anime & Animation (AniList Trending)"
         items={anime}
         mediaType="tv"
-        exploreLink="/explore/tv"
-        onExploreClick={() => navigate('/explore/tv')}
+        isAnime={true}
+        exploreLink="/explore/anime"
+        onExploreClick={() => navigate('/explore/anime')}
       />
 
       {/* Android App Download Banner (Visible on Large PC Screen View, Hidden on Mobile View) */}

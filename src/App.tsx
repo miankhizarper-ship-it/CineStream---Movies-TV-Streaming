@@ -6,6 +6,7 @@ import { RouterProvider, useRouter } from './context/RouterContext';
 import { ToastProvider } from './context/ToastContext';
 import { WatchlistProvider } from './context/WatchlistContext';
 import { WatchHistoryProvider } from './context/WatchHistoryContext';
+import { AnimeProvider } from './context/AnimeContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { PhantomGhost } from './components/PhantomGhost';
@@ -16,6 +17,8 @@ import { HomeView } from './views/HomeView';
 import { DetailsView } from './views/DetailsView';
 import { WatchPlayerView } from './views/WatchPlayerView';
 import { ExploreView } from './views/ExploreView';
+import { AnimeExploreView } from './views/AnimeExploreView';
+import { AnimeDetailsView } from './views/AnimeDetailsView';
 import { CategoriesView } from './views/CategoriesView';
 import { SearchView } from './views/SearchView';
 import { PersonView } from './views/PersonView';
@@ -29,7 +32,10 @@ const CLERK_PUBLISHABLE_KEY =
 const MainContent: React.FC = () => {
   const { route } = useRouter();
 
-  const isWatchPage = route.type === 'watch-movie' || route.type === 'watch-tv';
+  const isWatchPage =
+    route.type === 'watch-movie' ||
+    route.type === 'watch-tv' ||
+    route.type === 'watch-anime';
 
   const renderView = () => {
     switch (route.type) {
@@ -39,6 +45,8 @@ const MainContent: React.FC = () => {
         return <DetailsView id={route.params.id || ''} mediaType="movie" />;
       case 'tv':
         return <DetailsView id={route.params.id || ''} mediaType="tv" />;
+      case 'anime':
+        return <AnimeDetailsView id={route.params.id || ''} />;
       case 'watch-movie':
         return <WatchPlayerView id={route.params.id || ''} mediaType="movie" />;
       case 'watch-tv':
@@ -50,8 +58,19 @@ const MainContent: React.FC = () => {
             episode={route.params.episode}
           />
         );
+      case 'watch-anime':
+        return (
+          <WatchPlayerView
+            id={route.params.id || ''}
+            mediaType="anime"
+            season={route.params.season || '1'}
+            episode={route.params.episode || '1'}
+          />
+        );
+      case 'explore-anime':
+        return <AnimeExploreView />;
       case 'explore':
-        return <ExploreView initialType={route.params.mediaType || 'movie'} />;
+        return <ExploreView initialType={route.params.mediaType === 'tv' ? 'tv' : 'movie'} />;
       case 'categories':
         return <CategoriesView />;
       case 'search':
@@ -111,9 +130,11 @@ export default function App() {
       <ToastProvider>
         <WatchlistProvider>
           <WatchHistoryProvider>
-            <RouterProvider>
-              <MainContent />
-            </RouterProvider>
+            <AnimeProvider>
+              <RouterProvider>
+                <MainContent />
+              </RouterProvider>
+            </AnimeProvider>
           </WatchHistoryProvider>
         </WatchlistProvider>
       </ToastProvider>

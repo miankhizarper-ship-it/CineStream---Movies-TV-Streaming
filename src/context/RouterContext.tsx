@@ -4,9 +4,12 @@ export type RouteType =
   | 'home'
   | 'movie'
   | 'tv'
+  | 'anime'
   | 'watch-movie'
   | 'watch-tv'
+  | 'watch-anime'
   | 'explore'
+  | 'explore-anime'
   | 'categories'
   | 'search'
   | 'person'
@@ -20,7 +23,7 @@ export interface RouteState {
     id?: string;
     season?: string;
     episode?: string;
-    mediaType?: 'movie' | 'tv';
+    mediaType?: 'movie' | 'tv' | 'anime';
   };
   query: Record<string, string>;
   rawPath: string;
@@ -44,6 +47,22 @@ function parsePath(fullPath: string): RouteState {
 
   const clean = pathname.replace(/^\/+|\/+$/g, '');
   const segments = clean ? clean.split('/') : [];
+
+  // /watch/anime/:id/:season/:episode or /watch/anime/:id/:episode or /watch/anime/:id
+  if (segments[0] === 'watch' && segments[1] === 'anime' && segments[2]) {
+    const isThreeParts = segments[4] !== undefined;
+    return {
+      type: 'watch-anime',
+      params: {
+        id: segments[2],
+        season: isThreeParts ? segments[3] : '1',
+        episode: isThreeParts ? segments[4] : segments[3] || '1',
+        mediaType: 'anime',
+      },
+      query,
+      rawPath: fullPath,
+    };
+  }
 
   // /watch/movie/:id
   if (segments[0] === 'watch' && segments[1] === 'movie' && segments[2]) {
@@ -70,6 +89,16 @@ function parsePath(fullPath: string): RouteState {
     };
   }
 
+  // /anime/:id
+  if (segments[0] === 'anime' && segments[1]) {
+    return {
+      type: 'anime',
+      params: { id: segments[1], mediaType: 'anime' },
+      query,
+      rawPath: fullPath,
+    };
+  }
+
   // /movie/:id
   if (segments[0] === 'movie' && segments[1]) {
     return {
@@ -85,6 +114,16 @@ function parsePath(fullPath: string): RouteState {
     return {
       type: 'tv',
       params: { id: segments[1], mediaType: 'tv' },
+      query,
+      rawPath: fullPath,
+    };
+  }
+
+  // /explore/anime
+  if (segments[0] === 'explore' && segments[1] === 'anime') {
+    return {
+      type: 'explore-anime',
+      params: { mediaType: 'anime' },
       query,
       rawPath: fullPath,
     };

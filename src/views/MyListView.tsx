@@ -5,7 +5,8 @@ import { useWatchlist } from '../context/WatchlistContext';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
-import { getImageUrl, getBackdropUrl } from '../lib/tmdb';
+import { MovieCard } from '../components/MovieCard';
+import { getBackdropUrl } from '../lib/tmdb';
 
 function formatTime(seconds?: number): string {
   if (!seconds || isNaN(seconds) || seconds < 0) return '0:00';
@@ -23,7 +24,6 @@ export const MyListView: React.FC = () => {
   const { navigate } = useRouter();
   const {
     watchlist,
-    removeBookmark,
     clearBookmarks,
     isSyncing,
     openSignInForWatchlist,
@@ -45,11 +45,6 @@ export const MyListView: React.FC = () => {
     if (activeTab === 'tv') return b.media_type === 'tv';
     return true;
   });
-
-  const handleRemoveBookmark = (id: number | string, mediaType: 'movie' | 'tv', title: string) => {
-    removeBookmark(id, mediaType);
-    showToast(`Removed "${title}" from Watchlist`, 'bookmark');
-  };
 
   const handleClearBookmarks = () => {
     clearBookmarks();
@@ -170,32 +165,31 @@ export const MyListView: React.FC = () => {
           </div>
 
           {history.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {history.map((item) => (
                 <div
                   key={`history-card-${item.id}-${item.season || 0}-${item.episode || 0}`}
-                  className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-[0.98] transition-all hover:border-white/20 shadow-lg"
+                  className="group relative rounded-2xl overflow-hidden bg-[#101119] border border-white/15 transition-all duration-300 hover:scale-105 hover:border-rose-500/50 hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)] shadow-xl"
                 >
-                  <div className="aspect-video relative overflow-hidden bg-[#161822]">
+                  <div
+                    onClick={() => {
+                      if (item.media_type === 'tv') {
+                        navigate(`/watch/tv/${item.id}/${item.season || 1}/${item.episode || 1}`);
+                      } else {
+                        navigate(`/watch/movie/${item.id}`);
+                      }
+                    }}
+                    className="aspect-video relative overflow-hidden bg-[#161822] cursor-pointer"
+                  >
                     <img
                       src={getBackdropUrl(item.backdrop_path || item.poster_path, 'w780')}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <button
-                        onClick={() => {
-                          if (item.media_type === 'tv') {
-                            navigate(`/watch/tv/${item.id}/${item.season || 1}/${item.episode || 1}`);
-                          } else {
-                            navigate(`/watch/movie/${item.id}`);
-                          }
-                        }}
-                        className="w-11 h-11 rounded-full bg-[#e50914] flex items-center justify-center shadow-lg active:scale-90 transition-transform cursor-pointer"
-                        title="Resume playback"
-                      >
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-11 h-11 rounded-full bg-[#e50914] flex items-center justify-center shadow-lg">
                         <Play className="w-4 h-4 fill-white text-white ml-0.5" />
-                      </button>
+                      </div>
                     </div>
 
                     {/* Progress Bar overlay */}
@@ -209,7 +203,7 @@ export const MyListView: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="p-3">
+                  <div className="p-3.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
@@ -231,7 +225,7 @@ export const MyListView: React.FC = () => {
                       </div>
                       <button
                         onClick={() => handleRemoveHistory(item.id, item.media_type === 'tv' ? 'tv' : 'movie', item.season, item.episode)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-white/5 active:scale-90 cursor-pointer transition-colors shrink-0"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-white/5 active:scale-90 cursor-pointer transition-colors shrink-0"
                         title="Remove from history"
                         aria-label="Remove item from history"
                       >
@@ -239,8 +233,7 @@ export const MyListView: React.FC = () => {
                       </button>
                     </div>
 
-                    {/* Exact timestamp & Resume action button */}
-                    <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/5 text-[10px]">
+                    <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/10 text-[10px]">
                       <span className="text-slate-400 font-semibold tabular-nums">
                         {item.currentTime && item.currentTime > 0
                           ? `${formatTime(item.currentTime)}${item.duration ? ` / ${formatTime(item.duration)}` : ''}`
@@ -298,61 +291,25 @@ export const MyListView: React.FC = () => {
           </div>
 
           {filteredBookmarks.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
               {filteredBookmarks.map((item) => (
-                <div
+                <MovieCard
                   key={`bm-${item.media_type}-${item.id}`}
-                  className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] active:scale-[0.98] transition-all hover:border-white/20"
-                >
-                  <div
-                    onClick={() => navigate(`/${item.media_type}/${item.id}`)}
-                    className="aspect-[2/3] w-full relative overflow-hidden bg-[#161822] cursor-pointer"
-                  >
-                    <img
-                      src={getImageUrl(item.poster_path, 'w500')}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-
-                    {/* Quick Play & Delete buttons */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (item.media_type === 'tv') {
-                            navigate(`/watch/tv/${item.id}/1/1`);
-                          } else {
-                            navigate(`/watch/movie/${item.id}`);
-                          }
-                        }}
-                        className="w-10 h-10 rounded-full bg-[#e50914] flex items-center justify-center shadow-lg active:scale-90 transition-transform cursor-pointer"
-                        title="Watch now"
-                      >
-                        <Play className="w-4 h-4 fill-white text-white ml-0.5" />
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveBookmark(item.id, item.media_type === 'tv' ? 'tv' : 'movie', item.title);
-                      }}
-                      className="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-black/75 hover:bg-[#e50914] text-white transition-colors z-20 cursor-pointer"
-                      title="Remove from My List"
-                      aria-label="Remove title from My List"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <div className="p-2.5">
-                    <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 mt-0.5">
-                      <span className="capitalize">{item.media_type}</span>
-                      <span>{(item.release_date || item.first_air_date || '').slice(0, 4)}</span>
-                    </div>
-                  </div>
-                </div>
+                  media={{
+                    id: item.id,
+                    media_type: item.media_type,
+                    title: item.title,
+                    name: item.title,
+                    poster_path: item.poster_path,
+                    backdrop_path: item.backdrop_path,
+                    vote_average: item.vote_average || 8.0,
+                    release_date: item.release_date || '',
+                    first_air_date: item.first_air_date || '',
+                    overview: item.overview || '',
+                  }}
+                  mediaType={item.media_type === 'tv' ? 'tv' : 'movie'}
+                  aspect="poster"
+                />
               ))}
             </div>
           ) : (

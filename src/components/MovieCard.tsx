@@ -36,7 +36,33 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   // Match percentage simulation based on rating
   const matchPercentage = Math.min(99, Math.max(78, Math.round((media.vote_average || 7.5) * 10)));
 
+  const isDraggingRef = React.useRef(false);
+  const touchStartPos = React.useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    isDraggingRef.current = false;
+    touchStartPos.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPos.current) return;
+    const dx = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
+    const dy = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
+    // If movement exceeds small threshold, user is scrolling/panning
+    if (dx > 8 || dy > 8) {
+      isDraggingRef.current = true;
+    }
+  };
+
   const handleCardClick = () => {
+    // If user dragged to scroll, cancel navigation
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      return;
+    }
     if (isAnime) {
       navigate(`/anime/${media.id}`);
     } else {
@@ -84,7 +110,9 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/10 transition-all duration-300 ease-out hover:scale-105 hover:z-35 hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)] hover:border-rose-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 touch-manipulation active:scale-[0.98] transform-gpu will-change-transform"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/10 transition-transform duration-300 ease-out md:hover:scale-105 md:hover:z-35 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)] md:hover:border-rose-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 md:active:scale-[0.98] transform-gpu"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -130,7 +158,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         {/* Mobile Bookmark Touch Button */}
         <button
           onClick={handleBookmarkToggle}
-          className="md:hidden absolute top-2 right-2 z-20 w-11 h-11 flex items-center justify-center rounded-full text-white touch-manipulation active:scale-90"
+          className="md:hidden absolute top-2 right-2 z-20 w-11 h-11 flex items-center justify-center rounded-full text-white active:scale-90"
           aria-label={saved ? 'Remove from My List' : 'Add to My List'}
         >
           <div
@@ -144,8 +172,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         </button>
 
-        {/* Hover Vignette & Micro-Actions Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 z-20">
+        {/* Hover Vignette & Micro-Actions Overlay (Desktop only) */}
+        <div className="hidden md:flex absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/60 to-transparent opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-300 flex-col justify-end p-4 z-20">
           <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-400 mb-1.5">
             <span>{matchPercentage}% Match</span>
             <span className="text-slate-400 font-normal">·</span>

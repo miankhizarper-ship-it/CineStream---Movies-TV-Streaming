@@ -352,7 +352,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
               <div
                 ref={castRowRef}
                 onScroll={checkCastScroll}
-                className="flex gap-3.5 overflow-x-auto scrollbar-none snap-x touch-pan-x py-1 relative z-10"
+                className="flex gap-3.5 overflow-x-auto scrollbar-none snap-x py-1 relative z-10"
               >
                 {details.credits.cast.slice(0, 16).map((actor) => (
                   <div

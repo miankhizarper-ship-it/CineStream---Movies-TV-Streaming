@@ -94,7 +94,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({
         <div
           ref={rowRef}
           onScroll={checkScroll}
-          className="flex gap-2.5 sm:gap-4 overflow-x-auto overscroll-x-contain scrollbar-none snap-x snap-mandatory touch-pan-x py-4 -my-3 sm:py-6 sm:-my-5 px-1 relative z-10"
+          className="flex gap-2.5 sm:gap-4 overflow-x-auto scrollbar-none snap-x snap-proximity sm:snap-mandatory py-4 -my-3 sm:py-6 sm:-my-5 px-1 relative z-10"
         >
           {items.map((item, idx) => (
             <div

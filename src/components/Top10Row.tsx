@@ -70,7 +70,7 @@ export const Top10Row: React.FC<Top10RowProps> = ({ items, mediaType = 'movie' }
         <div
           ref={rowRef}
           onScroll={checkScroll}
-          className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none snap-x snap-mandatory touch-pan-x py-2 scroll-smooth relative z-10"
+          className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none snap-x snap-proximity sm:snap-mandatory py-2 scroll-smooth relative z-10"
         >
           {top10Items.map((item, index) => {
             const rank = index + 1;

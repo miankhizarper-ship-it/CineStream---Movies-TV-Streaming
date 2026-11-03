@@ -328,6 +328,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
             }))}
             backdropFallback={details.backdrop_path}
             initialSeason={selectedSeason}
+            onSeasonChange={(sNum) => setSelectedSeason(sNum)}
           />
         )}
 

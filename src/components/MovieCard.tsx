@@ -112,7 +112,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       onClick={handleCardClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
-      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/10 transition-transform duration-300 ease-out md:hover:scale-105 md:hover:z-35 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)] md:hover:border-rose-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 md:active:scale-[0.98] transform-gpu"
+      style={{ touchAction: 'pan-x pan-y' }}
+      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/10 transition-transform duration-300 ease-out md:hover:scale-105 md:hover:z-35 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)] md:hover:border-rose-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 md:active:scale-[0.98] [touch-action:pan-x_pan-y]"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -133,9 +134,10 @@ export const MovieCard: React.FC<MovieCardProps> = ({
             src={imageSrc}
             alt={title}
             loading="lazy"
+            draggable={false}
             referrerPolicy="no-referrer"
             onError={() => setImageError(true)}
-            className="w-full h-full object-cover transition-transform duration-500 ease-out md:group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out md:group-hover:scale-110 pointer-events-none select-none"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-b from-[#181a26] to-[#0f1017]">
@@ -145,19 +147,20 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         )}
 
         {/* Rating Badge on Card */}
-        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[11px] font-bold text-amber-400 border border-white/10 shadow-lg">
+        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[11px] font-bold text-amber-400 border border-white/10 shadow-lg pointer-events-none">
           <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
           <span className="tabular-nums">{rating}</span>
         </div>
 
         {/* 4K Badge */}
-        <div className="absolute top-2.5 right-2.5 z-10 hidden md:block px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-[10px] font-extrabold text-slate-300 border border-white/10 tracking-wider">
+        <div className="absolute top-2.5 right-2.5 z-10 hidden md:block px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-[10px] font-extrabold text-slate-300 border border-white/10 tracking-wider pointer-events-none">
           4K HDR
         </div>
 
         {/* Mobile Bookmark Touch Button */}
         <button
           onClick={handleBookmarkToggle}
+          onTouchStart={(e) => e.stopPropagation()}
           className="md:hidden absolute top-2 right-2 z-20 w-11 h-11 flex items-center justify-center rounded-full text-white active:scale-90"
           aria-label={saved ? 'Remove from My List' : 'Add to My List'}
         >

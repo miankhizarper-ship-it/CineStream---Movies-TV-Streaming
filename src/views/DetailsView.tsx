@@ -352,19 +352,21 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
               <div
                 ref={castRowRef}
                 onScroll={checkCastScroll}
-                className="flex gap-3.5 overflow-x-auto scrollbar-none snap-x py-1 relative z-10"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
+                className="flex gap-3.5 overflow-x-auto overflow-y-hidden overscroll-y-auto overscroll-x-contain scrollbar-none sm:snap-x sm:snap-proximity py-1 relative z-10 [touch-action:pan-x_pan-y]"
               >
                 {details.credits.cast.slice(0, 16).map((actor) => (
                   <div
                     key={actor.id}
                     onClick={() => navigate(`/person/${actor.id}`)}
-                    className="snap-start shrink-0 w-24 sm:w-28 text-center cursor-pointer active:scale-95 group"
+                    className="sm:snap-start shrink-0 w-24 sm:w-28 text-center cursor-pointer active:scale-95 group"
                   >
                     <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-[#181a26] border border-white/10 mb-2 group-hover:border-[#e50914]/60 transition-colors">
                       <img
                         src={getImageUrl(actor.profile_path, 'w185')}
                         alt={actor.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        draggable={false}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform pointer-events-none select-none"
                         loading="lazy"
                       />
                     </div>

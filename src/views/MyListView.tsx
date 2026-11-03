@@ -78,10 +78,10 @@ export const MyListView: React.FC = () => {
         </div>
 
         {/* Tab Controls */}
-        <div className="flex items-center gap-1 p-1 bg-[#12131a] rounded-xl border border-white/[0.08] self-start sm:self-auto overflow-x-auto scrollbar-none snap-x">
+        <div className="flex items-center gap-1 p-1 bg-[#12131a] rounded-xl border border-white/[0.08] self-start sm:self-auto overflow-x-auto scrollbar-none [touch-action:pan-x_pan-y]">
           <button
             onClick={() => setActiveTab('all')}
-            className={`snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'all'
                 ? 'bg-[#e50914] text-white shadow-md'
                 : 'text-slate-400 hover:text-white'

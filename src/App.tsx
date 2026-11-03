@@ -79,7 +79,7 @@ const MainContent: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="w-full transform-gpu"
+            className="w-full"
           >
             {renderView()}
           </motion.div>

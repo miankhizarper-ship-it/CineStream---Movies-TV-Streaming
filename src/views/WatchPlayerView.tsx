@@ -752,14 +752,14 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
               </div>
             </div>
 
-            <div className="flex gap-2.5 overflow-x-auto scrollbar-none snap-x py-1">
+            <div className="flex gap-2.5 overflow-x-auto scrollbar-none py-1 [touch-action:pan-x_pan-y]">
               {SERVERS.map((s) => {
                 const active = server === s.id;
                 return (
                   <button
                     key={s.id}
                     onClick={() => handleSelectServer(s.id, s.name)}
-                    className={`snap-start shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                    className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       active
                         ? 'bg-[#e50914] border-rose-500 text-white shadow-lg shadow-rose-950/60'
                         : 'bg-white/5 border-white/[0.08] text-slate-300 hover:text-white hover:bg-white/10 active:scale-95'

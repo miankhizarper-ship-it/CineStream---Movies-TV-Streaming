@@ -96,7 +96,7 @@ export const HomeView: React.FC = () => {
   }
 
   return (
-    <div className="w-full flex flex-col pb-24 overflow-x-hidden">
+    <div className="w-full flex flex-col pb-24">
       {/* Hero Showcase Spotlight */}
       {heroMedia && (
         <div className="relative w-full h-[65vh] sm:h-[75vh] md:h-[85vh] max-h-[900px] overflow-hidden select-none">

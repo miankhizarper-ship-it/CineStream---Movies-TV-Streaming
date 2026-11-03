@@ -70,18 +70,19 @@ export const Top10Row: React.FC<Top10RowProps> = ({ items, mediaType = 'movie' }
         <div
           ref={rowRef}
           onScroll={checkScroll}
-          className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none snap-x snap-proximity sm:snap-mandatory py-2 scroll-smooth relative z-10"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
+          className="flex gap-4 sm:gap-6 overflow-x-auto overflow-y-hidden overscroll-y-auto overscroll-x-contain scrollbar-none sm:snap-x sm:snap-proximity py-2 relative z-10 [touch-action:pan-x_pan-y]"
         >
           {top10Items.map((item, index) => {
             const rank = index + 1;
             return (
               <div
                 key={`top10-${item.id}`}
-                className="snap-start shrink-0 flex items-end relative min-w-[170px] sm:min-w-[220px] md:min-w-[260px]"
+                className="sm:snap-start shrink-0 flex items-end relative min-w-[170px] sm:min-w-[220px] md:min-w-[260px]"
               >
                 {/* Giant Outlined Number */}
                 <div
-                  className="top10-number select-none text-[110px] sm:text-[140px] md:text-[170px] font-black leading-none tracking-tighter -mr-6 sm:-mr-9 md:-mr-12 z-0 translate-y-3 sm:translate-y-4"
+                  className="top10-number select-none pointer-events-none text-[110px] sm:text-[140px] md:text-[170px] font-black leading-none tracking-tighter -mr-6 sm:-mr-9 md:-mr-12 z-0 translate-y-3 sm:translate-y-4"
                   aria-hidden="true"
                 >
                   {rank}

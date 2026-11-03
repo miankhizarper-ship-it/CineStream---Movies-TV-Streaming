@@ -94,12 +94,13 @@ export const MovieRow: React.FC<MovieRowProps> = ({
         <div
           ref={rowRef}
           onScroll={checkScroll}
-          className="flex gap-2.5 sm:gap-4 overflow-x-auto scrollbar-none snap-x snap-proximity sm:snap-mandatory py-4 -my-3 sm:py-6 sm:-my-5 px-1 relative z-10"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
+          className="flex gap-2.5 sm:gap-4 overflow-x-auto overflow-y-hidden overscroll-y-auto overscroll-x-contain scrollbar-none sm:snap-x sm:snap-proximity py-2 px-1 relative z-10 [touch-action:pan-x_pan-y]"
         >
           {items.map((item, idx) => (
             <div
               key={`${item.media_type || mediaType || 'item'}-${item.id}-${idx}`}
-              className={`snap-start shrink-0 relative transition-all duration-300 hover:z-30 ${
+              className={`sm:snap-start shrink-0 relative transition-all duration-300 hover:z-30 ${
                 aspect === 'backdrop'
                   ? 'w-[200px] sm:w-[260px] md:w-[300px]'
                   : 'w-[125px] sm:w-[165px] md:w-[200px]'

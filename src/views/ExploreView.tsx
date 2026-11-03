@@ -337,14 +337,14 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
             </button>
           )}
         </div>
-        <div className="flex overflow-x-auto py-1 scrollbar-none gap-2 snap-x">
+        <div className="flex overflow-x-auto py-1 scrollbar-none gap-2 [touch-action:pan-x_pan-y]">
           {STREAMING_PROVIDERS.map((provider) => {
             const isSelected = selectedProvider === provider.id;
             return (
               <button
                 key={provider.id}
                 onClick={() => setSelectedProvider(provider.id)}
-                className={`snap-start shrink-0 flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
+                className={`shrink-0 flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
                   isSelected
                     ? 'bg-[#1e2235] border-rose-500 text-white shadow-md shadow-rose-950/30'
                     : 'bg-[#12131a] border-white/[0.08] text-slate-300 hover:bg-white/10 hover:text-white'

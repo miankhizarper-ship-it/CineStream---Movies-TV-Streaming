@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, Trophy, Volume2, VolumeX } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { useGhostConfig } from '../lib/ghostConfig';
 
 interface GhostPosition {
   x: number;
@@ -41,6 +42,13 @@ const CATCH_MESSAGES = [
 
 export const PhantomGhost: React.FC = () => {
   const { showToast } = useToast();
+  const { isActive, fleeMessages, catchMessages } = useGhostConfig();
+
+  const fleeListRef = useRef(fleeMessages);
+  fleeListRef.current = fleeMessages.length > 0 ? fleeMessages : FLEE_MESSAGES;
+  const catchListRef = useRef(catchMessages);
+  catchListRef.current = catchMessages.length > 0 ? catchMessages : CATCH_MESSAGES;
+
   const [isDesktop, setIsDesktop] = useState(false);
   const [isFleeing, setIsFleeing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -365,7 +373,8 @@ export const PhantomGhost: React.FC = () => {
           // Playful speech on proximity entry with cooldown
           if (dist < 90 && now - lastSpeechTimeRef.current > 4200) {
             lastSpeechTimeRef.current = now;
-            const randomMsg = FLEE_MESSAGES[Math.floor(Math.random() * FLEE_MESSAGES.length)];
+            const activeFleeList = fleeListRef.current.length > 0 ? fleeListRef.current : FLEE_MESSAGES;
+            const randomMsg = activeFleeList[Math.floor(Math.random() * activeFleeList.length)];
             setSpeech(randomMsg);
             setSpookCount((prev) => prev + 1);
 
@@ -541,7 +550,8 @@ export const PhantomGhost: React.FC = () => {
 
     playCatchSound();
 
-    const randomCatchMsg = CATCH_MESSAGES[Math.floor(Math.random() * CATCH_MESSAGES.length)];
+    const activeCatchList = catchListRef.current.length > 0 ? catchListRef.current : CATCH_MESSAGES;
+    const randomCatchMsg = activeCatchList[Math.floor(Math.random() * activeCatchList.length)];
     setSpeech(randomCatchMsg);
     setShowSpookBadge(true);
     setTimeout(() => setShowSpookBadge(false), 3200);
@@ -553,6 +563,11 @@ export const PhantomGhost: React.FC = () => {
       triggerTeleport();
     }, 400);
   };
+
+  // Visibility Check (is_active: false)
+  if (!isActive) {
+    return null;
+  }
 
   if (!isDesktop || isAsleep) {
     if (isAsleep && isDesktop) {
@@ -732,7 +747,7 @@ export const PhantomGhost: React.FC = () => {
             </svg>
           </motion.div>
 
-          {/* Action buttons on hover (Mute & Sleep) */}
+          {/* Action buttons on hover (Mute, Sleep) */}
           <div className="absolute -bottom-3 -right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={(e) => {

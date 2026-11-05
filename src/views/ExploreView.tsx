@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Filter,
   ArrowUpDown,
@@ -9,8 +9,25 @@ import {
   Loader2,
   Radio,
   Check,
+  ChevronDown,
+  Globe,
+  Languages,
+  Flame,
+  Star,
+  Clock,
+  X,
+  Film,
+  Tv,
+  Search,
 } from 'lucide-react';
-import { tmdb, TMDBMedia, Genre } from '../lib/tmdb';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  tmdb,
+  TMDBMedia,
+  Genre,
+  TMDBCountry,
+  TMDBLanguage,
+} from '../lib/tmdb';
 import { MovieCard } from '../components/MovieCard';
 import { useRouter } from '../context/RouterContext';
 
@@ -75,6 +92,15 @@ const STREAMING_PROVIDERS: WatchProviderOption[] = [
   { id: 'hulu', name: 'Hulu', providerId: '15', networkId: '453', color: 'text-emerald-400', badgeColor: 'bg-emerald-500' },
 ];
 
+export type FeedType = 'discover' | 'now_playing' | 'top_rated' | 'upcoming';
+
+const FEED_OPTIONS: { id: FeedType; label: string; icon: React.FC<{ className?: string }> }[] = [
+  { id: 'discover', label: 'All Catalog', icon: Sparkles },
+  { id: 'now_playing', label: 'Now Playing', icon: Flame },
+  { id: 'top_rated', label: 'Top Rated', icon: Star },
+  { id: 'upcoming', label: 'Upcoming', icon: Clock },
+];
+
 const SORT_OPTIONS = [
   { label: 'Most Popular', value: 'popularity.desc' },
   { label: 'Highest Rated', value: 'vote_average.desc' },
@@ -92,12 +118,57 @@ const YEAR_OPTIONS = [
   }),
 ];
 
+// Popular fallback countries to ensure immediate instant rendering
+const POPULAR_COUNTRIES: { code: string; name: string }[] = [
+  { code: 'US', name: 'United States' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'KR', name: 'South Korea' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'FR', name: 'France' },
+  { code: 'IN', name: 'India' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'CN', name: 'China' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'TR', name: 'Turkey' },
+  { code: 'TH', name: 'Thailand' },
+  { code: 'SE', name: 'Sweden' },
+  { code: 'DK', name: 'Denmark' },
+  { code: 'HK', name: 'Hong Kong' },
+];
+
+// Popular fallback languages
+const POPULAR_LANGUAGES: { code: string; name: string }[] = [
+  { code: 'en', name: 'English' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'de', name: 'German' },
+  { code: 'it', name: 'Italian' },
+  { code: 'zh', name: 'Chinese / Mandarin' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'tr', name: 'Turkish' },
+  { code: 'ru', name: 'Russian' },
+  { code: 'ar', name: 'Arabic' },
+  { code: 'th', name: 'Thai' },
+  { code: 'sv', name: 'Swedish' },
+];
+
 export const ExploreView: React.FC<ExploreViewProps> = ({
   initialType = 'movie',
   initialGenreId,
 }) => {
   const { route, navigate } = useRouter();
   const [mediaType, setMediaType] = useState<'movie' | 'tv'>(initialType);
+  const [feedType, setFeedType] = useState<FeedType>('discover');
+
+  // Genres
   const [genreList, setGenreList] = useState<GenreOption[]>(ALL_GENRES);
   const [selectedGenreName, setSelectedGenreName] = useState<string>(() => {
     if (initialGenreId || route.query.genre) {
@@ -107,9 +178,23 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     }
     return '';
   });
+
+  // Configuration Filters
+  const [countries, setCountries] = useState<TMDBCountry[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [languages, setLanguages] = useState<TMDBLanguage[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('');
+
+  // Other filters
   const [selectedProvider, setSelectedProvider] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('popularity.desc');
+
+  // Dropdown menus open state & search queries
+  const [openDropdown, setOpenDropdown] = useState<'country' | 'language' | 'year' | 'sort' | null>(null);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [languageSearch, setLanguageSearch] = useState('');
+  const filterBarRef = useRef<HTMLDivElement>(null);
 
   // Infinite Scroll State
   const [items, setItems] = useState<TMDBMedia[]>([]);
@@ -128,6 +213,25 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   useEffect(() => {
     if (initialType) setMediaType(initialType);
   }, [initialType]);
+
+  // Close dropdown on outside click or ESC key
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterBarRef.current && !filterBarRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenDropdown(null);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openDropdown]);
 
   // Fetch all genres from both Movie and TV endpoints and merge
   useEffect(() => {
@@ -179,6 +283,40 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     };
   }, []);
 
+  // Fetch TMDB Configuration (Countries & Languages)
+  useEffect(() => {
+    let isMounted = true;
+    async function loadConfig() {
+      try {
+        const [cData, lData] = await Promise.all([
+          tmdb.getCountries('en').catch(() => []),
+          tmdb.getLanguages().catch(() => []),
+        ]);
+
+        if (!isMounted) return;
+        if (Array.isArray(cData) && cData.length > 0) {
+          const sorted = [...cData].sort((a, b) =>
+            (a.english_name || '').localeCompare(b.english_name || '')
+          );
+          setCountries(sorted);
+        }
+        if (Array.isArray(lData) && lData.length > 0) {
+          const sorted = [...lData]
+            .filter((l) => Boolean(l.english_name || l.name))
+            .sort((a, b) => (a.english_name || '').localeCompare(b.english_name || ''));
+          setLanguages(sorted);
+        }
+      } catch (err) {
+        console.error('Failed to load TMDB configurations:', err);
+      }
+    }
+
+    loadConfig();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Track window scroll for "Scroll to Top" button
   useEffect(() => {
     const handleScroll = () => {
@@ -202,7 +340,78 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     }
   }, [selectedGenreName, genreList, mediaType]);
 
-  // Primary Fetcher for Page 1 when any filter/sort changes
+  // Unified Fetcher based on Feed Type and active filters
+  const fetchItemsForPage = useCallback(
+    async (targetPage: number) => {
+      const genreId = getActiveGenreId();
+      const providerObj = STREAMING_PROVIDERS.find((p) => p.id === selectedProvider);
+      const hasGranularFilters = Boolean(
+        genreId ||
+        (providerObj && providerObj.id !== 'all') ||
+        selectedYear ||
+        selectedLanguage ||
+        selectedCountry ||
+        sortBy !== 'popularity.desc'
+      );
+
+      // Dedicated Feed Endpoints (/now_playing, /top_rated, /upcoming)
+      if (!hasGranularFilters) {
+        if (feedType === 'now_playing') {
+          if (mediaType === 'movie') {
+            return tmdb.getNowPlayingMovies(targetPage, selectedCountry || undefined);
+          } else {
+            return tmdb.getOnTheAirTV(targetPage);
+          }
+        }
+
+        if (feedType === 'top_rated') {
+          if (mediaType === 'movie') {
+            return tmdb.getTopRatedMovies(targetPage);
+          } else {
+            return tmdb.getTopRatedTV(targetPage);
+          }
+        }
+
+        if (feedType === 'upcoming') {
+          if (mediaType === 'movie') {
+            return tmdb.getUpcomingMovies(targetPage, selectedCountry || undefined);
+          } else {
+            return tmdb.getAiringTodayTV(targetPage);
+          }
+        }
+      }
+
+      // If feedType is specified WITH custom filters, tailor discover parameters
+      let activeSort = sortBy;
+      if (feedType === 'top_rated' && sortBy === 'popularity.desc') {
+        activeSort = 'vote_average.desc';
+      }
+
+      return tmdb.discoverMedia(mediaType, {
+        page: targetPage,
+        with_genres: genreId,
+        with_watch_providers: providerObj?.providerId || undefined,
+        with_networks:
+          mediaType === 'tv' && providerObj?.networkId ? providerObj.networkId : undefined,
+        sort_by: activeSort,
+        year: selectedYear || undefined,
+        with_original_language: selectedLanguage || undefined,
+        with_origin_country: selectedCountry || undefined,
+      });
+    },
+    [
+      feedType,
+      mediaType,
+      selectedProvider,
+      selectedYear,
+      selectedLanguage,
+      selectedCountry,
+      sortBy,
+      getActiveGenreId,
+    ]
+  );
+
+  // Primary Fetcher for Page 1 when any filter/feed/sort changes
   useEffect(() => {
     let isMounted = true;
     async function loadInitial() {
@@ -210,19 +419,9 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         setLoading(true);
         setPage(1);
 
-        const genreId = getActiveGenreId();
-        const providerObj = STREAMING_PROVIDERS.find((p) => p.id === selectedProvider);
-
-        const res = await tmdb.discoverMedia(mediaType, {
-          page: 1,
-          with_genres: genreId,
-          with_watch_providers: providerObj?.providerId || undefined,
-          with_networks: mediaType === 'tv' && providerObj?.networkId ? providerObj.networkId : undefined,
-          sort_by: sortBy,
-          year: selectedYear || undefined,
-        });
-
+        const res = await fetchItemsForPage(1);
         if (!isMounted) return;
+
         setItems(res.results || []);
         setTotalPages(Math.min(res.total_pages || 1, 500));
         setTotalResults(res.total_results || 0);
@@ -237,7 +436,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [mediaType, selectedGenreName, selectedProvider, selectedYear, sortBy, getActiveGenreId]);
+  }, [fetchItemsForPage]);
 
   // Infinite Scroll: fetch next page when sentinel is in view
   const loadNextPage = useCallback(async () => {
@@ -246,17 +445,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     try {
       setLoadingMore(true);
       const nextPage = page + 1;
-      const genreId = getActiveGenreId();
-      const providerObj = STREAMING_PROVIDERS.find((p) => p.id === selectedProvider);
-
-      const res = await tmdb.discoverMedia(mediaType, {
-        page: nextPage,
-        with_genres: genreId,
-        with_watch_providers: providerObj?.providerId || undefined,
-        with_networks: mediaType === 'tv' && providerObj?.networkId ? providerObj.networkId : undefined,
-        sort_by: sortBy,
-        year: selectedYear || undefined,
-      });
+      const res = await fetchItemsForPage(nextPage);
 
       const newResults = res.results || [];
       setItems((prev) => {
@@ -271,7 +460,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
     } finally {
       setLoadingMore(false);
     }
-  }, [loading, page, totalPages, mediaType, selectedProvider, selectedYear, sortBy, getActiveGenreId]);
+  }, [fetchItemsForPage, loading, page, totalPages]);
 
   // Set up IntersectionObserver on sentinel
   useEffect(() => {
@@ -293,27 +482,146 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   }, [loadNextPage, loading, page, totalPages]);
 
   const handleResetFilters = () => {
+    setFeedType('discover');
     setSelectedGenreName('');
     setSelectedProvider('all');
     setSelectedYear('');
+    setSelectedCountry('');
+    setSelectedLanguage('');
     setSortBy('popularity.desc');
+    setOpenDropdown(null);
   };
 
   const hasActiveFilters = Boolean(
-    selectedGenreName || selectedProvider !== 'all' || selectedYear || sortBy !== 'popularity.desc'
+    feedType !== 'discover' ||
+    selectedGenreName ||
+    selectedProvider !== 'all' ||
+    selectedYear ||
+    selectedCountry ||
+    selectedLanguage ||
+    sortBy !== 'popularity.desc'
   );
+
+  // Search filter for countries
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch.trim()) return countries;
+    const q = countrySearch.toLowerCase().trim();
+    return countries.filter(
+      (c) =>
+        (c.english_name && c.english_name.toLowerCase().includes(q)) ||
+        (c.iso_3166_1 && c.iso_3166_1.toLowerCase().includes(q)) ||
+        (c.native_name && c.native_name.toLowerCase().includes(q))
+    );
+  }, [countries, countrySearch]);
+
+  // Search filter for languages
+  const filteredLanguages = useMemo(() => {
+    if (!languageSearch.trim()) return languages;
+    const q = languageSearch.toLowerCase().trim();
+    return languages.filter(
+      (l) =>
+        (l.english_name && l.english_name.toLowerCase().includes(q)) ||
+        (l.iso_639_1 && l.iso_639_1.toLowerCase().includes(q)) ||
+        (l.name && l.name.toLowerCase().includes(q))
+    );
+  }, [languages, languageSearch]);
+
+  // Display labels for the active selections
+  const activeCountryLabel = useMemo(() => {
+    if (!selectedCountry) return 'All Countries';
+    const found =
+      countries.find((c) => c.iso_3166_1 === selectedCountry) ||
+      POPULAR_COUNTRIES.find((c) => c.code === selectedCountry);
+    return found ? ('english_name' in found ? found.english_name : found.name) : selectedCountry;
+  }, [selectedCountry, countries]);
+
+  const activeLanguageLabel = useMemo(() => {
+    if (!selectedLanguage) return 'All Languages';
+    const found =
+      languages.find((l) => l.iso_639_1 === selectedLanguage) ||
+      POPULAR_LANGUAGES.find((l) => l.code === selectedLanguage);
+    return found ? ('english_name' in found ? found.english_name : found.name) : selectedLanguage;
+  }, [selectedLanguage, languages]);
+
+  const activeYearLabel = selectedYear || 'All Years';
+  const activeSortLabel = SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Most Popular';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-8 w-full pb-24">
-      {/* Header */}
+      {/* Top Header & Media Type Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white flex items-center gap-2.5">
+            <span className="w-1.5 h-6 bg-[#e50914] rounded-full inline-block" />
+            Discover {mediaType === 'movie' ? 'Movies' : 'TV Shows'}
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Browse complete catalogue with genres, countries, languages, and release feeds.
+          </p>
+        </div>
+
+        {/* Media Type Switcher (Movie vs TV) */}
+        <div className="flex items-center bg-[#12131a] p-1 rounded-2xl border border-white/[0.08] self-start sm:self-auto shrink-0 shadow-inner">
+          <button
+            type="button"
+            onClick={() => {
+              setMediaType('movie');
+              navigate('/explore/movie');
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              mediaType === 'movie'
+                ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Film className="w-3.5 h-3.5" />
+            <span>Movies</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMediaType('tv');
+              navigate('/explore/tv');
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              mediaType === 'tv'
+                ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Tv className="w-3.5 h-3.5" />
+            <span>TV Series</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Feed Mode Selector (/now_playing, /top_rated, /upcoming, discover) */}
       <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white flex items-center gap-2.5">
-          <span className="w-1.5 h-6 bg-[#e50914] rounded-full inline-block" />
-          Discover {mediaType === 'movie' ? 'Movies' : 'TV Shows'}
-        </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Browse complete catalogue with genre categories, release years, and custom sorting.
-        </p>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none [touch-action:pan-x_pan-y]">
+          {FEED_OPTIONS.map((feed) => {
+            const Icon = feed.icon;
+            const isSelected = feedType === feed.id;
+            return (
+              <button
+                key={feed.id}
+                type="button"
+                onClick={() => setFeedType(feed.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer select-none ${
+                  isSelected
+                    ? 'bg-[#e50914] border-rose-500 text-white shadow-lg shadow-rose-950/40 ring-1 ring-rose-400/30'
+                    : 'bg-[#12131a] border-white/[0.08] text-slate-300 hover:bg-[#181a26] hover:text-white hover:border-white/20'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                <span>{feed.label}</span>
+                {feed.id === 'now_playing' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Streaming Platform / Network Bar */}
@@ -365,45 +673,73 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         </div>
       </div>
 
-      {/* All Genres Chips Bar (Horizontal Scrollable snap-x) */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>All Genres</span>
-            <span className="text-[10px] text-slate-500 font-normal">({genreList.length} categories)</span>
-          </span>
-          {selectedGenreName && (
-            <button
-              onClick={() => setSelectedGenreName('')}
-              className="text-[11px] text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
-            >
-              Reset to All Genres
-            </button>
-          )}
+      {/* Genres Horizontal Bar (Clean, Responsive, Expand Button Removed) */}
+      <div className="mb-6 bg-[#12131a] p-3.5 sm:p-4 rounded-2xl border border-white/[0.08] shadow-sm">
+        {/* Header with Title and Active Tag */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Genres</span>
+              <span className="text-[10px] text-slate-500 font-normal">
+                ({genreList.length} categories)
+              </span>
+            </span>
+
+            {/* Active Genre Tag */}
+            {selectedGenreName && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 font-semibold text-[11px]">
+                <span>{selectedGenreName}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedGenreName('')}
+                  className="hover:text-white cursor-pointer"
+                  title="Clear genre filter"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {selectedGenreName && (
+              <button
+                type="button"
+                onClick={() => setSelectedGenreName('')}
+                className="text-[11px] text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
+              >
+                Reset
+              </button>
+            )}
+          </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 py-1">
+
+        {/* All Genres in a 3-Rows Grid */}
+        <div className="grid grid-rows-3 grid-flow-col auto-cols-max lg:auto-cols-fr gap-2 sm:gap-2.5 overflow-x-auto py-2.5 scrollbar-none [touch-action:pan-x_pan-y] mt-2">
           <button
+            type="button"
             onClick={() => setSelectedGenreName('')}
-            className={`w-full py-2 px-3 rounded-xl text-xs font-semibold text-center truncate transition-all border cursor-pointer ${
+            className={`w-full py-2 px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap text-center transition-all border cursor-pointer select-none flex items-center justify-center ${
               !selectedGenreName
-                ? 'bg-[#e50914] border-rose-500 text-white shadow-md shadow-rose-950/40 ring-1 ring-rose-400/30'
-                : 'bg-[#12131a] border-white/[0.08] text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/20'
+                ? 'bg-[#e50914] border-rose-500 text-white shadow-md shadow-rose-950/40 ring-1 ring-rose-400/30 font-bold'
+                : 'bg-[#181a26] border-white/[0.08] text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/20 active:scale-[0.98]'
             }`}
           >
             All Genres
           </button>
+
           {genreList.map((g) => {
             const isSelected = selectedGenreName.toLowerCase() === g.name.toLowerCase();
             return (
               <button
                 key={g.name}
+                type="button"
                 onClick={() => setSelectedGenreName(isSelected ? '' : g.name)}
-                title={g.name}
-                className={`w-full py-2 px-3 rounded-xl text-xs font-semibold text-center truncate transition-all border cursor-pointer ${
+                className={`w-full py-2 px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap text-center transition-all border cursor-pointer select-none flex items-center justify-center ${
                   isSelected
-                    ? 'bg-[#e50914] border-rose-500 text-white shadow-md shadow-rose-950/40 ring-1 ring-rose-400/30'
-                    : 'bg-[#12131a] border-white/[0.08] text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/20'
+                    ? 'bg-[#e50914] border-rose-500 text-white shadow-md shadow-rose-950/40 ring-1 ring-rose-400/30 font-bold'
+                    : 'bg-[#181a26] border-white/[0.08] text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/20 active:scale-[0.98]'
                 }`}
               >
                 {g.name}
@@ -413,68 +749,598 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
         </div>
       </div>
 
-      {/* Controls & Filter Bar: Year, Sort, Reset */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[#12131a] border border-white/[0.08] mb-6">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Release Year Dropdown */}
-          <div className="flex items-center gap-1.5 bg-[#181a26] border border-white/[0.1] rounded-xl px-2.5 py-1.5">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-xs text-slate-400 font-medium">Year:</span>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer"
+      {/* Styled Responsive Filter Bar: Country, Language, Year, Sort */}
+      <div
+        ref={filterBarRef}
+        className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 p-3.5 rounded-2xl bg-[#12131a] border border-white/[0.08] mb-6 relative z-30"
+      >
+        {/* Dropdowns Row (2x2 grid on mobile, flex on desktop) */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto">
+          {/* Dropdown 1: Country Filter (TMDB /configuration/countries) */}
+          <div className="relative w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => {
+                setOpenDropdown(openDropdown === 'country' ? null : 'country');
+                setCountrySearch('');
+              }}
+              aria-expanded={openDropdown === 'country'}
+              className={`w-full sm:w-auto sm:min-w-[150px] md:min-w-[170px] flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-left transition-all cursor-pointer select-none ${
+                openDropdown === 'country' || selectedCountry
+                  ? 'bg-[#1e2235] border-rose-500/60 text-white shadow-md shadow-rose-950/20'
+                  : 'bg-[#161824] hover:bg-[#1c1f30] border-white/[0.08] text-slate-300 hover:text-white'
+              }`}
             >
-              {YEAR_OPTIONS.map((yr) => (
-                <option key={yr.label} value={yr.value} className="bg-[#12131a] text-white">
-                  {yr.label}
-                </option>
-              ))}
-            </select>
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-5 h-5 rounded-md bg-rose-500/15 flex items-center justify-center shrink-0">
+                  <Globe className="w-3.5 h-3.5 text-rose-400" />
+                </div>
+                <div className="min-w-0 truncate">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-0.5">
+                    Country
+                  </div>
+                  <div className="text-xs font-bold text-white truncate">
+                    {activeCountryLabel}
+                  </div>
+                </div>
+              </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${
+                  openDropdown === 'country' ? 'rotate-180 text-white' : ''
+                }`}
+              />
+            </button>
+
+            {/* Country Popover Menu */}
+            <AnimatePresence>
+              {openDropdown === 'country' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute left-0 top-full mt-2 w-[calc(100vw-2.5rem)] sm:w-72 bg-[#121420]/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shadow-black/90 p-1.5 z-50 overflow-hidden"
+                >
+                  {/* Search input */}
+                  <div className="p-1.5 border-b border-white/[0.08]">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search countries..."
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        className="w-full bg-[#181a26] border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  {/* List */}
+                  <div className="max-h-60 sm:max-h-72 overflow-y-auto overscroll-contain p-1 space-y-0.5 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCountry('');
+                        setOpenDropdown(null);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        !selectedCountry
+                          ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                          : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                      }`}
+                    >
+                      <span>All Countries</span>
+                      {!selectedCountry && <Check className="w-3.5 h-3.5 text-white" />}
+                    </button>
+
+                    {!countrySearch.trim() && (
+                      <>
+                        <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
+                          Popular Regions
+                        </div>
+                        {POPULAR_COUNTRIES.map((c) => {
+                          const isSelected = selectedCountry === c.code;
+                          return (
+                            <button
+                              key={`pop-${c.code}`}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCountry(c.code);
+                                setOpenDropdown(null);
+                              }}
+                              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                                  : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                              }`}
+                            >
+                              <span className="truncate">{c.name}</span>
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                  isSelected ? 'bg-black/30 text-rose-100' : 'bg-white/5 text-slate-400'
+                                }`}
+                              >
+                                {c.code}
+                              </span>
+                            </button>
+                          );
+                        })}
+
+                        {countries.length > 0 && (
+                          <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 border-t border-white/[0.06] pt-1.5">
+                            All Countries ({countries.length})
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {(countrySearch.trim() ? filteredCountries : countries).map((c) => {
+                      const isSelected = selectedCountry === c.iso_3166_1;
+                      return (
+                        <button
+                          key={c.iso_3166_1}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCountry(c.iso_3166_1);
+                            setOpenDropdown(null);
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                              : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                          }`}
+                        >
+                          <span className="truncate">{c.english_name || c.native_name}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded ${
+                              isSelected ? 'bg-black/30 text-rose-100' : 'bg-white/5 text-slate-400'
+                            }`}
+                          >
+                            {c.iso_3166_1}
+                          </span>
+                        </button>
+                      );
+                    })}
+
+                    {countrySearch.trim() && filteredCountries.length === 0 && (
+                      <div className="py-4 text-center text-xs text-slate-500 font-medium">
+                        No countries match "{countrySearch}"
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-1.5 bg-[#181a26] border border-white/[0.1] rounded-xl px-2.5 py-1.5">
-            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-xs text-slate-400 font-medium">Sort:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer"
+          {/* Dropdown 2: Language Filter (TMDB /configuration/languages) */}
+          <div className="relative w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => {
+                setOpenDropdown(openDropdown === 'language' ? null : 'language');
+                setLanguageSearch('');
+              }}
+              aria-expanded={openDropdown === 'language'}
+              className={`w-full sm:w-auto sm:min-w-[150px] md:min-w-[170px] flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-left transition-all cursor-pointer select-none ${
+                openDropdown === 'language' || selectedLanguage
+                  ? 'bg-[#1e2235] border-sky-500/60 text-white shadow-md shadow-sky-950/20'
+                  : 'bg-[#161824] hover:bg-[#1c1f30] border-white/[0.08] text-slate-300 hover:text-white'
+              }`}
             >
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value} className="bg-[#12131a] text-white">
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-5 h-5 rounded-md bg-sky-500/15 flex items-center justify-center shrink-0">
+                  <Languages className="w-3.5 h-3.5 text-sky-400" />
+                </div>
+                <div className="min-w-0 truncate">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-0.5">
+                    Language
+                  </div>
+                  <div className="text-xs font-bold text-white truncate">
+                    {activeLanguageLabel}
+                  </div>
+                </div>
+              </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${
+                  openDropdown === 'language' ? 'rotate-180 text-white' : ''
+                }`}
+              />
+            </button>
+
+            {/* Language Popover Menu */}
+            <AnimatePresence>
+              {openDropdown === 'language' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute left-0 sm:left-0 top-full mt-2 w-[calc(100vw-2.5rem)] sm:w-72 bg-[#121420]/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shadow-black/90 p-1.5 z-50 overflow-hidden"
+                >
+                  {/* Search input */}
+                  <div className="p-1.5 border-b border-white/[0.08]">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search languages..."
+                        value={languageSearch}
+                        onChange={(e) => setLanguageSearch(e.target.value)}
+                        className="w-full bg-[#181a26] border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  {/* List */}
+                  <div className="max-h-60 sm:max-h-72 overflow-y-auto overscroll-contain p-1 space-y-0.5 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedLanguage('');
+                        setOpenDropdown(null);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        !selectedLanguage
+                          ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                          : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                      }`}
+                    >
+                      <span>All Languages</span>
+                      {!selectedLanguage && <Check className="w-3.5 h-3.5 text-white" />}
+                    </button>
+
+                    {!languageSearch.trim() && (
+                      <>
+                        <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
+                          Popular Languages
+                        </div>
+                        {POPULAR_LANGUAGES.map((l) => {
+                          const isSelected = selectedLanguage === l.code;
+                          return (
+                            <button
+                              key={`pop-lang-${l.code}`}
+                              type="button"
+                              onClick={() => {
+                                setSelectedLanguage(l.code);
+                                setOpenDropdown(null);
+                              }}
+                              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                                  : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                              }`}
+                            >
+                              <span className="truncate">{l.name}</span>
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                  isSelected ? 'bg-black/30 text-rose-100' : 'bg-white/5 text-slate-400'
+                                }`}
+                              >
+                                {l.code}
+                              </span>
+                            </button>
+                          );
+                        })}
+
+                        {languages.length > 0 && (
+                          <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 border-t border-white/[0.06] pt-1.5">
+                            All Languages ({languages.length})
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {(languageSearch.trim() ? filteredLanguages : languages).map((l) => {
+                      const isSelected = selectedLanguage === l.iso_639_1;
+                      return (
+                        <button
+                          key={l.iso_639_1}
+                          type="button"
+                          onClick={() => {
+                            setSelectedLanguage(l.iso_639_1);
+                            setOpenDropdown(null);
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                              : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                          }`}
+                        >
+                          <span className="truncate">{l.english_name || l.name}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded ${
+                              isSelected ? 'bg-black/30 text-rose-100' : 'bg-white/5 text-slate-400'
+                            }`}
+                          >
+                            {l.iso_639_1}
+                          </span>
+                        </button>
+                      );
+                    })}
+
+                    {languageSearch.trim() && filteredLanguages.length === 0 && (
+                      <div className="py-4 text-center text-xs text-slate-500 font-medium">
+                        No languages match "{languageSearch}"
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Dropdown 3: Release Year Filter */}
+          <div className="relative w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown(openDropdown === 'year' ? null : 'year')}
+              aria-expanded={openDropdown === 'year'}
+              className={`w-full sm:w-auto sm:min-w-[125px] md:min-w-[140px] flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-left transition-all cursor-pointer select-none ${
+                openDropdown === 'year' || selectedYear
+                  ? 'bg-[#1e2235] border-emerald-500/60 text-white shadow-md shadow-emerald-950/20'
+                  : 'bg-[#161824] hover:bg-[#1c1f30] border-white/[0.08] text-slate-300 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-5 h-5 rounded-md bg-emerald-500/15 flex items-center justify-center shrink-0">
+                  <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <div className="min-w-0 truncate">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-0.5">
+                    Year
+                  </div>
+                  <div className="text-xs font-bold text-white truncate">
+                    {activeYearLabel}
+                  </div>
+                </div>
+              </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${
+                  openDropdown === 'year' ? 'rotate-180 text-white' : ''
+                }`}
+              />
+            </button>
+
+            {/* Year Popover Menu */}
+            <AnimatePresence>
+              {openDropdown === 'year' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute left-0 sm:left-0 top-full mt-2 w-[calc(100vw-2.5rem)] sm:w-56 bg-[#121420]/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shadow-black/90 p-1.5 z-50 overflow-hidden"
+                >
+                  <div className="max-h-60 sm:max-h-72 overflow-y-auto overscroll-contain p-1 space-y-0.5 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                    {YEAR_OPTIONS.map((yr) => {
+                      const isSelected = selectedYear === yr.value;
+                      return (
+                        <button
+                          key={yr.label}
+                          type="button"
+                          onClick={() => {
+                            setSelectedYear(yr.value);
+                            setOpenDropdown(null);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                              : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                          }`}
+                        >
+                          <span>{yr.label}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Dropdown 4: Sort Filter */}
+          <div className="relative w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setOpenDropdown(openDropdown === 'sort' ? null : 'sort')}
+              aria-expanded={openDropdown === 'sort'}
+              className={`w-full sm:w-auto sm:min-w-[140px] md:min-w-[160px] flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-left transition-all cursor-pointer select-none ${
+                openDropdown === 'sort' || sortBy !== 'popularity.desc'
+                  ? 'bg-[#1e2235] border-amber-500/60 text-white shadow-md shadow-amber-950/20'
+                  : 'bg-[#161824] hover:bg-[#1c1f30] border-white/[0.08] text-slate-300 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-5 h-5 rounded-md bg-amber-500/15 flex items-center justify-center shrink-0">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-amber-400" />
+                </div>
+                <div className="min-w-0 truncate">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-0.5">
+                    Sort By
+                  </div>
+                  <div className="text-xs font-bold text-white truncate">
+                    {activeSortLabel}
+                  </div>
+                </div>
+              </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${
+                  openDropdown === 'sort' ? 'rotate-180 text-white' : ''
+                }`}
+              />
+            </button>
+
+            {/* Sort Popover Menu */}
+            <AnimatePresence>
+              {openDropdown === 'sort' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute right-0 top-full mt-2 w-[calc(100vw-2.5rem)] sm:w-60 bg-[#121420]/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shadow-black/90 p-1.5 z-50 overflow-hidden"
+                >
+                  <div className="p-1 space-y-0.5">
+                    {SORT_OPTIONS.map((opt) => {
+                      const isSelected = sortBy === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setSortBy(opt.value);
+                            setOpenDropdown(null);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
+                              : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                          }`}
+                        >
+                          <span>{opt.label}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Reset Filters Button */}
           {hasActiveFilters && (
             <button
+              type="button"
               onClick={handleResetFilters}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all cursor-pointer"
+              className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all cursor-pointer h-[42px] active:scale-95"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>Reset Filters</span>
+              <span>Reset</span>
             </button>
           )}
         </div>
 
         {/* Results Counter */}
-        <div className="text-xs text-slate-400 font-medium">
-          Showing <span className="text-white font-bold">{items.length}</span> titles
-          {totalResults > 0 && <span> ({totalResults.toLocaleString()} available)</span>}
+        <div className="text-xs text-slate-400 font-medium shrink-0 flex items-center justify-between md:justify-end gap-2 pt-2 md:pt-0 border-t border-white/[0.06] md:border-t-0">
+          <div>
+            Showing <span className="text-white font-bold">{items.length}</span> titles
+            {totalResults > 0 && <span> ({totalResults.toLocaleString()} available)</span>}
+          </div>
         </div>
       </div>
+
+      {/* Active Filter Chips Bar (When multiple filters are set) */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Active Filters:
+          </span>
+
+          {feedType !== 'discover' && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+              <span>Feed: {FEED_OPTIONS.find((f) => f.id === feedType)?.label}</span>
+              <button
+                type="button"
+                onClick={() => setFeedType('discover')}
+                className="hover:text-white cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+
+          {selectedCountry && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+              <Globe className="w-3 h-3" />
+              <span>Country: {activeCountryLabel}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedCountry('')}
+                className="hover:text-white cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+
+          {selectedLanguage && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs font-semibold">
+              <Languages className="w-3 h-3" />
+              <span>Language: {activeLanguageLabel}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedLanguage('')}
+                className="hover:text-white cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+
+          {selectedGenreName && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+              <span>Genre: {selectedGenreName}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedGenreName('')}
+                className="hover:text-white cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+
+          {selectedYear && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+              <span>Year: {selectedYear}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedYear('')}
+                className="hover:text-white cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+
+          {selectedProvider !== 'all' && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-semibold">
+              <span>
+                Platform: {STREAMING_PROVIDERS.find((p) => p.id === selectedProvider)?.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedProvider('all')}
+                className="hover:text-white cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="text-xs text-rose-400 hover:text-rose-300 underline font-semibold ml-1 cursor-pointer"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
 
       {/* Grid Results */}
       {loading ? (
         <div className="w-full min-h-[380px] flex flex-col items-center justify-center gap-3 text-slate-400">
           <div className="w-9 h-9 border-3 border-[#e50914]/30 border-t-[#e50914] rounded-full animate-spin" />
           <p className="text-xs font-semibold tracking-wider uppercase text-slate-500">
-            Querying TMDB Discover catalogue...
+            {feedType !== 'discover'
+              ? `Loading ${FEED_OPTIONS.find((f) => f.id === feedType)?.label}...`
+              : 'Querying TMDB Discover catalogue...'}
           </p>
         </div>
       ) : items.length > 0 ? (
@@ -509,7 +1375,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           <Filter className="w-8 h-8 text-slate-500 mx-auto mb-3" />
           <p className="text-base text-slate-200 font-bold mb-1">No matching titles found</p>
           <p className="text-xs text-slate-400 mb-6 max-w-sm mx-auto">
-            Try adjusting your genre or release year filters to discover more content.
+            Try adjusting your feed, genre, country, language, or release year filters to discover more content.
           </p>
           <button
             onClick={handleResetFilters}

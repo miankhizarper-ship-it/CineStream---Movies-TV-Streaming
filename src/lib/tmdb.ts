@@ -224,6 +224,18 @@ export interface TMDBKeyword {
   name: string;
 }
 
+export interface TMDBCountry {
+  iso_3166_1: string;
+  english_name: string;
+  native_name: string;
+}
+
+export interface TMDBLanguage {
+  iso_639_1: string;
+  english_name: string;
+  name: string;
+}
+
 export interface DiscoverParams {
   with_genres?: number | string;
   with_watch_providers?: number | string;
@@ -239,6 +251,8 @@ export interface DiscoverParams {
   first_air_date_year?: number | string;
   year?: number | string;
   with_original_language?: string;
+  with_origin_country?: string;
+  region?: string;
   include_adult?: boolean;
 }
 
@@ -253,16 +267,26 @@ export const tmdb = {
   },
 
   // Movies
-  getPopularMovies: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number }> => {
+  getPopularMovies: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
     return fetchTMDB('/movie/popular', { page });
   },
 
-  getTopRatedMovies: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number }> => {
+  getTopRatedMovies: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
     return fetchTMDB('/movie/top_rated', { page });
   },
 
-  getNowPlayingMovies: async (page = 1): Promise<{ results: TMDBMedia[] }> => {
-    return fetchTMDB('/movie/now_playing', { page });
+  getNowPlayingMovies: async (
+    page = 1,
+    region?: string
+  ): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
+    return fetchTMDB('/movie/now_playing', { page, region });
+  },
+
+  getUpcomingMovies: async (
+    page = 1,
+    region?: string
+  ): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
+    return fetchTMDB('/movie/upcoming', { page, region });
   },
 
   getMovieDetails: async (id: number | string): Promise<MediaDetails> => {
@@ -272,13 +296,30 @@ export const tmdb = {
     });
   },
 
+  // Configuration (Countries, Languages)
+  getCountries: async (language: string = 'en'): Promise<TMDBCountry[]> => {
+    return fetchTMDB('/configuration/countries', { language });
+  },
+
+  getLanguages: async (): Promise<TMDBLanguage[]> => {
+    return fetchTMDB('/configuration/languages');
+  },
+
   // TV Shows
-  getPopularTV: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number }> => {
+  getPopularTV: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
     return fetchTMDB('/tv/popular', { page });
   },
 
-  getTopRatedTV: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number }> => {
+  getTopRatedTV: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
     return fetchTMDB('/tv/top_rated', { page });
+  },
+
+  getOnTheAirTV: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
+    return fetchTMDB('/tv/on_the_air', { page });
+  },
+
+  getAiringTodayTV: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number; total_results: number }> => {
+    return fetchTMDB('/tv/airing_today', { page });
   },
 
   getAnimeSeries: async (page = 1): Promise<{ results: TMDBMedia[]; total_pages: number }> => {
@@ -391,8 +432,17 @@ export const tmdb = {
       finalParams.with_keywords = params.with_keywords;
     }
 
+    // Language filter
     if (params.with_original_language) {
       finalParams.with_original_language = params.with_original_language;
+    }
+
+    // Origin Country & Region filters
+    if (params.with_origin_country) {
+      finalParams.with_origin_country = params.with_origin_country;
+    }
+    if (params.region) {
+      finalParams.region = params.region;
     }
 
     return fetchTMDB(`/discover/${type}`, finalParams);

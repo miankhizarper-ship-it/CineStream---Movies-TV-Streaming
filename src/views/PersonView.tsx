@@ -70,7 +70,7 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
   uniqueCredits.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-8 w-full pb-24">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pt-24 sm:pt-28 pb-24 w-full">
       {/* Back button */}
       <button
         onClick={goBack}

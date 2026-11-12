@@ -180,7 +180,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
         </div>
 
         {/* Content Container */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-8 sm:py-12 w-full">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pt-24 sm:pt-28 pb-8 sm:pb-12 w-full">
           {/* Back button */}
           <button
             onClick={goBack}

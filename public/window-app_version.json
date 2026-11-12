@@ -1,0 +1,7 @@
+{
+  "latest_version": "1.0.4",
+  "min_supported_version": "1.0.4",
+  "force_update": false,
+  "apk_url": "https://github.com/miankhizarper-ship-it/CineStream---Movies-TV-Streaming/releases/download/v1.0.4/CineStream-1.0.4-Setup.exe",
+  "release_notes": "In-app update system with automatic background downloads and restart-to-install."
+}

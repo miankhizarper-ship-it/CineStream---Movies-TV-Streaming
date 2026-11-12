@@ -118,7 +118,7 @@ const ANDROID_RELEASE_URL =
   'https://github.com/miankhizarper-ship-it/CineStream---Movies-TV-Streaming/releases/download/1.0.14/cinestream.apk';
 
 const WINDOWS_RELEASE_URL =
-  'https://github.com/miankhizarper-ship-it/CineStream---Movies-TV-Streaming/releases/download/v1.0.4/CineStream-Setup.exe';
+  'https://github.com/miankhizarper-ship-it/CineStream---Movies-TV-Streaming/releases/download/v1.0.4/CineStream-1.0.4-Setup.exe';
 
 interface DownloadAppViewProps {
   platform: 'android' | 'windows';
@@ -132,7 +132,7 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
   const [desktopModalOpen, setDesktopModalOpen] = useState(false);
 
   const isAndroid = platform === 'android';
-  const fileName = isAndroid ? 'cinestream.apk' : 'CineStream-Setup.exe';
+  const fileName = isAndroid ? 'cinestream.apk' : 'CineStream-1.0.4-Setup.exe';
   const fileUrl = isAndroid ? ANDROID_RELEASE_URL : WINDOWS_RELEASE_URL;
   const currentScreenshots = isAndroid ? ANDROID_SCREENSHOTS : WINDOWS_SCREENSHOTS;
 
@@ -140,7 +140,7 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
     setDownloading(true);
     const msg = isAndroid
       ? 'Starting Android APK download (v1.0.14)...'
-      : 'Starting Windows Installer (CineStream-Setup.exe v1.0.4) download...';
+      : 'Starting Windows Installer (CineStream-1.0.4-Setup.exe) download...';
     showToast(msg, 'info');
 
     const link = document.createElement('a');
@@ -498,12 +498,12 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">1</span>
               <h4 className="text-xs font-bold text-white">Download Setup.exe</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed">Click download to get `CineStream-Setup.exe` from GitHub release v1.0.4.</p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">Click download to get `CineStream-1.0.4-Setup.exe` from GitHub release v1.0.4.</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">2</span>
               <h4 className="text-xs font-bold text-white">Run Installer</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed">Double-click `CineStream-Setup.exe`. If Windows SmartScreen appears, click "More info" then "Run anyway".</p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">Double-click `CineStream-1.0.4-Setup.exe`. If Windows SmartScreen appears, click "More info" then "Run anyway".</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">3</span>

@@ -15,7 +15,7 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.png', 'apple-touch-icon.png', 'assets/aistudio/logo_1fdc68d7.png'],
+        includeAssets: ['favicon.png', 'apple-touch-icon.png'],
         manifest: {
           id: '/',
           name: 'CineStream - Movies & TV Streaming',
@@ -56,8 +56,19 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}'],
           runtimeCaching: [
+            {
+              urlPattern: /\/assets\/.*\.(png|jpg|jpeg|svg|webp)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'local-assets-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                },
+              },
+            },
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
               handler: 'CacheFirst',

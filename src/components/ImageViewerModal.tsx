@@ -65,7 +65,9 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({ item, onClos
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative max-w-lg w-full max-h-[85vh] flex flex-col items-center justify-center bg-[#12131a] border border-white/20 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-hidden"
+            className={`relative w-full max-h-[90vh] flex flex-col items-center justify-center bg-[#12131a] border border-white/20 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-hidden ${
+              item.badge?.includes('Windows') ? 'max-w-4xl' : 'max-w-lg'
+            }`}
           >
             {/* Close Button */}
             <button
@@ -77,11 +79,13 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({ item, onClos
             </button>
 
             {/* Modal Image */}
-            <div className="relative h-[55vh] sm:h-[60vh] w-auto aspect-[9/19] rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl my-1">
+            <div className={`relative max-h-[65vh] sm:max-h-[72vh] w-auto rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl my-1 flex items-center justify-center ${
+              item.badge?.includes('Windows') ? 'aspect-video max-w-full' : 'aspect-[9/19]'
+            }`}>
               <img
                 src={item.imagePath}
                 alt={item.title}
-                className="h-full w-full object-contain"
+                className="max-h-full max-w-full object-contain"
               />
             </div>
 

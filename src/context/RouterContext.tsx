@@ -20,6 +20,7 @@ export interface RouteState {
     season?: string;
     episode?: string;
     mediaType?: 'movie' | 'tv';
+    platform?: string;
   };
   query: Record<string, string>;
   rawPath: string;
@@ -34,7 +35,14 @@ interface RouterContextType {
 const RouterContext = createContext<RouterContextType | null>(null);
 
 function parsePath(fullPath: string): RouteState {
-  const [pathname, search] = fullPath.split('?');
+  // Support both standard pathname and hash routing (#/movie/123 or /movie/123)
+  let normalizedPath = fullPath;
+  if (normalizedPath.includes('#')) {
+    const afterHash = normalizedPath.split('#')[1] || '/';
+    normalizedPath = afterHash.startsWith('/') ? afterHash : `/${afterHash}`;
+  }
+
+  const [pathname, search] = normalizedPath.split('?');
   const searchParams = new URLSearchParams(search || '');
   const query: Record<string, string> = {};
   searchParams.forEach((value, key) => {
@@ -139,11 +147,13 @@ function parsePath(fullPath: string): RouteState {
     };
   }
 
-  // /download-app, /download, /apk
+  // /download-app, /download-app/android, /download-app/windows, /download, /apk
   if (segments[0] === 'download-app' || segments[0] === 'download' || segments[0] === 'apk') {
+    const sub = segments[1]?.toLowerCase();
+    const platform = (sub === 'windows' || sub === 'win' || sub === 'pc' || sub === 'desktop') ? 'windows' : 'android';
     return {
       type: 'download-app',
-      params: {},
+      params: { platform },
       query,
       rawPath: fullPath,
     };
@@ -159,18 +169,27 @@ function parsePath(fullPath: string): RouteState {
 }
 
 export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentPath, setCurrentPath] = useState<string>(() => {
+  const getFullLocation = () => {
+    if (window.location.hash && window.location.hash.length > 1) {
+      return window.location.hash.slice(1);
+    }
     return window.location.pathname + window.location.search;
-  });
+  };
+
+  const [currentPath, setCurrentPath] = useState<string>(getFullLocation);
 
   useEffect(() => {
-    const onPopState = () => {
-      setCurrentPath(window.location.pathname + window.location.search);
+    const handleUrlChange = () => {
+      setCurrentPath(getFullLocation());
       window.scrollTo(0, 0);
     };
 
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
   }, []);
 
   const navigate = useCallback((path: string) => {

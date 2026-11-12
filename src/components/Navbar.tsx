@@ -9,6 +9,7 @@ import {
   Tv,
   Smartphone,
   LogIn,
+  Download,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -82,7 +83,7 @@ export const Navbar: React.FC = () => {
     { label: 'Home', path: '/', icon: Home },
     { label: 'Movies', path: '/explore/movie', icon: Film },
     { label: 'TV Series', path: '/explore/tv', icon: Tv },
-    { label: 'Android App', path: '/download-app', icon: Smartphone },
+    { label: 'Download App', path: '/download-app', icon: Download },
   ];
 
   const isActive = (path: string) => {

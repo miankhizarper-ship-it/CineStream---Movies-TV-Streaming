@@ -60,7 +60,7 @@ const MainContent: React.FC = () => {
       case 'mylist':
         return <MyListView />;
       case 'download-app':
-        return <DownloadAppView />;
+        return <DownloadAppView platform={(route.params.platform as 'android' | 'windows') || 'android'} />;
       case 'profile':
         return <MyListView />;
       default:

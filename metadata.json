@@ -1,0 +1,8 @@
+{
+  "name": "CineStream - Movies & TV Streaming",
+  "description": "A cinematic movie and TV streaming web application featuring live TMDB discovery, responsive carousels, dedicated FMOV player with server switches and episode drawer, and watchlist persistence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

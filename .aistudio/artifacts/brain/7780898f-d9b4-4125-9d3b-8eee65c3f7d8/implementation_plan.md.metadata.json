@@ -1,0 +1,6 @@
+{
+  "summary":  "Architecture and implementation plan for CineStream, a mobile-responsive cinematic streaming web application featuring TMDB integration, FMOV embed player, custom crimson aesthetic, responsive carousels, dedicated watch player with server selection and episode switcher, and local persistence.",
+  "updatedAt":  "2026-10-22T21:14:52.068250128Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

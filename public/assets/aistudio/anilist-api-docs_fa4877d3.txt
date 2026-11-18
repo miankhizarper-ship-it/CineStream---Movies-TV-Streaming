@@ -1,0 +1,422 @@
+Search
+Technical details regarding the usage of the search function for the anilist provider can be found below. Example code is provided for both JavaScript and Python, along with a response schema.
+
+Route Schema (URL)
+https://api.consumet.org/meta/anilist/{query}?page={page}
+
+Path Parameters
+Parameter	Type	Description	Required?	Default
+query	string	The search query; i.e. the title of the item you are looking for.	Yes	""
+Query Parameters
+Parameter	Type	Description	Required?	Default
+page	integer	The page number of results to return.	No	1
+Request Samples
+import axios from "axios";
+ 
+// Using the example query "demon", and looking at the first page of results.
+const url = "https://api.consumet.org/meta/anilist/demon";
+const data = async () => {
+    try {
+        const { data } = await axios.get(url, { params: { page: 1 } });
+        return data;
+    } catch (err) {
+        throw new Error(err.message);
+    }
+};
+ 
+console.log(data);
+
+Response Schema
+MIME Type: application/json
+
+{
+"currentPage": 1,
+"results": [
+    {
+      "id": "string",
+      "title": "string",
+      "image": "string",
+      "type": "string",
+      "rating": "number",
+      "releaseDate": "string"
+    }
+  ]
+}
+
+
+
+Info
+Technical details regarding the usage of the get anime info function for the Anilist Anime provider can be found below. Example code is provided for both JavaScript and Python, along with a response schema.
+
+Route Schema (URL)
+https://api.consumet.org/meta/anilist/info/{id}?provider={provider}
+
+Path Parameters
+Parameter	Type	Description	Required?	Default
+id	string	The anilist info id	Yes	N/A
+Query Parameters
+Parameter	Type	Description	Required?	Default
+provider	string	The provider you want to use. Enum: 9anime, animefox, animepahe, bilibili, crunchyroll, enime, gogoanime, marin, zoro	No	N/A
+Request Samples
+import axios from "axios";
+ 
+// Using the example id of "21" (one piece) and the query of "gogoanime"
+const url = "https://api.consumet.org/meta/anilist/info/21";
+const data = async () => {
+    try {
+        const { data } = await axios.get(url, { params: { provider: "gogoanime" } });
+        return data;
+    } catch (err) {
+        throw new Error(err.message);
+    }
+};
+ 
+console.log(data);
+
+Response Schema
+MIME Type: application/json
+
+{
+    "id": "string",
+    "title": "string[]",
+    "malId": "integer",
+    "trailer": {
+      "id": "string",
+      "site": "string",
+      "thumbnail": "string"
+    },
+    "image": "string",
+    "popularity": "number",
+    "color": "string",
+    "description": "string",
+    "status": "string",
+    "releaseDate": "integer",
+    "startDate": {
+      "year": "number",
+      "month": "number",
+      "day": "number"
+    },
+    "endDate": {
+      "year": "number",
+      "month": "number",
+      "day": "number"
+      },
+    "rating": "integer",
+    "genres": "string[]",
+    "season": "string",
+    "studios": "string[]",
+    "type": "string",
+    "recommendations": {
+      "id": "string",
+      "malId": "string",
+      "title": "string[]",
+      "status": "string",
+      "episodes": "number",
+      "image": "string",
+      "cover": "string",
+      "rating": "number",
+      "type": "string",
+    },
+    "characters": {
+      "id": "string",
+      "role": "string",
+      "name": "string[]",
+      "image": "string",
+    },
+    "relations": {
+      "id": "integer",
+      "relationType": "string",
+      "malId": "integer",
+      "title": "string[]",
+      "status": "string",
+      "episodes": "integer",
+      "image": "string",
+      "color": "string",
+      "type": "string",
+      "cover": "string",
+      "rating": "integer",
+    },
+    "episodes": {
+      "id": "string",
+      "title": "string",
+      "episode": "string",
+    }
+}
+
+
+
+
+Search
+Technical details regarding the usage of the search function for the anilist provider can be found below. Example code is provided for both JavaScript and Python, along with a response schema.
+
+Route Schema (URL)
+https://api.consumet.org/meta/anilist/trending?page={page}&perPage={perPage}
+
+Query Parameters
+Parameter	Type	Description	Required?	Default
+page	integer	The page number of results to return.	No	1
+perPage	integer	The numb of results per page to return.	No	20
+Request Samples
+import axios from "axios";
+ 
+// Using the example query "demon", and looking at the first page of results.
+const url = "https://api.consumet.org/meta/anilist/trending";
+const data = async () => {
+    try {
+        const { data } = await axios.get(url, { params: {
+           page: 1,
+           perPage: 20
+          } });
+        return data;
+    } catch (err) {
+        throw new Error(err.message);
+    }
+};
+ 
+console.log(data);
+
+Response Schema
+MIME Type: application/json
+
+{
+"currentPage": 1,
+"results": [
+    {
+      "id": "string",
+      "title": "string",
+      "image": "string",
+      "type": "string",
+      "rating": "number",
+      "releaseDate": "string"
+    }
+  ]
+}
+
+
+
+Search
+Technical details regarding the usage of the search function for the anilist provider can be found below. Example code is provided for both JavaScript and Python, along with a response schema.
+
+Route Schema (URL)
+https://api.consumet.org/meta/anilist/popular?page={page}&perPage={perPage}
+
+Query Parameters
+Parameter	Type	Description	Required?	Default
+page	integer	The page number of results to return.	No	1
+perPage	integer	The number of results per page to return.	No	20
+Request Samples
+import axios from "axios";
+ 
+// Using the example query "demon", and looking at the first page of results.
+const url = "https://api.consumet.org/meta/anilist/popular";
+const data = async () => {
+    try {
+        const { data } = await axios.get(url, { params: {
+           page: 1,
+           perPage: 20
+          } });
+        return data;
+    } catch (err) {
+        throw new Error(err.message);
+    }
+};
+ 
+console.log(data);
+
+Response Schema
+MIME Type: application/json
+
+{
+"currentPage": 1,
+"results": [
+    {
+      "id": "string",
+      "title": "string",
+      "image": "string",
+      "type": "string",
+      "rating": "number",
+      "releaseDate": "string"
+    }
+  ]
+}
+
+
+
+
+Search
+Technical details regarding the usage of the search function for the anilist provider can be found below. Example code is provided for both JavaScript and Python, along with a response schema.
+
+Route Schema (URL)
+https://api.consumet.org/meta/anilist/airing-schedule
+
+Query Parameters
+Parameter	Type	Description	Required?	Default
+page	integer	The page number of results to return.	No	1
+perPage	integer	The number of results per page to return.	No	20
+weekStart	string	Filter by the start of the week. you can use either the number or the string	No	today's date
+weekEnd	string	Filter by the end of the week. you can use either the number or the string. Enum/or Integer: "Saturday or 0" "Sunday or 1" "Monday or 2" "Tuesday or 3" "Wednesday or 4" "Thursday or 5" "Friday or 6"	No	today's date + 7 days
+notYetAired	bool	The season the anime aired in. Bool: true false	No	false
+est Samples
+
+import axios from "axios";
+ 
+// Using the example query "demon", and looking at the first page of results.
+const url = "https://api.consumet.org/meta/anilist/airing-schedule";
+const data = async () => {
+    try {
+        const { data } = await axios.get(url, { params: { page: 1 } });
+        return data;
+    } catch (err) {
+        throw new Error(err.message);
+    }
+};
+ 
+console.log(data);
+
+Response Schema
+MIME Type: application/json
+
+{
+"currentPage": 1,
+"results": [
+    {
+      "id": "string",
+      "title": "string",
+      "image": "string",
+      "type": "string",
+      "rating": "number",
+      "releaseDate": "string"
+    }
+  ]
+}
+
+
+
+Get Character Info
+Technical details regarding the usage of the get character info function for the Anilist Anime provider can be found below. Example code is provided for both JavaScript and Python, along with a response schema.
+
+Route Schema (URL)
+https://api.consumet.org/meta/anilist/character/{id}
+
+Path Parameters
+Parameter	Type	Description	Required?	Default
+id	string	The anilist character id	Yes	N/A
+Request Samples
+import axios from "axios";
+ 
+// Using the example character id of "5"
+const url = "https://api.consumet.org/meta/anilist/character/5";
+const data = async () => {
+    try {
+        const { data } = await axios.get(url);
+        return data;
+    } catch (err) {
+        throw new Error(err.message);
+    }
+};
+ 
+console.log(data);
+
+Response Schema
+MIME Type: application/json
+
+{
+    "id": "string",
+    "name": {
+      "first": "string",
+      "last": "string",
+      "full": "string",
+      "native": "string",
+      "userPreferred": "string"
+    },
+    "image": "string",
+    "description": "string",
+    "gender": "string",
+    "dateOfBirth": {
+      "year": "number",
+      "month": "number",
+      "day": "number"
+    },
+    "bloodType": "string",
+    "appearances": "string[]",
+    "relations": {
+      "id": "string",
+      "role": "string",
+      "name": "string",
+      "image": "string"
+    }
+}
+
+
+
+Get Staff Info
+Technical details regarding the usage of the get staff info function for the Anilist Anime provider can be found below. Example code is provided for both JavaScript and Python, along with a response schema.
+
+Route Schema (URL)
+https://api.consumet.org/meta/anilist/staff/{id}
+
+Path Parameters
+Parameter	Type	Description	Required?	Default
+id	string	The ID of the staff member	Yes	N/A
+Request Samples
+import axios from "axios";
+ 
+/*
+Using the example staff ID of '95095' (Junichi Suwabe),
+*/
+const url = "https://api.consumet.org/meta/anilist/staff/95095";
+const data = async () => {
+    try {
+        const { data } = await axios.get(url);
+        return data;
+    } catch (err) {
+        throw new Error(err.message);
+    }
+};
+ 
+console.log(data);
+
+Response Schema
+MIME Type: application/json
+
+{
+    "id": "string",
+    "name": {
+      "first": "string",
+      "last": "string",
+      "full": "string",
+      "native": "string",
+      "alternative": "string[]"
+    },
+    "image": "string",
+    "description": "string",
+    "primaryOccupations": "string[]",
+    "gender": "string",
+    "dateOfBirth": {
+      "year": "number",
+      "month": "number",
+      "day": "number"
+    },
+    "dateOfDeath": {
+      "year": "number",
+      "month": "number",
+      "day": "number"
+    },
+    "age": "number",
+    "yearsActive": "number[]",
+    "homeTown": "string",
+    "bloodType": "string",
+    "isFavourite": "boolean",
+    "characters": {
+      "id": "string",
+      "role": "string",
+      "name": "string[]",
+      "image": "string"
+    },
+    "staff": {
+      "id": "string",
+      "role": "string",
+      "name": "string[]",
+      "image": "string"
+    }
+}

@@ -15,18 +15,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   UserButton,
   useUser,
-  useClerk,
-} from '@clerk/clerk-react';
-import { dark } from '@clerk/themes';
+} from '@clerk/react';
+import { dark } from '@clerk/ui/themes';
 import { useRouter } from '../context/RouterContext';
-import { useToast } from '../context/ToastContext';
+import { useAuthModal } from '../context/AuthModalContext';
 import { CommandPalette } from './CommandPalette';
 
 export const Navbar: React.FC = () => {
   const { route, navigate } = useRouter();
   const { isLoaded, isSignedIn } = useUser();
-  const { openSignIn } = useClerk();
-  const { showToast } = useToast();
+  const { openSignInModal } = useAuthModal();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
@@ -167,7 +165,7 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center">
                 <UserButton
                   appearance={{
-                    baseTheme: dark,
+                    theme: dark,
                     variables: {
                       colorPrimary: '#e50914',
                     },
@@ -188,20 +186,7 @@ export const Navbar: React.FC = () => {
               </div>
             ) : (
               <button
-                onClick={() => {
-                  if (!isLoaded) {
-                    showToast('Authentication is still initializing. Please try again in a moment.', 'info');
-                    return;
-                  }
-                  openSignIn({
-                    appearance: {
-                      baseTheme: dark,
-                      variables: {
-                        colorPrimary: '#e50914',
-                      },
-                    },
-                  });
-                }}
+                onClick={openSignInModal}
                 className="px-3.5 py-1.5 rounded-full bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
                 title="Sign In with Clerk"
               >

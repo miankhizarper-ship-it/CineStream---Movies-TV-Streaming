@@ -170,9 +170,8 @@ function parsePath(fullPath: string): RouteState {
 
 export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const getFullLocation = () => {
-    const hash = window.location.hash;
-    if (hash && /^#\/?(movie|tv|watch|explore|search|person|mylist|profile|download|apk)(\/|$|\?)/i.test(hash)) {
-      return hash.slice(1);
+    if (window.location.hash && window.location.hash.length > 1) {
+      return window.location.hash.slice(1);
     }
     return window.location.pathname + window.location.search;
   };

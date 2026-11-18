@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { useUser } from '@clerk/react';
-import { useAuthModal } from './AuthModalContext';
+import { useUser, useClerk } from '@clerk/clerk-react';
 import { TMDBMedia } from '../lib/tmdb';
 
 export interface BookmarkItem {
@@ -96,7 +95,7 @@ const syncToClerk = async (userObj: any, list: BookmarkItem[]) => {
 
 export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isSignedIn, user, isLoaded } = useUser();
-  const { openSignInModal } = useAuthModal();
+  const { openSignIn } = useClerk();
 
   const [watchlist, setWatchlist] = useState<BookmarkItem[]>(() => getLocalWatchlist());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -170,8 +169,18 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Open sign in prompt for guest watchlist actions
   const openSignInForWatchlist = useCallback(() => {
-    openSignInModal();
-  }, [openSignInModal]);
+    try {
+      openSignIn({
+        appearance: {
+          variables: {
+            colorPrimary: '#e50914',
+          },
+        },
+      });
+    } catch (err) {
+      console.warn('Could not open Clerk sign-in modal:', err);
+    }
+  }, [openSignIn]);
 
   // Check if a media is saved
   const isBookmarked = useCallback(

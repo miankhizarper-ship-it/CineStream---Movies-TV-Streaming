@@ -1,17 +1,15 @@
 import React from 'react';
 import { Bookmark, X, Play, Trash2, ArrowRight, LogIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useUser } from '@clerk/react';
+import { useUser, SignInButton } from '@clerk/clerk-react';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useQuickView } from '../context/QuickViewContext';
 import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
-import { useAuthModal } from '../context/AuthModalContext';
 import { getImageUrl } from '../lib/tmdb';
 
 export const WatchlistDrawer: React.FC = () => {
   const { isSignedIn } = useUser();
-  const { openSignInModal } = useAuthModal();
   const { isWatchlistPanelOpen, closeWatchlistPanel } = useQuickView();
   const { bookmarks, removeBookmark } = useBookmarks();
   const { navigate } = useRouter();
@@ -70,16 +68,15 @@ export const WatchlistDrawer: React.FC = () => {
                   <p className="text-xs font-bold text-white">Guest Mode</p>
                   <p className="text-[11px] text-slate-400 truncate">Sign in to sync across devices</p>
                 </div>
-                <button
-                  onClick={() => {
-                    closeWatchlistPanel();
-                    openSignInModal();
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shrink-0 flex items-center gap-1 cursor-pointer"
-                >
-                  <LogIn className="w-3 h-3" />
-                  <span>Sign In</span>
-                </button>
+                <SignInButton mode="modal">
+                  <button
+                    onClick={closeWatchlistPanel}
+                    className="px-3 py-1.5 rounded-lg bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shrink-0 flex items-center gap-1 cursor-pointer"
+                  >
+                    <LogIn className="w-3 h-3" />
+                    <span>Sign In</span>
+                  </button>
+                </SignInButton>
               </div>
             )}
 

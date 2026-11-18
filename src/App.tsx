@@ -1,18 +1,15 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ClerkProvider } from '@clerk/react';
-import { ui } from '@clerk/ui';
-import { dark } from '@clerk/ui/themes';
+import { ClerkProvider } from '@clerk/clerk-react';
+import { dark } from '@clerk/themes';
 import { RouterProvider, useRouter } from './context/RouterContext';
 import { ToastProvider } from './context/ToastContext';
-import { AuthModalProvider } from './context/AuthModalContext';
 import { WatchlistProvider } from './context/WatchlistContext';
 import { WatchHistoryProvider } from './context/WatchHistoryContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { PhantomGhost } from './components/PhantomGhost';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { SignInModal } from './components/SignInModal';
 
 // Views
 import { HomeView } from './views/HomeView';
@@ -24,16 +21,9 @@ import { PersonView } from './views/PersonView';
 import { MyListView } from './views/MyListView';
 import { DownloadAppView } from './views/DownloadAppView';
 
-const isProductionDomain =
-  typeof window !== 'undefined' &&
-  (window.location.hostname === 'cinestreams.net' ||
-    window.location.hostname === 'www.cinestreams.net');
-
-const CLERK_PUBLISHABLE_KEY = isProductionDomain
-  ? (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.startsWith('pk_live_')
-      ? import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-      : 'pk_live_Y2xlcmsuY2luZXN0cmVhbXMubmV0JA')
-  : 'pk_test_b3B0aW1hbC1xdWFnZ2EtMzQ5NC5jbGVyay5hY2NvdW50cy5kZXYk';
+const CLERK_PUBLISHABLE_KEY =
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+  'pk_test_b3B0aW1hbC1xdWFnZ2EtMzQ5NC5jbGVyay5hY2NvdW50cy5kZXYk';
 
 const MainContent: React.FC = () => {
   const { route } = useRouter();
@@ -112,32 +102,25 @@ export default function App() {
   return (
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY}
-      ui={ui}
-      signInFallbackRedirectUrl="/"
-      signUpFallbackRedirectUrl="/"
-      afterSignOutUrl="/"
       appearance={{
-        theme: dark,
+        baseTheme: dark,
         variables: {
           colorPrimary: '#e50914',
           colorBackground: '#0d0e14',
-          colorInput: '#161822',
-          colorForeground: '#f8fafc',
-          colorInputForeground: '#ffffff',
+          colorInputBackground: '#161822',
+          colorText: '#f8fafc',
+          colorInputText: '#ffffff',
         },
       }}
     >
       <ToastProvider>
-        <AuthModalProvider>
-          <WatchlistProvider>
-            <WatchHistoryProvider>
-              <RouterProvider>
-                <MainContent />
-                <SignInModal />
-              </RouterProvider>
-            </WatchHistoryProvider>
-          </WatchlistProvider>
-        </AuthModalProvider>
+        <WatchlistProvider>
+          <WatchHistoryProvider>
+            <RouterProvider>
+              <MainContent />
+            </RouterProvider>
+          </WatchHistoryProvider>
+        </WatchlistProvider>
       </ToastProvider>
     </ClerkProvider>
   );

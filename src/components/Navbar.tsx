@@ -13,18 +13,17 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
   UserButton,
-  useUser,
-} from '@clerk/react';
-import { dark } from '@clerk/ui/themes';
+} from '@clerk/clerk-react';
+import { dark } from '@clerk/themes';
 import { useRouter } from '../context/RouterContext';
-import { useAuthModal } from '../context/AuthModalContext';
 import { CommandPalette } from './CommandPalette';
 
 export const Navbar: React.FC = () => {
   const { route, navigate } = useRouter();
-  const { isLoaded, isSignedIn } = useUser();
-  const { openSignInModal } = useAuthModal();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
@@ -161,11 +160,11 @@ export const Navbar: React.FC = () => {
             </button>
 
             {/* Clerk Authentication in Header */}
-            {isLoaded && isSignedIn ? (
+            <SignedIn>
               <div className="flex items-center">
                 <UserButton
                   appearance={{
-                    theme: dark,
+                    baseTheme: dark,
                     variables: {
                       colorPrimary: '#e50914',
                     },
@@ -184,16 +183,19 @@ export const Navbar: React.FC = () => {
                   </UserButton.MenuItems>
                 </UserButton>
               </div>
-            ) : (
-              <button
-                onClick={openSignInModal}
-                className="px-3.5 py-1.5 rounded-full bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
-                title="Sign In with Clerk"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
-              </button>
-            )}
+            </SignedIn>
+
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button
+                  className="px-3.5 py-1.5 rounded-full bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                  title="Sign In with Clerk"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </button>
+              </SignInButton>
+            </SignedOut>
 
             {/* Hamburger Menu Toggle (Mobile/Tablet) */}
             <button

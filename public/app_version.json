@@ -1,7 +1,7 @@
 {
-  "latest_version": "1.0.14",
-  "min_supported_version": "1.0.8",
-  "force_update": false,
+  "latest_version": "1.0.15",
+  "min_supported_version": "1.0.15",
+  "force_update": true,
   "apk_url": "https://github.com/miankhizarper-ship-it/CineStream---Movies-TV-Streaming/releases/download/1.0.14/cinestream.apk",
   "release_notes": "Live progress + controls in Downloads"
 }

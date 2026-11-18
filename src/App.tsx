@@ -23,7 +23,7 @@ import { DownloadAppView } from './views/DownloadAppView';
 
 const CLERK_PUBLISHABLE_KEY =
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
-  'pk_test_b3B0aW1hbC1xdWFnZ2EtMzQ5NC5jbGVyay5hY2NvdW50cy5kZXYk';
+  'pk_live_Y2xlcmsuY2luZXN0cmVhbXMubmV0JA';
 
 const MainContent: React.FC = () => {
   const { route } = useRouter();

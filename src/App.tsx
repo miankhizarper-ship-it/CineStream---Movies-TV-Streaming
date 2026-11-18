@@ -22,8 +22,9 @@ import { MyListView } from './views/MyListView';
 import { DownloadAppView } from './views/DownloadAppView';
 
 const CLERK_PUBLISHABLE_KEY =
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
-  'pk_live_Y2xlcmsuY2luZXN0cmVhbXMubmV0JA';
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.startsWith('pk_live_')
+    ? import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+    : 'pk_live_Y2xlcmsuY2luZXN0cmVhbXMubmV0JA';
 
 const MainContent: React.FC = () => {
   const { route } = useRouter();

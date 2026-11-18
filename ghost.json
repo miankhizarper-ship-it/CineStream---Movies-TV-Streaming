@@ -1,0 +1,23 @@
+{
+  "is_active": false,
+  "flee_messages": [
+    "Eep! Too close! 👻",
+    "Whooosh! 💨",
+    "Can’t catch me! 🏃‍♂️💨",
+    "Boo! 🎃",
+    "Spooky mode activated! 🦇",
+    "Did I scare you? 👻",
+    "Ahhh human! 😱",
+    "Floating away... ✨",
+    "Teleporting magic! 🪄",
+    "Zoom! Into the shadows! 🌌"
+  ],
+  "catch_messages": [
+    "Poof! You got me! 👻🎉",
+    "Impressive reflexes! 🏆",
+    "Ghost Whisperer unlocked! ✨",
+    "You caught the Phantom! 🌟",
+    "Aha! Caught in the act! 🪄",
+    "Nice catch, movie buff! 🎬"
+  ]
+}

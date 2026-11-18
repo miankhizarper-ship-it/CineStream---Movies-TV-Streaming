@@ -26,6 +26,19 @@ const CLERK_PUBLISHABLE_KEY =
     ? import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
     : 'pk_live_Y2xlcmsuY2luZXN0cmVhbXMubmV0JA';
 
+const CLERK_DEV_PUBLISHABLE_KEY =
+  'pk_test_b3B0aW1hbC1xdWFnZ2EtMzQ5NC5jbGVyay5hY2NvdW50cy5kZXYk';
+
+const isPreviewOrLocalHost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.endsWith('.run.app'));
+
+const RESOLVED_CLERK_PUBLISHABLE_KEY = isPreviewOrLocalHost
+  ? CLERK_DEV_PUBLISHABLE_KEY
+  : CLERK_PUBLISHABLE_KEY;
+
 const MainContent: React.FC = () => {
   const { route } = useRouter();
 
@@ -102,7 +115,7 @@ const MainContent: React.FC = () => {
 export default function App() {
   return (
     <ClerkProvider
-      publishableKey={CLERK_PUBLISHABLE_KEY}
+      publishableKey={RESOLVED_CLERK_PUBLISHABLE_KEY}
       appearance={{
         baseTheme: dark,
         variables: {

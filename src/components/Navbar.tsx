@@ -13,17 +13,20 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
   UserButton,
+  useUser,
+  useClerk,
 } from '@clerk/clerk-react';
 import { dark } from '@clerk/themes';
 import { useRouter } from '../context/RouterContext';
+import { useToast } from '../context/ToastContext';
 import { CommandPalette } from './CommandPalette';
 
 export const Navbar: React.FC = () => {
   const { route, navigate } = useRouter();
+  const { isLoaded, isSignedIn } = useUser();
+  const { openSignIn } = useClerk();
+  const { showToast } = useToast();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
@@ -160,7 +163,7 @@ export const Navbar: React.FC = () => {
             </button>
 
             {/* Clerk Authentication in Header */}
-            <SignedIn>
+            {isLoaded && isSignedIn ? (
               <div className="flex items-center">
                 <UserButton
                   appearance={{
@@ -183,19 +186,29 @@ export const Navbar: React.FC = () => {
                   </UserButton.MenuItems>
                 </UserButton>
               </div>
-            </SignedIn>
-
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button
-                  className="px-3.5 py-1.5 rounded-full bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
-                  title="Sign In with Clerk"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>Sign In</span>
-                </button>
-              </SignInButton>
-            </SignedOut>
+            ) : (
+              <button
+                onClick={() => {
+                  if (!isLoaded) {
+                    showToast('Authentication is still initializing. Please try again in a moment.', 'info');
+                    return;
+                  }
+                  openSignIn({
+                    appearance: {
+                      baseTheme: dark,
+                      variables: {
+                        colorPrimary: '#e50914',
+                      },
+                    },
+                  });
+                }}
+                className="px-3.5 py-1.5 rounded-full bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                title="Sign In with Clerk"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            )}
 
             {/* Hamburger Menu Toggle (Mobile/Tablet) */}
             <button

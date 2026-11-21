@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ChevronLeft, Calendar, MapPin } from 'lucide-react';
 import { tmdb, PersonDetails, TMDBMedia, getImageUrl } from '../lib/tmdb';
 import { MovieCard } from '../components/MovieCard';
+import { SEOHead } from '../components/SEOHead';
+import { getOrigin, truncateDescription } from '../lib/seo';
 import { useRouter } from '../context/RouterContext';
 
 interface PersonViewProps {
@@ -33,9 +35,19 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
     };
   }, [id]);
 
+  const origin = getOrigin() || 'https://cinestream.app';
+  const canonicalPath = `/person/${id}`;
+
   if (loading) {
     return (
       <div className="w-full min-h-[70dvh] flex flex-col items-center justify-center gap-3 text-slate-400">
+        <SEOHead
+          title="Actor & Creator Profile | CineStream"
+          description="Explore biography, known credits, movies, and TV shows on CineStream."
+          canonicalPath={canonicalPath}
+          ogType="profile"
+        />
+        <h1 className="sr-only">Loading Actor & Creator Profile</h1>
         <div className="w-8 h-8 border-3 border-[#e50914]/30 border-t-[#e50914] rounded-full animate-spin" />
         <p className="text-xs font-medium">Loading profile...</p>
       </div>
@@ -44,9 +56,16 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
 
   if (!person) {
     return (
-      <div className="text-center py-16 text-slate-400">
-        <p className="text-xs">Profile not found.</p>
-        <button onClick={goBack} className="mt-3 px-4 py-2 bg-white/10 rounded-xl text-white text-xs">
+      <div className="text-center py-24 text-slate-400 px-4">
+        <SEOHead
+          title="Profile Not Found | CineStream"
+          description="The requested actor or creator profile could not be found on CineStream."
+          canonicalPath={canonicalPath}
+          robots="noindex, follow"
+        />
+        <h1 className="text-xl font-bold text-white mb-2">Profile Not Found</h1>
+        <p className="text-xs mb-4">We could not locate this person in the TMDB catalogue.</p>
+        <button onClick={goBack} className="px-4 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-white text-xs font-semibold">
           Go Back
         </button>
       </div>
@@ -69,8 +88,42 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
 
   uniqueCredits.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
 
+  const department = person.known_for_department || 'Artist';
+  const personDesc =
+    truncateDescription(person.biography, 155) ||
+    `Explore ${person.name}'s biography, filmography, and ${uniqueCredits.length} movies & TV credits on CineStream.`;
+  const portraitUrl = getImageUrl(person.profile_path, 'w500');
+
+  const personSchema = {
+    '@type': 'Person',
+    name: person.name,
+    url: `${origin}${canonicalPath}`,
+    description: personDesc,
+    image: portraitUrl,
+    jobTitle: department,
+    ...(person.birthday ? { birthDate: person.birthday } : {}),
+    ...(person.place_of_birth ? { birthPlace: { '@type': 'Place', name: person.place_of_birth } } : {}),
+  };
+
+  const breadcrumbSchema = {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${origin}/` },
+      { '@type': 'ListItem', position: 2, name: person.name, item: `${origin}${canonicalPath}` },
+    ],
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pt-24 sm:pt-28 pb-24 w-full">
+      <SEOHead
+        title={`${person.name} – Movies, TV Shows & Bio | CineStream`}
+        description={personDesc}
+        canonicalPath={canonicalPath}
+        ogType="profile"
+        ogImage={portraitUrl}
+        structuredData={[personSchema, breadcrumbSchema]}
+      />
+
       {/* Back button */}
       <button
         onClick={goBack}
@@ -84,15 +137,15 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
       <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 items-start mb-10">
         <div className="w-32 sm:w-48 rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] shrink-0 shadow-2xl">
           <img
-            src={getImageUrl(person.profile_path, 'w500')}
-            alt={person.name}
+            src={portraitUrl}
+            alt={`${person.name} portrait`}
             className="w-full aspect-[2/3] object-cover"
           />
         </div>
 
         <div className="flex-1 space-y-3">
           <span className="inline-block px-2 py-0.5 rounded-md bg-[#e50914]/20 text-rose-400 font-bold uppercase tracking-wider text-[10px] border border-[#e50914]/40">
-            {person.known_for_department || 'Artist'}
+            {department}
           </span>
 
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white">{person.name}</h1>

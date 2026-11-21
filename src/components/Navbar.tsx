@@ -21,6 +21,7 @@ import {
 import { dark } from '@clerk/themes';
 import { useRouter } from '../context/RouterContext';
 import { CommandPalette } from './CommandPalette';
+import { AppLink } from './AppLink';
 
 export const Navbar: React.FC = () => {
   const { route, navigate } = useRouter();
@@ -110,8 +111,8 @@ export const Navbar: React.FC = () => {
       >
         <div className="bg-transparent border-0 shadow-none px-0 py-0 xl:bg-[#0a0b10]/80 xl:backdrop-blur-2xl xl:border xl:border-white/[0.12] xl:shadow-2xl xl:shadow-black/80 xl:rounded-full xl:px-4 2xl:px-6 xl:py-2 flex items-center justify-between gap-2 xl:gap-3 2xl:gap-4 w-full">
           {/* Brand Wordmark & Icon */}
-          <button
-            onClick={() => navigate('/')}
+          <AppLink
+            to="/"
             className="flex items-center gap-2 text-base sm:text-lg font-black tracking-tight text-white whitespace-nowrap shrink-0 group focus-visible:outline-none cursor-pointer"
           >
             <div className="w-8 h-8 sm:w-9 sm:h-9 xl:w-8 xl:h-8 rounded-full overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform bg-black/60 xl:bg-black/40 backdrop-blur-xl xl:backdrop-blur-none border border-white/15 xl:border-transparent p-1 xl:p-0">
@@ -120,16 +121,16 @@ export const Navbar: React.FC = () => {
             <span className="font-extrabold tracking-tight bg-gradient-to-r from-white via-white to-slate-200 bg-clip-text text-transparent inline-block text-sm sm:text-base xl:text-lg drop-shadow-md">
               CINE<span className="text-[#e50914]">STREAM</span>
             </span>
-          </button>
+          </AppLink>
 
           {/* Desktop Navigation Links (Pill Style) */}
-          <nav className="hidden xl:flex items-center gap-0.5 2xl:gap-1.5 text-xs font-medium">
+          <nav className="hidden xl:flex items-center gap-0.5 2xl:gap-1.5 text-xs font-medium" aria-label="Main navigation">
             {navLinks.map((link) => {
               const active = isActive(link.path);
               return (
-                <button
+                <AppLink
                   key={link.path}
-                  onClick={() => navigate(link.path)}
+                  to={link.path}
                   className={`whitespace-nowrap shrink-0 transition-all px-2.5 2xl:px-3.5 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer text-xs font-semibold ${
                     active
                       ? 'bg-white text-slate-950 font-bold shadow-md shadow-black/30'
@@ -142,7 +143,7 @@ export const Navbar: React.FC = () => {
                       {link.count}
                     </span>
                   )}
-                </button>
+                </AppLink>
               );
             })}
           </nav>
@@ -249,14 +250,15 @@ export const Navbar: React.FC = () => {
 
 
               {/* Drawer Navigation Links */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+              <nav className="flex-1 overflow-y-auto p-4 space-y-1.5" aria-label="Mobile navigation">
                 {navLinks.map((link) => {
                   const Icon = link.icon;
                   const active = isActive(link.path);
                   return (
-                    <button
+                    <AppLink
                       key={link.path}
-                      onClick={() => handleNavClick(link.path)}
+                      to={link.path}
+                      onClick={() => setMobileMenuOpen(false)}
                       className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-semibold text-sm transition-all cursor-pointer ${
                         active
                           ? 'bg-[#e50914] text-white shadow-lg shadow-rose-950/50'
@@ -272,11 +274,11 @@ export const Navbar: React.FC = () => {
                           {link.count}
                         </span>
                       )}
-                    </button>
+                    </AppLink>
                   );
                 })}
 
-              </div>
+              </nav>
 
               {/* Drawer Footer Info */}
               <div className="p-4 border-t border-white/10 bg-black/40 text-[11px] text-slate-500 text-center">

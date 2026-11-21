@@ -22,6 +22,9 @@ import {
   generateSearchQueryVariants,
 } from '../lib/tmdb';
 import { MovieCard } from '../components/MovieCard';
+import { SEOHead } from '../components/SEOHead';
+import { AppLink } from '../components/AppLink';
+import { getOrigin } from '../lib/seo';
 import { useRouter } from '../context/RouterContext';
 
 export const SearchView: React.FC = () => {
@@ -240,8 +243,30 @@ export const SearchView: React.FC = () => {
       )
     : [];
 
+  const origin = getOrigin() || 'https://cinestream.app';
+  const trimmedQuery = query.trim();
+  const searchTitle = trimmedQuery
+    ? `"${trimmedQuery}" – Search Results | CineStream`
+    : 'Search Movies, TV Shows & Cast | CineStream';
+  const searchDescription = trimmedQuery
+    ? `Browse movies, TV series, and cast matching "${trimmedQuery}" with instant fuzzy search on CineStream.`
+    : 'Instantly search thousands of movies, TV series, actors, and directors with smart fuzzy matching on CineStream.';
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-8 w-full pb-24">
+      <SEOHead
+        title={searchTitle}
+        description={searchDescription}
+        canonicalPath="/search"
+        ogType="website"
+        structuredData={{
+          '@type': 'SearchResultsPage',
+          name: searchTitle,
+          description: searchDescription,
+          url: `${origin}/search`,
+        }}
+      />
+
       {/* Header & Search Bar Box */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="text-center mb-5">
@@ -479,6 +504,7 @@ export const SearchView: React.FC = () => {
         </div>
       ) : filteredResults.length > 0 ? (
         <>
+          <h2 className="sr-only">Search Results</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-4">
             {filteredResults.map((item, idx) => {
               if (item.media_type === 'person') {
@@ -489,9 +515,9 @@ export const SearchView: React.FC = () => {
                   .join(', ');
 
                 return (
-                  <div
+                  <AppLink
                     key={`person-${item.id}-${idx}`}
-                    onClick={() => navigate(`/person/${item.id}`)}
+                    to={`/person/${item.id}`}
                     className="group cursor-pointer rounded-2xl overflow-hidden bg-[#101119] border border-white/10 hover:border-rose-500/50 p-4 text-center transition-all duration-300 hover:scale-105 hover:z-30 hover:shadow-2xl active:scale-95 flex flex-col items-center justify-between relative"
                   >
                     {item._isFuzzyMatch && (
@@ -502,14 +528,14 @@ export const SearchView: React.FC = () => {
                     <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full overflow-hidden bg-[#181a26] border border-white/10 mb-3 group-hover:border-rose-500 transition-colors shadow-lg">
                       <img
                         src={getImageUrl(item.profile_path, 'w185')}
-                        alt={item.name || 'Person'}
+                        alt={`${item.name || 'Artist'} portrait`}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       />
                     </div>
                     <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-rose-400 transition-colors">
+                      <h3 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-rose-400 transition-colors">
                         {item.name}
-                      </h4>
+                      </h3>
                       <p className="text-[10px] text-rose-400 font-extrabold uppercase tracking-wider mt-0.5">
                         {item.known_for_department || 'Actor / Creator'}
                       </p>
@@ -519,7 +545,7 @@ export const SearchView: React.FC = () => {
                         </p>
                       )}
                     </div>
-                  </div>
+                  </AppLink>
                 );
               }
 
@@ -564,9 +590,9 @@ export const SearchView: React.FC = () => {
       ) : query.trim() ? (
         <div className="text-center py-16 bg-[#12131a] rounded-3xl border border-white/[0.08] max-w-xl mx-auto p-8 shadow-2xl">
           <Search className="w-10 h-10 text-slate-500 mx-auto mb-3" />
-          <h3 className="text-base font-extrabold text-white mb-1">
+          <h2 className="text-base font-extrabold text-white mb-1">
             No exact matches found for "{query}"
-          </h3>
+          </h2>
           <p className="text-xs text-slate-400 mb-6">
             We searched TMDB movies and TV series including fuzzy variants. Check the suggestions below:
           </p>
@@ -633,10 +659,10 @@ export const SearchView: React.FC = () => {
           {/* Trending Today Showcase */}
           {trending.length > 0 && (
             <div className="space-y-4 pt-4 border-t border-white/[0.08]">
-              <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+              <h2 className="text-sm font-extrabold text-white flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-400" />
                 <span>Popular Right Now</span>
-              </h3>
+              </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                 {trending.slice(0, 5).map((item) => (
                   <MovieCard key={`trending-${item.id}`} media={item} />

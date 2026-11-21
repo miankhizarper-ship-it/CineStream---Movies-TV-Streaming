@@ -11,9 +11,11 @@ import {
   Cpu,
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
-import { useRouter } from '../context/RouterContext';
 import { ImageViewerModal, ImageViewerItem } from '../components/ImageViewerModal';
 import { DesktopInstallModal } from '../components/DesktopInstallModal';
+import { SEOHead } from '../components/SEOHead';
+import { AppLink } from '../components/AppLink';
+import { getOrigin } from '../lib/seo';
 
 interface AppScreenshot {
   id: string;
@@ -126,7 +128,6 @@ interface DownloadAppViewProps {
 
 export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) => {
   const { showToast } = useToast();
-  const { navigate } = useRouter();
   const [downloading, setDownloading] = useState(false);
   const [modalScreenshot, setModalScreenshot] = useState<ImageViewerItem | null>(null);
   const [desktopModalOpen, setDesktopModalOpen] = useState(false);
@@ -135,6 +136,40 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
   const fileName = isAndroid ? 'cinestream.apk' : 'CineStream-1.0.4-Setup.exe';
   const fileUrl = isAndroid ? ANDROID_RELEASE_URL : WINDOWS_RELEASE_URL;
   const currentScreenshots = isAndroid ? ANDROID_SCREENSHOTS : WINDOWS_SCREENSHOTS;
+
+  const origin = getOrigin() || 'https://cinestream.app';
+  const canonicalPath = isAndroid ? '/download-app' : '/download-app/windows';
+  const pageTitle = isAndroid
+    ? 'Download CineStream Android APK (v1.0.14) | CineStream'
+    : 'Download CineStream Windows Desktop App (v1.0.4) | CineStream';
+  const pageDescription = isAndroid
+    ? 'Download the official CineStream Android APK v1.0.14 for ad-free 4K movie and TV streaming, episode selector, and hardware playback.'
+    : 'Download the native CineStream Windows PC installer v1.0.4 with GPU-accelerated 4K streaming, keyboard shortcuts, and watchlist sync.';
+
+  const softwareSchema = [
+    {
+      '@type': 'SoftwareApplication',
+      name: isAndroid ? 'CineStream for Android' : 'CineStream for Windows',
+      operatingSystem: isAndroid ? 'Android 8.0+' : 'Windows 10, Windows 11',
+      applicationCategory: 'EntertainmentApplication',
+      softwareVersion: isAndroid ? '1.0.14' : '1.0.4',
+      downloadUrl: fileUrl,
+      url: `${origin}${canonicalPath}`,
+      description: pageDescription,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${origin}/` },
+        { '@type': 'ListItem', position: 2, name: isAndroid ? 'Android App' : 'Windows App', item: `${origin}${canonicalPath}` },
+      ],
+    },
+  ];
 
   const handleDownload = () => {
     setDownloading(true);
@@ -158,16 +193,21 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
     }, 2000);
   };
 
-  const handlePlatformSwitch = (newPlatform: 'android' | 'windows') => {
-    if (newPlatform === 'windows') {
-      navigate('/download-app/windows');
-    } else {
-      navigate('/download-app');
-    }
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10 w-full pb-28 space-y-10">
+      <SEOHead
+        title={pageTitle}
+        description={pageDescription}
+        canonicalPath={canonicalPath}
+        ogType="website"
+        ogImage={
+          isAndroid
+            ? '/assets/aistudio/CineStream Home & Spotlight.png'
+            : '/assets/aistudio/home_b3b198ff.png'
+        }
+        structuredData={softwareSchema}
+      />
+
       {/* Top Platform Selector Header & Tabs */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#12131a] p-4 sm:p-5 rounded-3xl border border-white/[0.08] shadow-2xl">
         <div className="space-y-1">
@@ -187,8 +227,8 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
 
         {/* Platform Tabs Switcher */}
         <div className="flex items-center bg-black/55 p-1.5 rounded-2xl border border-white/10 shrink-0">
-          <button
-            onClick={() => handlePlatformSwitch('android')}
+          <AppLink
+            to="/download-app"
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               isAndroid
                 ? 'bg-[#e50914] text-white shadow-lg shadow-rose-950/60 scale-[1.02]'
@@ -197,9 +237,9 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
           >
             <Smartphone className="w-4 h-4" />
             <span>Android APK</span>
-          </button>
-          <button
-            onClick={() => handlePlatformSwitch('windows')}
+          </AppLink>
+          <AppLink
+            to="/download-app/windows"
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               !isAndroid
                 ? 'bg-[#e50914] text-white shadow-lg shadow-rose-950/60 scale-[1.02]'
@@ -208,7 +248,7 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
           >
             <Monitor className="w-4 h-4" />
             <span>Windows (setup.exe)</span>
-          </button>
+          </AppLink>
         </div>
       </div>
 
@@ -232,9 +272,9 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
                 All Browsers
               </span>
             </div>
-            <h3 className="text-base font-black text-white group-hover:text-rose-400 transition-colors">
+            <h2 className="text-base font-black text-white group-hover:text-rose-400 transition-colors">
               Looking for instant browser installation? Install PWA
-            </h3>
+            </h2>
             <p className="text-xs text-slate-300 max-w-xl">
               Add CineStream directly to your desktop or home screen without installer setup.
             </p>
@@ -371,10 +411,10 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2 tracking-tight">
+            <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2 tracking-tight">
               <span className="w-1.5 h-4 bg-[#e50914] rounded-full inline-block" />
               {isAndroid ? 'Android App Interface Screenshots' : 'Windows Desktop App Interface Screenshots (Horizontal View)'}
-            </h3>
+            </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               {isAndroid
                 ? 'Click any screenshot below to inspect the full mobile interface.'
@@ -399,7 +439,7 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
                 <div className="aspect-[9/16] w-full rounded-xl overflow-hidden bg-black relative mb-2">
                   <img
                     src={screen.imagePath}
-                    alt={screen.title}
+                    alt={`${screen.title} – CineStream Android app screenshot`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white">
@@ -408,9 +448,9 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
                     </div>
                   </div>
                 </div>
-                <h4 className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
+                <h3 className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
                   {screen.title}
-                </h4>
+                </h3>
               </button>
             ))}
           </div>
@@ -425,7 +465,7 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
                 <div className="aspect-video w-full rounded-xl overflow-hidden bg-black relative mb-2.5 border border-white/5">
                   <img
                     src={screen.imagePath}
-                    alt={screen.title}
+                    alt={`${screen.title} – CineStream Windows desktop app screenshot`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white">
@@ -434,9 +474,9 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
                     </div>
                   </div>
                 </div>
-                <h4 className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
+                <h3 className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
                   {screen.title}
-                </h4>
+                </h3>
                 <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
                   {screen.subtitle}
                 </p>
@@ -459,9 +499,9 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
             ?
           </div>
           <div>
-            <h3 className="text-base font-black text-white">
+            <h2 className="text-base font-black text-white">
               {isAndroid ? 'How to Install Android APK' : 'How to Install Windows Setup.exe'}
-            </h3>
+            </h2>
             <p className="text-xs text-slate-400">
               {isAndroid
                 ? 'Step-by-step process for sideloading the APK on your Android phone or tablet.'
@@ -474,22 +514,22 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">1</span>
-              <h4 className="text-xs font-bold text-white">Download APK</h4>
+              <h3 className="text-xs font-bold text-white">Download APK</h3>
               <p className="text-[11px] text-slate-400 leading-relaxed">Tap download to save `cinestream.apk` v1.0.14 from GitHub.</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">2</span>
-              <h4 className="text-xs font-bold text-white">Open File Manager</h4>
+              <h3 className="text-xs font-bold text-white">Open File Manager</h3>
               <p className="text-[11px] text-slate-400 leading-relaxed">Locate `cinestream.apk` in your Downloads folder and tap it.</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">3</span>
-              <h4 className="text-xs font-bold text-white">Allow Unknown Sources</h4>
+              <h3 className="text-xs font-bold text-white">Allow Unknown Sources</h3>
               <p className="text-[11px] text-slate-400 leading-relaxed">Enable installation from trusted browser/file sources if prompted.</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">4</span>
-              <h4 className="text-xs font-bold text-white">Launch & Stream</h4>
+              <h3 className="text-xs font-bold text-white">Launch & Stream</h3>
               <p className="text-[11px] text-slate-400 leading-relaxed">Tap Install, open CineStream, and enjoy ad-free 4K streaming.</p>
             </div>
           </div>
@@ -497,22 +537,22 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">1</span>
-              <h4 className="text-xs font-bold text-white">Download Setup.exe</h4>
+              <h3 className="text-xs font-bold text-white">Download Setup.exe</h3>
               <p className="text-[11px] text-slate-400 leading-relaxed">Click download to get `CineStream-1.0.4-Setup.exe` from GitHub release v1.0.4.</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">2</span>
-              <h4 className="text-xs font-bold text-white">Run Installer</h4>
+              <h3 className="text-xs font-bold text-white">Run Installer</h3>
               <p className="text-[11px] text-slate-400 leading-relaxed">Double-click `CineStream-1.0.4-Setup.exe`. If Windows SmartScreen appears, click "More info" then "Run anyway".</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">3</span>
-              <h4 className="text-xs font-bold text-white">Select Destination</h4>
+              <h3 className="text-xs font-bold text-white">Select Destination</h3>
               <p className="text-[11px] text-slate-400 leading-relaxed">Choose installation folder (or keep default AppData) and create desktop shortcut.</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
               <span className="w-6 h-6 rounded-lg bg-[#e50914] text-white text-xs font-black flex items-center justify-center">4</span>
-              <h4 className="text-xs font-bold text-white">Launch App</h4>
+              <h3 className="text-xs font-bold text-white">Launch App</h3>
               <p className="text-[11px] text-slate-400 leading-relaxed">Open CineStream from desktop shortcut or start menu and start streaming!</p>
             </div>
           </div>

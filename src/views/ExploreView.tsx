@@ -29,6 +29,9 @@ import {
   TMDBLanguage,
 } from '../lib/tmdb';
 import { MovieCard } from '../components/MovieCard';
+import { SEOHead } from '../components/SEOHead';
+import { AppLink } from '../components/AppLink';
+import { getOrigin } from '../lib/seo';
 import { useRouter } from '../context/RouterContext';
 
 interface ExploreViewProps {
@@ -164,7 +167,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   initialType = 'movie',
   initialGenreId,
 }) => {
-  const { route, navigate } = useRouter();
+  const { route } = useRouter();
   const [mediaType, setMediaType] = useState<'movie' | 'tv'>(initialType);
   const [feedType, setFeedType] = useState<FeedType>('discover');
 
@@ -546,8 +549,48 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const activeYearLabel = selectedYear || 'All Years';
   const activeSortLabel = SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Most Popular';
 
+  const origin = getOrigin() || 'https://cinestream.app';
+  const exploreCanonical = `/explore/${mediaType}`;
+  const exploreTitle =
+    mediaType === 'movie'
+      ? `${selectedGenreName ? `${selectedGenreName} ` : ''}Explore Movies by Genre & Rating | CineStream`
+      : `${selectedGenreName ? `${selectedGenreName} ` : ''}Explore TV Series by Genre & Network | CineStream`;
+  const exploreDescription =
+    mediaType === 'movie'
+      ? `Browse popular, top-rated, and upcoming${selectedGenreName ? ` ${selectedGenreName}` : ''} movies filtered by genre, country, language, and platform on CineStream.`
+      : `Discover trending, top-rated, and airing${selectedGenreName ? ` ${selectedGenreName}` : ''} TV series across every genre and network on CineStream.`;
+
+  const exploreStructuredData = [
+    {
+      '@type': 'CollectionPage',
+      name: mediaType === 'movie' ? 'Explore Movies' : 'Explore TV Series',
+      description: exploreDescription,
+      url: `${origin}${exploreCanonical}`,
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${origin}/` },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: mediaType === 'movie' ? 'Movies' : 'TV Series',
+          item: `${origin}${exploreCanonical}`,
+        },
+      ],
+    },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-8 w-full pb-24">
+      <SEOHead
+        title={exploreTitle}
+        description={exploreDescription}
+        canonicalPath={exploreCanonical}
+        ogType="website"
+        structuredData={exploreStructuredData}
+      />
+
       {/* Top Header & Media Type Toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -562,12 +605,9 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
 
         {/* Media Type Switcher (Movie vs TV) */}
         <div className="flex items-center bg-[#12131a] p-1 rounded-2xl border border-white/[0.08] self-start sm:self-auto shrink-0 shadow-inner">
-          <button
-            type="button"
-            onClick={() => {
-              setMediaType('movie');
-              navigate('/explore/movie');
-            }}
+          <AppLink
+            to="/explore/movie"
+            onClick={() => setMediaType('movie')}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               mediaType === 'movie'
                 ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
@@ -576,14 +616,11 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           >
             <Film className="w-3.5 h-3.5" />
             <span>Movies</span>
-          </button>
+          </AppLink>
 
-          <button
-            type="button"
-            onClick={() => {
-              setMediaType('tv');
-              navigate('/explore/tv');
-            }}
+          <AppLink
+            to="/explore/tv"
+            onClick={() => setMediaType('tv')}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               mediaType === 'tv'
                 ? 'bg-[#e50914] text-white shadow-md shadow-rose-950/40'
@@ -592,7 +629,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
           >
             <Tv className="w-3.5 h-3.5" />
             <span>TV Series</span>
-          </button>
+          </AppLink>
         </div>
       </div>
 

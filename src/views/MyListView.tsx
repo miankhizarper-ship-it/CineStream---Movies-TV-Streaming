@@ -6,6 +6,8 @@ import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
 import { MovieCard } from '../components/MovieCard';
+import { SEOHead } from '../components/SEOHead';
+import { AppLink } from '../components/AppLink';
 import { getBackdropUrl } from '../lib/tmdb';
 
 function formatTime(seconds?: number): string {
@@ -63,6 +65,12 @@ export const MyListView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-8 w-full pb-24">
+      <SEOHead
+        title="My Watchlist & Watch History | CineStream"
+        description="Access your saved movies, TV shows, and continue-watching progress synced across devices on CineStream."
+        canonicalPath="/mylist"
+        robots="noindex, nofollow"
+      />
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
@@ -131,7 +139,7 @@ export const MyListView: React.FC = () => {
               <Bookmark className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Save & Sync to Clerk</h3>
+              <h2 className="text-sm font-bold text-white">Save & Sync to Clerk</h2>
               <p className="text-xs text-slate-400">
                 Sign in to automatically sync your watchlist across mobile, tablet, and PC.
               </p>
@@ -165,7 +173,9 @@ export const MyListView: React.FC = () => {
           </div>
 
           {history.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <>
+              <h2 className="sr-only">Recent Watch History</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {history.map((item) => (
                 <div
                   key={`history-card-${item.id}-${item.season || 0}-${item.episode || 0}`}
@@ -206,7 +216,7 @@ export const MyListView: React.FC = () => {
                   <div className="p-3.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h4 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h4>
+                        <h3 className="text-xs sm:text-sm font-bold text-white truncate">{item.title}</h3>
                         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
                           <span>
                             {item.media_type === 'tv'
@@ -256,7 +266,8 @@ export const MyListView: React.FC = () => {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            </>
           ) : (
             <div className="text-center py-16 bg-[#12131a] rounded-2xl border border-white/[0.08]">
               <History className="w-7 h-7 text-slate-500 mx-auto mb-2" />
@@ -315,16 +326,16 @@ export const MyListView: React.FC = () => {
           ) : (
             <div className="text-center py-20 bg-[#12131a] rounded-2xl border border-white/[0.08] max-w-md mx-auto p-6">
               <Bookmark className="w-8 h-8 text-[#e50914] mx-auto mb-2.5" />
-              <h3 className="text-base text-white font-bold mb-1">Your Watchlist is empty</h3>
+              <h2 className="text-base text-white font-bold mb-1">Your Watchlist is empty</h2>
               <p className="text-xs text-slate-400 mb-5">
                 Explore movies and TV shows, then tap the bookmark icon on any poster to save it here.
               </p>
-              <button
-                onClick={() => navigate('/')}
-                className="px-5 py-2.5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-semibold shadow-lg shadow-rose-950/50 cursor-pointer"
+              <AppLink
+                to="/"
+                className="inline-block px-5 py-2.5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-semibold shadow-lg shadow-rose-950/50 cursor-pointer"
               >
                 Browse Trending
-              </button>
+              </AppLink>
             </div>
           )}
         </div>

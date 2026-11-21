@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tmdb, TVSeasonDetails, getImageUrl } from '../../lib/tmdb';
-import { useRouter } from '../../context/RouterContext';
+import { AppLink } from '../AppLink';
 
 interface EpisodeListSectionProps {
   tvShowId: string;
@@ -33,7 +33,6 @@ export const EpisodeListSection: React.FC<EpisodeListSectionProps> = ({
   initialSeason = 1,
   onSeasonChange,
 }) => {
-  const { navigate } = useRouter();
   const [selectedSeasonNum, setSelectedSeasonNum] = useState<number>(initialSeason);
   const [seasonDetails, setSeasonDetails] = useState<TVSeasonDetails | null>(null);
   const [loading, setLoading] = useState(false);
@@ -307,56 +306,59 @@ export const EpisodeListSection: React.FC<EpisodeListSectionProps> = ({
                   initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.18, delay: Math.min(idx * 0.015, 0.25) }}
-                  onClick={() => navigate(`/watch/tv/${tvShowId}/${selectedSeasonNum}/${ep.episode_number}`)}
-                  className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] hover:border-rose-500/40 hover:bg-[#151722] transition-all cursor-pointer flex flex-col shadow-lg"
                 >
-                  <div className="aspect-video relative overflow-hidden bg-slate-900">
-                    <img
-                      src={getImageUrl(ep.still_path || backdropFallback, 'w780')}
-                      alt={ep.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="w-10 h-10 rounded-full bg-[#e50914] text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                        <Play className="w-4 h-4 fill-white ml-0.5" />
+                  <AppLink
+                    to={`/watch/tv/${tvShowId}/${selectedSeasonNum}/${ep.episode_number}`}
+                    className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] hover:border-rose-500/40 hover:bg-[#151722] transition-all cursor-pointer flex flex-col shadow-lg h-full"
+                  >
+                    <div className="aspect-video relative overflow-hidden bg-slate-900">
+                      <img
+                        src={getImageUrl(ep.still_path || backdropFallback, 'w780')}
+                        alt={`Episode ${ep.episode_number}: ${ep.name}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-[#e50914] text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                          <Play className="w-4 h-4 fill-white ml-0.5" />
+                        </div>
                       </div>
-                    </div>
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-bold text-white border border-white/10">
-                      Ep {ep.episode_number}
-                    </div>
-                    {ep.runtime ? (
-                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-semibold text-slate-300">
-                        {ep.runtime}m
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-bold text-white border border-white/10">
+                        Ep {ep.episode_number}
                       </div>
-                    ) : null}
-                  </div>
-
-                  <div className="p-3.5 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <h4 className="text-xs sm:text-sm font-bold text-white line-clamp-1 group-hover:text-rose-400 transition-colors">
-                          {ep.episode_number}. {ep.name}
-                        </h4>
-                        {ep.vote_average ? (
-                          <div className="flex items-center gap-1 text-[11px] text-amber-400 font-bold shrink-0">
-                            <Star className="w-3 h-3 fill-amber-400" />
-                            <span>{ep.vote_average.toFixed(1)}</span>
-                          </div>
-                        ) : null}
-                      </div>
-                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
-                        {ep.overview || 'No description available for this episode.'}
-                      </p>
+                      {ep.runtime ? (
+                        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-semibold text-slate-300">
+                          {ep.runtime}m
+                        </div>
+                      ) : null}
                     </div>
 
-                    {ep.air_date && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-2.5 pt-2 border-t border-white/5">
-                        <Calendar className="w-3 h-3" />
-                        <span>{ep.air_date}</span>
+                    <div className="p-3.5 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <h3 className="text-xs sm:text-sm font-bold text-white line-clamp-1 group-hover:text-rose-400 transition-colors">
+                            {ep.episode_number}. {ep.name}
+                          </h3>
+                          {ep.vote_average ? (
+                            <div className="flex items-center gap-1 text-[11px] text-amber-400 font-bold shrink-0">
+                              <Star className="w-3 h-3 fill-amber-400" />
+                              <span>{ep.vote_average.toFixed(1)}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                          {ep.overview || 'No description available for this episode.'}
+                        </p>
                       </div>
-                    )}
-                  </div>
+
+                      {ep.air_date && (
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-2.5 pt-2 border-t border-white/5">
+                          <Calendar className="w-3 h-3" />
+                          <span>{ep.air_date}</span>
+                        </div>
+                      )}
+                    </div>
+                  </AppLink>
                 </motion.div>
               ))}
             </motion.div>
@@ -376,78 +378,81 @@ export const EpisodeListSection: React.FC<EpisodeListSectionProps> = ({
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.18, delay: Math.min(idx * 0.015, 0.25) }}
-                  onClick={() => navigate(`/watch/tv/${tvShowId}/${selectedSeasonNum}/${ep.episode_number}`)}
-                  className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] hover:border-rose-500/40 hover:bg-[#161824] transition-all cursor-pointer p-3 sm:p-4 flex flex-col sm:flex-row gap-3.5 sm:gap-4.5 items-start sm:items-center shadow-lg"
                 >
-                  {/* Thumbnail */}
-                  <div className="w-full sm:w-52 md:w-64 aspect-video shrink-0 rounded-xl overflow-hidden bg-slate-900 relative">
-                    <img
-                      src={getImageUrl(ep.still_path || backdropFallback, 'w780')}
-                      alt={ep.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="w-10 h-10 rounded-full bg-[#e50914] text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                        <Play className="w-4 h-4 fill-white ml-0.5" />
-                      </div>
-                    </div>
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-bold text-white border border-white/10">
-                      Ep {ep.episode_number}
-                    </div>
-                    {ep.runtime ? (
-                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-semibold text-slate-300">
-                        {ep.runtime}m
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {/* Metadata and synopsis */}
-                  <div className="flex-1 min-w-0 w-full flex flex-col justify-between self-stretch">
-                    <div>
-                      <div className="flex items-start justify-between gap-3 mb-1.5">
-                        <div className="flex items-center gap-2 flex-wrap min-w-0">
-                          <span className="text-[11px] font-bold text-[#e50914] bg-[#e50914]/15 px-2 py-0.5 rounded-md border border-[#e50914]/25 shrink-0">
-                            Episode {ep.episode_number}
-                          </span>
-                          <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-rose-400 transition-colors line-clamp-1">
-                            {ep.name}
-                          </h4>
+                  <AppLink
+                    to={`/watch/tv/${tvShowId}/${selectedSeasonNum}/${ep.episode_number}`}
+                    className="group relative rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] hover:border-rose-500/40 hover:bg-[#161824] transition-all cursor-pointer p-3 sm:p-4 flex flex-col sm:flex-row gap-3.5 sm:gap-4.5 items-start sm:items-center shadow-lg"
+                  >
+                    {/* Thumbnail */}
+                    <div className="w-full sm:w-52 md:w-64 aspect-video shrink-0 rounded-xl overflow-hidden bg-slate-900 relative">
+                      <img
+                        src={getImageUrl(ep.still_path || backdropFallback, 'w780')}
+                        alt={`Episode ${ep.episode_number}: ${ep.name}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-[#e50914] text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                          <Play className="w-4 h-4 fill-white ml-0.5" />
                         </div>
-                        {ep.vote_average ? (
-                          <div className="flex items-center gap-1 text-xs text-amber-400 font-bold shrink-0 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
-                            <Star className="w-3 h-3 fill-amber-400" />
-                            <span>{ep.vote_average.toFixed(1)}</span>
-                          </div>
-                        ) : null}
                       </div>
-
-                      <p className="text-xs sm:text-sm text-slate-400 line-clamp-2 sm:line-clamp-3 leading-relaxed mt-1">
-                        {ep.overview || 'No synopsis available for this episode.'}
-                      </p>
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-bold text-white border border-white/10">
+                        Ep {ep.episode_number}
+                      </div>
+                      {ep.runtime ? (
+                        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-semibold text-slate-300">
+                          {ep.runtime}m
+                        </div>
+                      ) : null}
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-white/5 text-[11px]">
-                      <div className="flex items-center gap-3 text-slate-500">
-                        {ep.air_date && (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5" />
-                            <span>{ep.air_date}</span>
+                    {/* Metadata and synopsis */}
+                    <div className="flex-1 min-w-0 w-full flex flex-col justify-between self-stretch">
+                      <div>
+                        <div className="flex items-start justify-between gap-3 mb-1.5">
+                          <div className="flex items-center gap-2 flex-wrap min-w-0">
+                            <span className="text-[11px] font-bold text-[#e50914] bg-[#e50914]/15 px-2 py-0.5 rounded-md border border-[#e50914]/25 shrink-0">
+                              Episode {ep.episode_number}
+                            </span>
+                            <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-rose-400 transition-colors line-clamp-1">
+                              {ep.name}
+                            </h3>
                           </div>
-                        )}
-                        {ep.runtime ? (
-                          <span className="hidden sm:inline">
-                            · {ep.runtime} mins
-                          </span>
-                        ) : null}
+                          {ep.vote_average ? (
+                            <div className="flex items-center gap-1 text-xs text-amber-400 font-bold shrink-0 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
+                              <Star className="w-3 h-3 fill-amber-400" />
+                              <span>{ep.vote_average.toFixed(1)}</span>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <p className="text-xs sm:text-sm text-slate-400 line-clamp-2 sm:line-clamp-3 leading-relaxed mt-1">
+                          {ep.overview || 'No synopsis available for this episode.'}
+                        </p>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-rose-400 font-semibold group-hover:translate-x-1 transition-transform">
-                        <Play className="w-3 h-3 fill-rose-400" />
-                        <span className="text-xs">Play Episode</span>
+                      <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-white/5 text-[11px]">
+                        <div className="flex items-center gap-3 text-slate-500">
+                          {ep.air_date && (
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>{ep.air_date}</span>
+                            </div>
+                          )}
+                          {ep.runtime ? (
+                            <span className="hidden sm:inline">
+                              · {ep.runtime} mins
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-rose-400 font-semibold group-hover:translate-x-1 transition-transform">
+                          <Play className="w-3 h-3 fill-rose-400" />
+                          <span className="text-xs">Play Episode</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </AppLink>
                 </motion.div>
               ))}
             </motion.div>

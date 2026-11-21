@@ -294,9 +294,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                         {/* Title & Metadata */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-white truncate group-hover:text-rose-400 transition-colors">
+                            <h3 className="text-sm font-semibold text-white truncate group-hover:text-rose-400 transition-colors">
                               {title}
-                            </h4>
+                            </h3>
                             <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-white/10 text-slate-300">
                               {type}
                             </span>
@@ -346,10 +346,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               <div className="space-y-5">
                 {/* Genre Quick Links */}
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                  <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-rose-500" />
                     <span>Popular Categories</span>
-                  </h4>
+                  </h2>
                   <div className="flex flex-wrap gap-2">
                     {quickGenres.map((g) => (
                       <button
@@ -369,9 +369,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                 {/* Trending Items List */}
                 {trending.length > 0 && (
                   <div>
-                    <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
+                    <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
                       Trending This Week
-                    </h4>
+                    </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {trending.map((item) => {
                         const type = item.media_type === 'tv' ? 'tv' : 'movie';
@@ -394,7 +394,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h5 className="text-xs font-semibold text-white truncate">{title}</h5>
+                              <h3 className="text-xs font-semibold text-white truncate">{title}</h3>
                               <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
                                 <span className="capitalize">{type}</span>
                                 <span className="text-amber-400 font-semibold">★ {rating}</span>

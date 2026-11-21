@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Info, Plus, Check, Star, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Play, Info, Plus, Check, Star } from 'lucide-react';
 import { tmdb, TMDBMedia, getBackdropUrl } from '../lib/tmdb';
 import { MovieRow } from '../components/MovieRow';
 import { MediaLogo } from '../components/MediaLogo';
+import { SEOHead } from '../components/SEOHead';
+import { AppLink } from '../components/AppLink';
+import { getOrigin } from '../lib/seo';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useRouter } from '../context/RouterContext';
-import { useToast } from '../context/ToastContext';
 
 export const HomeView: React.FC = () => {
   const { navigate } = useRouter();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { history } = useWatchHistory();
-  const { showToast } = useToast();
 
   const [heroList, setHeroList] = useState<TMDBMedia[]>([]);
   const [heroIndex, setHeroIndex] = useState(0);
@@ -71,10 +71,52 @@ export const HomeView: React.FC = () => {
   }, [heroList.length]);
 
   const heroMedia = heroList[heroIndex] || null;
+  const origin = getOrigin() || 'https://cinestream.app';
+  const heroTitle = heroMedia ? heroMedia.title || heroMedia.name || 'Featured Title' : '';
+  const heroType = heroMedia?.media_type === 'tv' ? 'tv' : 'movie';
+
+  const homeStructuredData = [
+    {
+      '@type': 'WebSite',
+      name: 'CineStream',
+      url: `${origin}/`,
+      description:
+        'Stream trending movies and TV shows in 4K Ultra HD, explore curated genres, and sync your personal watchlist on CineStream.',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: `${origin}/search?q={search_term_string}`,
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'WebApplication',
+      name: 'CineStream',
+      applicationCategory: 'EntertainmentApplication',
+      operatingSystem: 'Web, Android, Windows',
+      url: `${origin}/`,
+    },
+  ];
+
+  const seoNode = (
+    <SEOHead
+      title="CineStream – Watch Movies & TV Series Online in HD"
+      description="Stream trending movies and TV shows in 4K Ultra HD, explore curated genres, and sync your personal watchlist on CineStream."
+      canonicalPath="/"
+      ogType="website"
+      ogImage={
+        heroMedia?.backdrop_path || heroMedia?.poster_path
+          ? getBackdropUrl(heroMedia.backdrop_path || heroMedia.poster_path, 'w1280')
+          : '/pwa-512x512.png'
+      }
+      structuredData={homeStructuredData}
+    />
+  );
 
   if (loading) {
     return (
       <div className="w-full min-h-[70dvh] flex flex-col items-center justify-center gap-3 text-slate-400">
+        {seoNode}
+        <h1 className="sr-only">CineStream – Watch Movies & TV Series Online in HD</h1>
         <div className="w-8 h-8 border-3 border-[#e50914]/30 border-t-[#e50914] rounded-full animate-spin" />
         <p className="text-xs font-semibold tracking-wider uppercase text-slate-500">Loading cinema spotlight...</p>
       </div>
@@ -84,6 +126,8 @@ export const HomeView: React.FC = () => {
   if (error) {
     return (
       <div className="w-full min-h-[60dvh] flex flex-col items-center justify-center gap-4 text-center px-4">
+        {seoNode}
+        <h1 className="text-lg font-extrabold text-white">CineStream – Movies & TV Series</h1>
         <p className="text-sm text-rose-400 font-semibold">{error}</p>
         <button
           onClick={() => window.location.reload()}
@@ -97,14 +141,19 @@ export const HomeView: React.FC = () => {
 
   return (
     <div className="w-full flex flex-col pb-24">
+      {seoNode}
+
       {/* Hero Showcase Spotlight */}
-      {heroMedia && (
-        <div className="relative w-full h-[65vh] sm:h-[75vh] md:h-[85vh] max-h-[900px] overflow-hidden select-none">
+      {heroMedia ? (
+        <section
+          aria-label="Featured spotlight"
+          className="relative w-full h-[65vh] sm:h-[75vh] md:h-[85vh] max-h-[900px] overflow-hidden select-none"
+        >
           {/* Backdrop Image & Vignette Gradients */}
           <div className="absolute inset-0 bg-[#07080a]">
             <img
               src={getBackdropUrl(heroMedia.backdrop_path || heroMedia.poster_path, 'original')}
-              alt={heroMedia.title || heroMedia.name || 'Hero'}
+              alt={`${heroTitle} featured backdrop`}
               className="w-full h-full object-cover object-center scale-105 animate-fade-in"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/40 to-black/60" />
@@ -117,9 +166,10 @@ export const HomeView: React.FC = () => {
               {/* Media Title / Logo */}
               <div className="min-h-[48px] sm:min-h-[64px] flex items-center">
                 <MediaLogo
+                  as="h1"
                   mediaId={heroMedia.id}
-                  mediaType={heroMedia.media_type === 'tv' ? 'tv' : 'movie'}
-                  titleFallback={heroMedia.title || heroMedia.name || 'Featured Title'}
+                  mediaType={heroType}
+                  titleFallback={heroTitle}
                 />
               </div>
 
@@ -147,31 +197,21 @@ export const HomeView: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <button
-                  onClick={() => {
-                    const mType = heroMedia.media_type === 'tv' ? 'tv' : 'movie';
-                    if (mType === 'tv') {
-                      navigate(`/watch/tv/${heroMedia.id}/1/1`);
-                    } else {
-                      navigate(`/watch/movie/${heroMedia.id}`);
-                    }
-                  }}
+                <AppLink
+                  to={heroType === 'tv' ? `/watch/tv/${heroMedia.id}/1/1` : `/watch/movie/${heroMedia.id}`}
                   className="px-6 sm:px-8 py-3 rounded-2xl bg-[#e50914] hover:bg-rose-500 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-rose-950/70 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-white text-white ml-0.5" />
                   <span>Play Now</span>
-                </button>
+                </AppLink>
 
-                <button
-                  onClick={() => {
-                    const mType = heroMedia.media_type === 'tv' ? 'tv' : 'movie';
-                    navigate(`/${mType}/${heroMedia.id}`);
-                  }}
+                <AppLink
+                  to={`/${heroType}/${heroMedia.id}`}
                   className="px-5 sm:px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm backdrop-blur-xl border border-white/15 active:scale-95 transition-all flex items-center gap-2 cursor-pointer shadow-lg"
                 >
                   <Info className="w-4 h-4" />
                   <span>More Info</span>
-                </button>
+                </AppLink>
 
                 <button
                   onClick={() => toggleBookmark(heroMedia)}
@@ -181,6 +221,7 @@ export const HomeView: React.FC = () => {
                       : 'bg-black/50 border-white/15 text-slate-200 hover:text-white hover:bg-white/10'
                   }`}
                   title={isBookmarked(heroMedia.id) ? 'Remove from My List' : 'Add to My List'}
+                  aria-label={isBookmarked(heroMedia.id) ? 'Remove from My List' : 'Add to My List'}
                 >
                   {isBookmarked(heroMedia.id) ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 </button>
@@ -203,7 +244,9 @@ export const HomeView: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </section>
+      ) : (
+        <h1 className="sr-only">CineStream – Watch Movies & TV Series Online in HD</h1>
       )}
 
       {/* Continue Watching Row */}
@@ -269,48 +312,49 @@ export const HomeView: React.FC = () => {
                 Enjoy ultra-fast 4K streaming, offline episode downloads, customized episode selection drawers, and cinema dark mode on your phone or tablet.
               </p>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
-                <button
-                  onClick={() => navigate('/download-app')}
+                <AppLink
+                  to="/download-app"
                   className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-emerald-950/80 active:scale-95 transition-all"
                 >
-                  Download APK (v1.0.0)
-                </button>
-                <button
-                  onClick={() => navigate('/download-app')}
+                  Download APK (v1.0.14)
+                </AppLink>
+                <AppLink
+                  to="/download-app"
                   className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm border border-white/15 transition-all"
                 >
                   View App Screenshots
-                </button>
+                </AppLink>
               </div>
             </div>
 
             {/* Android App Screenshots Preview Stack */}
-            <div
-              onClick={() => navigate('/download-app')}
-              className="cursor-pointer shrink-0 flex items-center justify-center gap-3 transition-transform hover:scale-105"
+            <AppLink
+              to="/download-app"
+              aria-label="Preview CineStream Android App Screenshots"
+              className="shrink-0 flex items-center justify-center gap-3 transition-transform hover:scale-105"
             >
               <div className="w-24 sm:w-28 rounded-2xl overflow-hidden border border-white/20 shadow-2xl -rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
                 <img
                   src="/assets/aistudio/CineStream Home & Spotlight.png"
-                  alt="App Home Screen"
+                  alt="CineStream Android App Home & Spotlight screen"
                   className="w-full h-auto"
                 />
               </div>
               <div className="w-28 sm:w-32 rounded-2xl overflow-hidden border border-emerald-500/40 shadow-2xl z-10 bg-black">
                 <img
                   src="/assets/aistudio/Ultra HD Video Player.png"
-                  alt="App Video Player"
+                  alt="CineStream Android App Ultra HD Video Player screen"
                   className="w-full h-auto"
                 />
               </div>
               <div className="w-24 sm:w-28 rounded-2xl overflow-hidden border border-white/20 shadow-2xl rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
                 <img
                   src="/assets/aistudio/Seasons & Episodes Selector.png"
-                  alt="App Episode Selector"
+                  alt="CineStream Android App Seasons & Episodes Selector screen"
                   className="w-full h-auto"
                 />
               </div>
-            </div>
+            </AppLink>
           </div>
         </div>
       </section>

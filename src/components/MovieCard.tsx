@@ -32,6 +32,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const releaseYear = (media.release_date || media.first_air_date || '').slice(0, 4);
   const rating = media.vote_average ? media.vote_average.toFixed(1) : 'NR';
   const saved = isBookmarked(media.id, type);
+  const detailPath = isAnime ? `/tv/${media.id}` : `/${type}/${media.id}`;
 
   // Match percentage simulation based on rating
   const matchPercentage = Math.min(99, Math.max(78, Math.round((media.vote_average || 7.5) * 10)));
@@ -51,29 +52,28 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     if (!touchStartPos.current) return;
     const dx = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
     const dy = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
-    // If movement exceeds small threshold, user is scrolling/panning
     if (dx > 8 || dy > 8) {
       isDraggingRef.current = true;
     }
   };
 
-  const handleCardClick = () => {
-    // If user dragged to scroll, cancel navigation
+  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (isDraggingRef.current) {
+      e.preventDefault();
       isDraggingRef.current = false;
       return;
     }
-    if (isAnime) {
-      navigate(`/anime/${media.id}`);
-    } else {
-      navigate(`/${type}/${media.id}`);
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+      return;
     }
+    e.preventDefault();
+    navigate(detailPath);
   };
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isAnime) {
-      navigate(`/watch/anime/${media.id}/1/1`);
+      navigate(`/watch/tv/${media.id}/1/1`);
     } else if (type === 'tv') {
       navigate(`/watch/tv/${media.id}/1/1`);
     } else {
@@ -93,7 +93,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/#/${type}/${media.id}`;
+    const url = `${window.location.origin}${detailPath}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
       showToast(`Link for "${title}" copied to clipboard!`, 'share');
@@ -108,20 +108,11 @@ export const MovieCard: React.FC<MovieCardProps> = ({
       : getImageUrl(media.poster_path, 'w500');
 
   return (
-    <div
-      onClick={handleCardClick}
+    <article
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       style={{ touchAction: 'pan-x pan-y' }}
-      className="group relative cursor-pointer select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/10 transition-transform duration-300 ease-out md:hover:scale-105 md:hover:z-35 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)] md:hover:border-rose-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 md:active:scale-[0.98] [touch-action:pan-x_pan-y]"
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleCardClick();
-        }
-      }}
+      className="group relative select-none rounded-2xl overflow-hidden bg-[#101119] border border-white/10 transition-transform duration-300 ease-out md:hover:scale-105 md:hover:z-35 md:hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)] md:hover:border-rose-500/50 md:active:scale-[0.98] [touch-action:pan-x_pan-y]"
     >
       {/* Image Container */}
       <div
@@ -129,10 +120,20 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           aspect === 'backdrop' ? 'aspect-video' : 'aspect-[2/3]'
         }`}
       >
+        {/* Stretched crawlable anchor link covering the card surface */}
+        <a
+          href={detailPath}
+          onClick={handleAnchorClick}
+          aria-label={`${title}${releaseYear ? ` (${releaseYear})` : ''}`}
+          className="absolute inset-0 z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-2xl"
+        >
+          <span className="sr-only">{title}</span>
+        </a>
+
         {!imageError ? (
           <img
             src={imageSrc}
-            alt={title}
+            alt={`${title}${releaseYear ? ` (${releaseYear})` : ''} ${type === 'tv' ? 'TV series' : 'movie'} poster`}
             loading="lazy"
             draggable={false}
             referrerPolicy="no-referrer"
@@ -176,7 +177,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         </button>
 
         {/* Hover Vignette & Micro-Actions Overlay (Desktop only) */}
-        <div className="hidden md:flex absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/60 to-transparent opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-300 flex-col justify-end p-4 z-20">
+        <div className="hidden md:flex absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/60 to-transparent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 flex-col justify-end p-4 z-20">
           <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-400 mb-1.5">
             <span>{matchPercentage}% Match</span>
             <span className="text-slate-400 font-normal">·</span>
@@ -185,6 +186,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
           <div className="h-7 flex items-center mb-1 max-w-[150px] sm:max-w-[180px]">
             <MediaLogo
+              as="span"
               mediaId={media.id}
               mediaType={type}
               titleFallback={title}
@@ -201,10 +203,10 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           </div>
 
           {/* Action Row */}
-          <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+          <div className="flex items-center gap-2 pt-3 border-t border-white/10 pointer-events-auto">
             <button
               onClick={handlePlayClick}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-950/70 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-950/70 transition-colors cursor-pointer"
               title="Watch now"
               aria-label={`Play ${title}`}
             >
@@ -214,7 +216,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
             <button
               onClick={handleBookmarkToggle}
-              className={`p-2.5 rounded-xl border transition-colors ${
+              className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${
                 saved
                   ? 'bg-[#e50914]/25 border-[#e50914] text-rose-400 hover:bg-[#e50914]/40'
                   : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
@@ -227,7 +229,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
 
             <button
               onClick={handleShare}
-              className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
+              className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors cursor-pointer"
               title="Share"
               aria-label="Share media"
             >
@@ -236,6 +238,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 };

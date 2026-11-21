@@ -17,10 +17,12 @@ import {
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
-import { MovieCard } from '../components/MovieCard';
 import { MovieRow } from '../components/MovieRow';
 import { EpisodeListSection } from '../components/episodes/EpisodeListSection';
 import { MediaLogo } from '../components/MediaLogo';
+import { SEOHead } from '../components/SEOHead';
+import { AppLink } from '../components/AppLink';
+import { getOrigin, truncateDescription } from '../lib/seo';
 
 interface DetailsViewProps {
   id: string;
@@ -28,7 +30,7 @@ interface DetailsViewProps {
 }
 
 export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
-  const { navigate, goBack } = useRouter();
+  const { goBack } = useRouter();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { showToast } = useToast();
 
@@ -99,9 +101,19 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
     };
   }, [id, mediaType]);
 
+  const origin = getOrigin() || 'https://cinestream.app';
+  const canonicalPath = `/${mediaType}/${id}`;
+
   if (loading) {
     return (
       <div className="w-full min-h-[70dvh] flex flex-col items-center justify-center gap-3 text-slate-400">
+        <SEOHead
+          title={`${mediaType === 'tv' ? 'TV Series' : 'Movie'} Details | CineStream`}
+          description={`View full overview, cast, ratings, and stream in HD 4K on CineStream.`}
+          canonicalPath={canonicalPath}
+          ogType={mediaType === 'tv' ? 'video.tv_show' : 'video.movie'}
+        />
+        <h1 className="sr-only">Loading {mediaType === 'tv' ? 'TV Series' : 'Movie'} Details</h1>
         <div className="w-8 h-8 border-3 border-[#e50914]/30 border-t-[#e50914] rounded-full animate-spin" />
         <p className="text-xs font-semibold tracking-wider uppercase text-slate-500">Loading title details...</p>
       </div>
@@ -111,8 +123,14 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
   if (error || !details) {
     return (
       <div className="max-w-md mx-auto my-16 px-4">
+        <SEOHead
+          title="Title Not Found | CineStream"
+          description="The requested movie or TV series could not be loaded on CineStream."
+          canonicalPath={canonicalPath}
+          robots="noindex, follow"
+        />
         <div className="p-6 rounded-2xl bg-[#12131a] border border-white/[0.08] text-center">
-          <h3 className="text-base font-bold text-white mb-2">Notice</h3>
+          <h1 className="text-base font-bold text-white mb-2">Title Unavailable</h1>
           <p className="text-xs text-slate-400 mb-6">{error || 'Media not found.'}</p>
           <button
             onClick={goBack}
@@ -137,13 +155,66 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
     ? `${details.number_of_seasons} Season${details.number_of_seasons > 1 ? 's' : ''}`
     : null;
 
-  const handlePlayNow = () => {
-    if (mediaType === 'tv') {
-      navigate(`/watch/tv/${id}/${selectedSeason}/1`);
-    } else {
-      navigate(`/watch/movie/${id}`);
-    }
+  const pageTitle =
+    title.length > 36
+      ? `${title} | CineStream`
+      : `${title}${releaseYear ? ` (${releaseYear})` : ''} – Watch HD | CineStream`;
+
+  const pageDescription =
+    truncateDescription(details.overview, 155) ||
+    `Watch ${title}${releaseYear ? ` (${releaseYear})` : ''} in HD 4K with full cast, ratings, and recommendations on CineStream.`;
+
+  const director = details.credits?.crew?.find((c) => c.job === 'Director');
+  const topActors = (details.credits?.cast || []).slice(0, 6).map((a) => ({
+    '@type': 'Person',
+    name: a.name,
+    url: `${origin}/person/${a.id}`,
+  }));
+
+  const mediaSchema: Record<string, unknown> = {
+    '@type': mediaType === 'tv' ? 'TVSeries' : 'Movie',
+    name: title,
+    url: `${origin}${canonicalPath}`,
+    description: pageDescription,
+    image: getBackdropUrl(details.backdrop_path || details.poster_path, 'w1280'),
+    ...(releaseDate ? { datePublished: releaseDate } : {}),
+    ...(details.genres?.length ? { genre: details.genres.map((g) => g.name) } : {}),
+    ...(topActors.length ? { actor: topActors } : {}),
+    ...(director ? { director: { '@type': 'Person', name: director.name } } : {}),
+    ...(mediaType === 'tv' && details.number_of_seasons
+      ? { numberOfSeasons: details.number_of_seasons }
+      : {}),
+    ...(details.vote_average && details.vote_count
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Number(details.vote_average.toFixed(1)),
+            ratingCount: details.vote_count,
+            bestRating: 10,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
+
+  const breadcrumbSchema = {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${origin}/` },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: mediaType === 'tv' ? 'TV Series' : 'Movies',
+        item: `${origin}/explore/${mediaType}`,
+      },
+      { '@type': 'ListItem', position: 3, name: title, item: `${origin}${canonicalPath}` },
+    ],
+  };
+
+  const watchPath =
+    mediaType === 'tv'
+      ? `/watch/tv/${id}/${selectedSeason}/1`
+      : `/watch/movie/${id}`;
 
   const handleToggleBookmark = async () => {
     const isNowSaved = await toggleBookmark(details, mediaType);
@@ -155,7 +226,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
   };
 
   const handleShare = () => {
-    const url = window.location.href;
+    const url = `${window.location.origin}${canonicalPath}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
       showToast(`Link for "${title}" copied to clipboard!`, 'share');
@@ -166,13 +237,22 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
 
   return (
     <div className="w-full pb-24">
+      <SEOHead
+        title={pageTitle}
+        description={pageDescription}
+        canonicalPath={canonicalPath}
+        ogType={mediaType === 'tv' ? 'video.tv_show' : 'video.movie'}
+        ogImage={getBackdropUrl(details.backdrop_path || details.poster_path, 'w1280')}
+        structuredData={[mediaSchema, breadcrumbSchema]}
+      />
+
       {/* Immersive Hero Header with Backdrop Blur */}
       <div className="relative w-full min-h-[460px] md:min-h-[580px] overflow-hidden bg-[#07080a] flex items-end">
         {/* Full Backdrop */}
         <div className="absolute inset-0">
           <img
             src={getBackdropUrl(details.backdrop_path, 'original')}
-            alt={title}
+            alt={`${title} backdrop image`}
             className="w-full h-full object-cover object-center filter blur-xs scale-105 opacity-35"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/80 to-transparent" />
@@ -195,7 +275,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
             <div className="w-36 sm:w-48 md:w-60 shrink-0 rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#12131a] relative group">
               <img
                 src={getImageUrl(details.poster_path, 'w500')}
-                alt={title}
+                alt={`${title}${releaseYear ? ` (${releaseYear})` : ''} official poster`}
                 className="w-full aspect-[2/3] object-cover"
               />
             </div>
@@ -212,6 +292,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
               </div>
 
               <MediaLogo
+                as="h1"
                 mediaId={id}
                 mediaType={mediaType}
                 titleFallback={title}
@@ -248,28 +329,26 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
               {details.genres && details.genres.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {details.genres.map((genre) => (
-                    <button
+                    <AppLink
                       key={genre.id}
-                      onClick={() =>
-                        navigate(`/explore/${mediaType}?genre=${genre.id}`)
-                      }
+                      to={`/explore/${mediaType}?genre=${genre.id}`}
                       className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/[0.08] text-slate-300 active:bg-white/10 hover:text-white transition-colors"
                     >
                       {genre.name}
-                    </button>
+                    </AppLink>
                   ))}
                 </div>
               )}
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-3">
-                <button
-                  onClick={handlePlayNow}
+                <AppLink
+                  to={watchPath}
                   className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-rose-950/60 active:scale-95 transition-all touch-manipulation"
                 >
                   <Play className="w-4 h-4 fill-white" />
                   <span>Watch Now</span>
-                </button>
+                </AppLink>
 
                 <div className="flex items-center gap-2">
                   <button
@@ -357,27 +436,27 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
                 className="flex gap-3.5 overflow-x-auto overflow-y-hidden overscroll-y-auto overscroll-x-contain scrollbar-none sm:snap-x sm:snap-proximity py-1 relative z-10 [touch-action:pan-x_pan-y]"
               >
                 {details.credits.cast.slice(0, 16).map((actor) => (
-                  <div
+                  <AppLink
                     key={actor.id}
-                    onClick={() => navigate(`/person/${actor.id}`)}
-                    className="sm:snap-start shrink-0 w-24 sm:w-28 text-center cursor-pointer active:scale-95 group"
+                    to={`/person/${actor.id}`}
+                    className="sm:snap-start shrink-0 w-24 sm:w-28 text-center cursor-pointer active:scale-95 group block"
                   >
                     <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full overflow-hidden bg-[#181a26] border border-white/10 mb-2 group-hover:border-[#e50914]/60 transition-colors">
                       <img
                         src={getImageUrl(actor.profile_path, 'w185')}
-                        alt={actor.name}
+                        alt={`${actor.name} portrait`}
                         draggable={false}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform pointer-events-none select-none"
                         loading="lazy"
                       />
                     </div>
-                    <h4 className="text-xs font-bold text-white truncate group-hover:text-rose-400 transition-colors">
+                    <h3 className="text-xs font-bold text-white truncate group-hover:text-rose-400 transition-colors">
                       {actor.name}
-                    </h4>
+                    </h3>
                     <p className="text-[10px] text-slate-400 truncate mt-0.5">
                       {actor.character}
                     </p>
-                  </div>
+                  </AppLink>
                 ))}
               </div>
 

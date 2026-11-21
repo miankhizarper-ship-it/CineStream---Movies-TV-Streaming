@@ -1,10 +1,11 @@
 import React from 'react';
-import { Film, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { useRouter } from '../context/RouterContext';
 import { PWAInstallButton } from './PWAInstallButton';
+import { AppLink } from './AppLink';
 
 export const Footer: React.FC = () => {
-  const { navigate, route } = useRouter();
+  const { route } = useRouter();
 
   if (route.type === 'watch-movie' || route.type === 'watch-tv') {
     return null; // hide on player view for maximum cinematic immersion
@@ -15,12 +16,12 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start justify-between gap-8">
         {/* Brand statement */}
         <div className="max-w-md">
-          <div className="flex items-center gap-2 text-base sm:text-lg font-bold text-white mb-2.5">
+          <AppLink to="/" className="inline-flex items-center gap-2 text-base sm:text-lg font-bold text-white mb-2.5">
             <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden flex items-center justify-center bg-black/40">
               <img src="/assets/aistudio/logo_1fdc68d7.png" alt="CineStream Logo" className="w-full h-full object-cover" />
             </div>
             <span>CINE<span className="text-[#e50914]">STREAM</span></span>
-          </div>
+          </AppLink>
           <p className="text-xs text-slate-400 leading-relaxed">
             A native-feel cinematic streaming platform delivering instant movie and TV exploration.
             Discover trending titles, browse curated genres, manage your personal watchlist, and stream with our embedded player.
@@ -30,74 +31,53 @@ export const Footer: React.FC = () => {
         {/* Links */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs">
           <div>
-            <h5 className="font-semibold text-slate-200 mb-2.5 uppercase tracking-wider text-[10px]">
+            <h2 className="font-semibold text-slate-200 mb-2.5 uppercase tracking-wider text-[10px]">
               Explore
-            </h5>
+            </h2>
             <ul className="space-y-1.5">
               <li>
-                <button
-                  onClick={() => navigate('/')}
-                  className="hover:text-white transition-colors"
-                >
+                <AppLink to="/" className="hover:text-white transition-colors">
                   Featured Home
-                </button>
+                </AppLink>
               </li>
               <li>
-                <button
-                  onClick={() => navigate('/explore/movie')}
-                  className="hover:text-white transition-colors"
-                >
+                <AppLink to="/explore/movie" className="hover:text-white transition-colors">
                   Popular Movies
-                </button>
+                </AppLink>
               </li>
               <li>
-                <button
-                  onClick={() => navigate('/explore/tv')}
-                  className="hover:text-white transition-colors"
-                >
+                <AppLink to="/explore/tv" className="hover:text-white transition-colors">
                   Top TV Shows
-                </button>
+                </AppLink>
               </li>
               <li>
-                <button
-                  onClick={() => navigate('/categories')}
-                  className="hover:text-white transition-colors"
-                >
-                  All Genres
-                </button>
+                <AppLink to="/search" className="hover:text-white transition-colors">
+                  Browse & Filter
+                </AppLink>
               </li>
             </ul>
           </div>
 
           <div>
-            <h5 className="font-semibold text-slate-200 mb-2.5 uppercase tracking-wider text-[10px]">
+            <h2 className="font-semibold text-slate-200 mb-2.5 uppercase tracking-wider text-[10px]">
               Library & App
-            </h5>
+            </h2>
             <ul className="space-y-1.5">
               <li>
-                <button
-                  onClick={() => navigate('/mylist')}
-                  className="hover:text-white transition-colors"
-                >
+                <AppLink to="/mylist" className="hover:text-white transition-colors">
                   My Saved List
-                </button>
+                </AppLink>
               </li>
               <li>
-                <button
-                  onClick={() => navigate('/search')}
-                  className="hover:text-white transition-colors"
-                >
-                  Search Database
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => navigate('/download-app')}
-                  className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors flex items-center gap-1.5"
-                >
-                  <span>Android App (v1.0.0 APK)</span>
+                <AppLink to="/download-app" className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors inline-flex items-center gap-1.5">
+                  <span>Android App (APK)</span>
                   <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">NEW</span>
-                </button>
+                </AppLink>
+              </li>
+              <li>
+                <AppLink to="/download-app/windows" className="hover:text-white transition-colors">
+                  Windows Desktop App
+                </AppLink>
               </li>
               <li className="pt-1">
                 <PWAInstallButton variant="footer" />
@@ -106,9 +86,9 @@ export const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h5 className="font-semibold text-slate-200 mb-2.5 uppercase tracking-wider text-[10px]">
+            <h2 className="font-semibold text-slate-200 mb-2.5 uppercase tracking-wider text-[10px]">
               Attribution
-            </h5>
+            </h2>
             <p className="text-[11px] text-slate-500 leading-normal">
               Media metadata and imagery provided by{' '}
               <span className="text-slate-400">TMDB</span>.

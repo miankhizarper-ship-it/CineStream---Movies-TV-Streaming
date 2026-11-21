@@ -3,9 +3,10 @@ import { Home, Compass, Search, Bookmark } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRouter } from '../context/RouterContext';
 import { useBookmarks } from '../hooks/useBookmarks';
+import { AppLink } from './AppLink';
 
 export const BottomNav: React.FC = () => {
-  const { route, navigate } = useRouter();
+  const { route } = useRouter();
   const { bookmarks } = useBookmarks();
 
   // Hide the bottom nav automatically when watching videos on the WatchPlayerView
@@ -46,16 +47,15 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-[#07080a]/90 backdrop-blur-xl border-t border-white/10 pb-safe shadow-2xl">
+    <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-[#07080a]/90 backdrop-blur-xl border-t border-white/10 pb-safe shadow-2xl" aria-label="Bottom navigation">
       <div className="grid grid-cols-4 items-center h-16 px-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
-            <motion.button
+            <AppLink
               key={tab.id}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => navigate(tab.path)}
-              className="flex flex-col items-center justify-center h-full min-h-[48px] min-w-[40px] relative group text-center focus-visible:outline-none"
+              to={tab.path}
+              className="flex flex-col items-center justify-center h-full min-h-[48px] min-w-[40px] relative group text-center focus-visible:outline-none active:scale-90 transition-transform"
               aria-label={tab.label}
             >
               <div className="relative">
@@ -92,7 +92,7 @@ export const BottomNav: React.FC = () => {
                   className="absolute bottom-1 w-1 h-1 rounded-full bg-[#e50914]"
                 />
               )}
-            </motion.button>
+            </AppLink>
           );
         })}
       </div>

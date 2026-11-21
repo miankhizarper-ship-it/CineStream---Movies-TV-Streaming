@@ -23,11 +23,14 @@ import {
   Palette,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { tmdb, MediaDetails, TVSeasonDetails, getImageUrl } from '../lib/tmdb';
+import { tmdb, MediaDetails, TVSeasonDetails, getImageUrl, getBackdropUrl } from '../lib/tmdb';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useRouter } from '../context/RouterContext';
 import { useToast } from '../context/ToastContext';
+import { SEOHead } from '../components/SEOHead';
+import { AppLink } from '../components/AppLink';
+import { getOrigin, truncateDescription } from '../lib/seo';
 
 interface WatchPlayerViewProps {
   id: string;
@@ -580,8 +583,45 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     );
   };
 
+  const origin = getOrigin() || 'https://cinestream.app';
+  const canonicalWatchPath =
+    mediaType === 'movie'
+      ? `/watch/movie/${id}`
+      : `/watch/${mediaType}/${id}/${currentSeason}/${currentEpisode}`;
+  const detailPath = `/${mediaType === 'anime' ? 'tv' : mediaType}/${id}`;
+  const watchTitle =
+    mediaType === 'movie'
+      ? `Watch ${title} in HD | CineStream`
+      : `Watch ${title} S${currentSeason}E${currentEpisode} | CineStream`;
+  const watchDescription =
+    truncateDescription(details?.overview, 155) ||
+    `Stream ${title}${mediaType !== 'movie' ? ` Season ${currentSeason} Episode ${currentEpisode}` : ''} online in HD 4K with multi-server failover on CineStream.`;
+  const watchImage = details
+    ? getBackdropUrl(details.backdrop_path || details.poster_path, 'w1280')
+    : '/pwa-512x512.png';
+
+  const videoSchema: Record<string, unknown> = {
+    '@type': 'VideoObject',
+    name: mediaType === 'movie' ? title : `${title} - Season ${currentSeason} Episode ${currentEpisode}`,
+    description: watchDescription,
+    thumbnailUrl: watchImage,
+    url: `${origin}${canonicalWatchPath}`,
+    ...(details?.release_date || details?.first_air_date
+      ? { uploadDate: details.release_date || details.first_air_date }
+      : {}),
+  };
+
   return (
     <div className="relative min-h-[100dvh] bg-[#07080a] text-white pb-16 selection:bg-[#e50914] selection:text-white overflow-x-hidden">
+      <SEOHead
+        title={watchTitle}
+        description={watchDescription}
+        canonicalPath={canonicalWatchPath}
+        ogType={mediaType === 'movie' ? 'video.movie' : 'video.episode'}
+        ogImage={watchImage}
+        structuredData={videoSchema}
+      />
+
       {/* Theater Dim Ambient Blackout Overlay */}
       <AnimatePresence>
         {theaterMode && (
@@ -602,13 +642,13 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
       {/* Minimalist Player Top Header */}
       <header className="sticky top-0 z-40 w-full bg-[#07080a]/90 backdrop-blur-xl border-b border-white/[0.08] px-4 sm:px-6 md:px-12 h-14 sm:h-16 flex items-center justify-between gap-4">
         {/* Left: Back Button */}
-        <button
-          onClick={() => navigate(`/${mediaType}/${id}`)}
+        <AppLink
+          to={detailPath}
           className="flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all active:scale-95 shrink-0 cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4 text-rose-500" />
           <span>Back to Details</span>
-        </button>
+        </AppLink>
 
         {/* Center: Media Title & Season/Episode */}
         <div className="text-center truncate max-w-xs sm:max-w-md md:max-w-lg">
@@ -790,7 +830,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
                   className="w-12 h-16 rounded-xl object-cover shrink-0 border border-white/10"
                 />
                 <div className="min-w-0">
-                  <h3 className="text-sm font-extrabold text-white truncate">{title}</h3>
+                  <h2 className="text-sm font-extrabold text-white truncate">{title}</h2>
                   <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
                     <span className="text-amber-400 font-bold tabular-nums">
                       ★ {details.vote_average ? details.vote_average.toFixed(1) : 'NR'}
@@ -840,7 +880,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
                 <div className="flex items-center gap-2">
                   <Tv className="w-4 h-4 text-[#e50914]" />
-                  <h3 className="text-sm font-extrabold text-white">Episode Selector</h3>
+                  <h2 className="text-sm font-extrabold text-white">Episode Selector</h2>
                 </div>
                 <button
                   onClick={() => setEpisodeDrawerOpen(false)}
@@ -902,13 +942,13 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
                           <span className="font-extrabold text-rose-400">EP {ep.episode_number}</span>
                           {ep.runtime && <span>{ep.runtime}m</span>}
                         </div>
-                        <h4
+                        <h3
                           className={`text-xs font-bold truncate ${
                             isSelected ? 'text-white' : 'text-slate-300'
                           }`}
                         >
                           {ep.name || `Episode ${ep.episode_number}`}
-                        </h4>
+                        </h3>
                       </div>
                     </button>
                   );
@@ -934,7 +974,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
                 <div className="flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-[#e50914]" />
-                  <h3 className="text-sm font-extrabold text-white">Player Configuration</h3>
+                  <h2 className="text-sm font-extrabold text-white">Player Configuration</h2>
                 </div>
                 <button
                   onClick={() => setSettingsDrawerOpen(false)}
@@ -1103,7 +1143,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
               <div className="flex items-center justify-between pb-3 border-b border-white/10">
                 <div className="flex items-center gap-2">
                   <Subtitles className="w-5 h-5 text-[#e50914]" />
-                  <h3 className="text-sm font-extrabold text-white">Subtitles & Custom Uploads</h3>
+                  <h2 className="text-sm font-extrabold text-white">Subtitles & Custom Uploads</h2>
                 </div>
                 <button
                   onClick={() => setSubtitlesHelpOpen(false)}
@@ -1115,10 +1155,10 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
 
               <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
                 <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
-                  <h4 className="font-bold text-white mb-1 flex items-center gap-1.5">
+                  <h3 className="font-bold text-white mb-1 flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-rose-400" />
                     <span>Drag & Drop Custom Subtitle Files</span>
-                  </h4>
+                  </h3>
                   <p className="text-slate-400 text-[11px]">
                     You can drag and drop any subtitle file (<code className="text-rose-400">.srt</code>,{' '}
                     <code className="text-rose-400">.vtt</code>, <code className="text-rose-400">.ass</code>,{' '}
@@ -1161,7 +1201,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
               <div className="flex items-center justify-between pb-3 border-b border-white/10">
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-5 h-5 text-[#e50914]" />
-                  <h3 className="text-sm font-extrabold text-white">Controls & Remote Shortcuts</h3>
+                  <h2 className="text-sm font-extrabold text-white">Controls & Remote Shortcuts</h2>
                 </div>
                 <button
                   onClick={() => setGesturesModalOpen(false)}

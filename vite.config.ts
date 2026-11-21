@@ -1,18 +1,80 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { buildRobotsTxt, buildSitemapXml, normalizeBaseUrl } from './seo-server.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+function cinestreamSeoPlugin(): Plugin {
+  return {
+    name: 'cinestream-seo-plugin',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const reqPath = (req.url || '').split('?')[0];
+        if (reqPath !== '/robots.txt' && reqPath !== '/sitemap.xml') {
+          return next();
+        }
+
+        const host = (req.headers['x-forwarded-host'] as string | undefined)?.split(',')[0]?.trim() || req.headers.host;
+        const isLocal = host ? /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(host) : true;
+        const proto = (req.headers['x-forwarded-proto'] as string | undefined)?.split(',')[0]?.trim() || (isLocal ? 'http' : 'https');
+        const origin = host ? `${proto}://${host}` : normalizeBaseUrl();
+
+        if (reqPath === '/robots.txt') {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          res.end(buildRobotsTxt(origin));
+          return;
+        }
+
+        if (reqPath === '/sitemap.xml') {
+          try {
+            const xml = await buildSitemapXml(origin);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+            res.end(xml);
+          } catch {
+            res.statusCode = 500;
+            res.end('Failed to generate sitemap');
+          }
+          return;
+        }
+      });
+    },
+    async closeBundle() {
+      const distDir = path.resolve(__dirname, 'dist');
+      if (!fs.existsSync(distDir)) return;
+
+      const origin = normalizeBaseUrl(
+        process.env.APP_URL ||
+          'https://ais-pre-2huhmwetvdxbpbshd4fw6h-291052241474.asia-east1.run.app'
+      );
+
+      try {
+        const [robotsTxt, sitemapXml] = await Promise.all([
+          Promise.resolve(buildRobotsTxt(origin)),
+          buildSitemapXml(origin),
+        ]);
+        fs.writeFileSync(path.join(distDir, 'robots.txt'), robotsTxt, 'utf-8');
+        fs.writeFileSync(path.join(distDir, 'sitemap.xml'), sitemapXml, 'utf-8');
+      } catch (err) {
+        console.warn('[SEO] Failed to generate build-time SEO files:', err);
+      }
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
     plugins: [
       react(),
       tailwindcss(),
+      cinestreamSeoPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.png', 'apple-touch-icon.png'],
@@ -20,7 +82,7 @@ export default defineConfig(() => {
           id: '/',
           name: 'CineStream - Movies & TV Streaming',
           short_name: 'CineStream',
-          description: 'A cinematic movie and TV streaming web application featuring live TMDB discovery, responsive carousels, dedicated FMOV player, and watchlist persistence.',
+          description: 'Stream trending movies and TV shows in 4K Ultra HD, explore curated genres, and sync your personal watchlist on CineStream.',
           theme_color: '#07080a',
           background_color: '#07080a',
           display: 'standalone',
@@ -57,6 +119,7 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}'],
+          navigateFallbackDenylist: [/^\/api\//, /^\/sitemap\.xml$/, /^\/robots\.txt$/, /^\/.*\.json$/],
           runtimeCaching: [
             {
               urlPattern: /\/assets\/.*\.(png|jpg|jpeg|svg|webp)$/i,

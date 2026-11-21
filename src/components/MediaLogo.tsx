@@ -5,6 +5,7 @@ interface MediaLogoProps {
   mediaId: number | string;
   mediaType: 'movie' | 'tv';
   titleFallback: string;
+  as?: 'h1' | 'h2' | 'h3' | 'span';
   className?: string;
   imgClassName?: string;
   titleClassName?: string;
@@ -30,6 +31,7 @@ export const MediaLogo: React.FC<MediaLogoProps> = ({
   mediaId,
   mediaType,
   titleFallback,
+  as = 'span',
   className = '',
   imgClassName = 'max-h-16 md:max-h-24 w-auto object-contain drop-shadow-lg',
   titleClassName,
@@ -38,6 +40,8 @@ export const MediaLogo: React.FC<MediaLogoProps> = ({
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    setLogoPath(null);
+    setLoaded(false);
     let isMounted = true;
     async function fetchLogo() {
       if (!mediaId) return;
@@ -47,7 +51,7 @@ export const MediaLogo: React.FC<MediaLogoProps> = ({
           const best = getBestLogoPath(images);
           setLogoPath(best);
         }
-      } catch (err) {
+      } catch {
         // Fallback silently to text title
       }
     }
@@ -58,11 +62,14 @@ export const MediaLogo: React.FC<MediaLogoProps> = ({
   }, [mediaId, mediaType]);
 
   const logoUrl = logoPath ? getImageUrl(logoPath, 'w500') : null;
-  const headingClasses = titleClassName || 'text-2xl sm:text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-2xl';
+  const headingClasses =
+    titleClassName ||
+    'text-2xl sm:text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-2xl';
+  const Tag = as;
 
   if (logoUrl) {
     return (
-      <div className={`inline-flex items-center relative ${className}`}>
+      <Tag className={`inline-flex items-center relative ${className}`}>
         <img
           src={logoUrl}
           alt={titleFallback}
@@ -73,18 +80,10 @@ export const MediaLogo: React.FC<MediaLogoProps> = ({
           onError={() => setLogoPath(null)}
           loading="eager"
         />
-        {!loaded && (
-          <h1 className={`${headingClasses} ${className}`}>
-            {titleFallback}
-          </h1>
-        )}
-      </div>
+        {!loaded && <span className={headingClasses}>{titleFallback}</span>}
+      </Tag>
     );
   }
 
-  return (
-    <h1 className={`${headingClasses} ${className}`}>
-      {titleFallback}
-    </h1>
-  );
+  return <Tag className={`${headingClasses} ${className}`}>{titleFallback}</Tag>;
 };

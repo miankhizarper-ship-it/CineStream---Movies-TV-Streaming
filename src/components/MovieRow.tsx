@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TMDBMedia } from '../lib/tmdb';
 import { MovieCard } from './MovieCard';
+import { AppLink } from './AppLink';
 
 interface MovieRowProps {
   title: React.ReactNode;
@@ -56,7 +57,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({
       {/* Row Header */}
       {title && (
         <div className="flex items-center justify-between mb-2.5 sm:mb-3.5">
-          <div className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
             {typeof title === 'string' ? (
               <>
                 <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block shrink-0" />
@@ -65,14 +66,15 @@ export const MovieRow: React.FC<MovieRowProps> = ({
             ) : (
               title
             )}
-          </div>
-          {exploreLink && onExploreClick && (
-            <button
-              onClick={onExploreClick}
+          </h2>
+          {exploreLink && (
+            <AppLink
+              to={exploreLink}
+              onClick={() => onExploreClick?.()}
               className="text-xs sm:text-sm font-semibold text-rose-400 hover:text-rose-300 transition-colors whitespace-nowrap active:scale-95 shrink-0"
             >
               See all →
-            </button>
+            </AppLink>
           )}
         </div>
       )}

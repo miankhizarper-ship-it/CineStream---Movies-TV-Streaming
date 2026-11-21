@@ -156,11 +156,11 @@ function escapeXml(value: string): string {
 }
 
 export function normalizeBaseUrl(rawOrigin?: string): string {
-  const candidate = (rawOrigin || process.env.APP_URL || '').trim();
+  const candidate = (rawOrigin || process.env.SITE_URL || process.env.APP_URL || '').trim();
   if (candidate && candidate !== 'MY_APP_URL' && /^https?:\/\//i.test(candidate)) {
     return candidate.replace(/\/+$/, '');
   }
-  return 'http://localhost:3000';
+  return 'https://cinestreams.net';
 }
 
 export function buildRobotsTxt(origin?: string): string {

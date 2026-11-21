@@ -5,4 +5,4 @@ Disallow: /mylist
 Disallow: /profile
 Disallow: /api/
 
-Sitemap: https://ais-pre-2huhmwetvdxbpbshd4fw6h-291052241474.asia-east1.run.app/sitemap.xml
+Sitemap: https://cinestreams.net/sitemap.xml

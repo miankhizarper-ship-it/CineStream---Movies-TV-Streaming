@@ -50,9 +50,20 @@ function cinestreamSeoPlugin(): Plugin {
       const distDir = path.resolve(__dirname, 'dist');
       if (!fs.existsSync(distDir)) return;
 
+      const envSiteUrl = (process.env.SITE_URL || process.env.VITE_SITE_URL || '').trim();
+      const envAppUrl = (process.env.APP_URL || '').trim();
+      const isCustomOrigin = (val: string) =>
+        Boolean(val) &&
+        val !== 'MY_APP_URL' &&
+        /^https?:\/\//i.test(val) &&
+        !val.includes('.run.app');
+
       const origin = normalizeBaseUrl(
-        process.env.APP_URL ||
-          'https://ais-pre-2huhmwetvdxbpbshd4fw6h-291052241474.asia-east1.run.app'
+        isCustomOrigin(envSiteUrl)
+          ? envSiteUrl
+          : isCustomOrigin(envAppUrl)
+            ? envAppUrl
+            : 'https://cinestreams.net'
       );
 
       try {

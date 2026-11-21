@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useUser } from '@clerk/react';
+import { useClerkAuth } from './ClerkBridgeContext';
 
 export type AuthModalMode = 'sign-in' | 'sign-up';
 
@@ -15,7 +15,7 @@ interface AuthModalContextValue {
 const AuthModalContext = createContext<AuthModalContextValue | null>(null);
 
 export const AuthModalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isLoaded, isSignedIn } = useUser();
+  const { isLoaded, isSignedIn, requestClerkLoad, clearPendingSignIn } = useClerkAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<AuthModalMode>('sign-in');
 
@@ -23,22 +23,26 @@ export const AuthModalProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     if (isLoaded && isSignedIn && isOpen) {
       setIsOpen(false);
+      clearPendingSignIn();
     }
-  }, [isLoaded, isSignedIn, isOpen]);
+  }, [isLoaded, isSignedIn, isOpen, clearPendingSignIn]);
 
   const openSignInModal = useCallback(() => {
+    requestClerkLoad(true);
     setMode('sign-in');
     setIsOpen(true);
-  }, []);
+  }, [requestClerkLoad]);
 
   const openSignUpModal = useCallback(() => {
+    requestClerkLoad(true);
     setMode('sign-up');
     setIsOpen(true);
-  }, []);
+  }, [requestClerkLoad]);
 
   const closeAuthModal = useCallback(() => {
     setIsOpen(false);
-  }, []);
+    clearPendingSignIn();
+  }, [clearPendingSignIn]);
 
   return (
     <AuthModalContext.Provider

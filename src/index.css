@@ -171,6 +171,56 @@
   animation: kenburns 8.5s ease-out forwards;
 }
 
+/* Drawer, Toast, and Modal CSS transitions */
+@keyframes slideInRight {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.24s var(--ease-out-expo) both;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-toast-in {
+  animation: toastIn 0.2s var(--ease-out-expo) both;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-modal-in {
+  animation: modalIn 0.18s ease-out both;
+}
+
+/* Defer offscreen layout and paint work for below-the-fold sections */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 340px;
+}
+
 /* Fade Edge Mask for Rails */
 .mask-fade-edges {
   mask-image: linear-gradient(
@@ -195,3 +245,4 @@
     transform: scale(1) !important;
   }
 }
+

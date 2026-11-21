@@ -41,7 +41,7 @@ export const Top10Row: React.FC<Top10RowProps> = ({ items, mediaType = 'movie' }
   if (top10Items.length === 0) return null;
 
   return (
-    <section className="relative my-6 sm:my-8 px-4 sm:px-6 md:px-12 group/top10">
+    <section className="relative my-6 sm:my-8 px-4 sm:px-6 md:px-12 group/top10 cv-auto">
       {/* Section Title */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">

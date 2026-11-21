@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Download, Monitor, CheckCircle2 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
-import { DesktopInstallModal } from './DesktopInstallModal';
+
+const DesktopInstallModal = lazy(() =>
+  import('./DesktopInstallModal').then((m) => ({ default: m.DesktopInstallModal }))
+);
 
 interface PWAInstallButtonProps {
   variant?: 'nav-desktop' | 'nav-mobile' | 'hero' | 'footer';
@@ -12,7 +15,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
   variant = 'nav-desktop',
   className = '',
 }) => {
-  const { isInstallable, isInstalled, install, isIOS } = usePWAInstall();
+  const { isInstallable, isInstalled, install } = usePWAInstall();
   const [modalOpen, setModalOpen] = useState(false);
 
   // If already running in standalone PWA window, don't show prompt
@@ -39,6 +42,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
     }
   };
 
+  const modalNode = modalOpen ? (
+    <Suspense fallback={null}>
+      <DesktopInstallModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+    </Suspense>
+  ) : null;
+
   if (variant === 'nav-desktop') {
     return (
       <>
@@ -51,7 +60,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
           <span className="hidden xl:inline 2xl:hidden">Install App</span>
           <span className="hidden 2xl:inline">Install Web App</span>
         </button>
-        <DesktopInstallModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+        {modalNode}
       </>
     );
   }
@@ -71,7 +80,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
             PWA
           </span>
         </button>
-        <DesktopInstallModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+        {modalNode}
       </>
     );
   }
@@ -86,7 +95,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
           <Monitor className="w-4 h-4 text-rose-500" />
           <span>Install Desktop Web App</span>
         </button>
-        <DesktopInstallModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+        {modalNode}
       </>
     );
   }
@@ -101,7 +110,8 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
         <Download className="w-4 h-4" />
         <span>Install Desktop Web App</span>
       </button>
-      <DesktopInstallModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      {modalNode}
     </>
   );
 };
+

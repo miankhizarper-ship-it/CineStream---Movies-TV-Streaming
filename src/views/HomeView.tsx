@@ -10,6 +10,65 @@ import { useBookmarks } from '../hooks/useBookmarks';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useRouter } from '../context/RouterContext';
 
+function isTmdbBackdropPath(path: string | null | undefined): path is string {
+  return Boolean(
+    path &&
+      path.startsWith('/') &&
+      !path.startsWith('/assets/') &&
+      !path.startsWith('/pwa-') &&
+      !path.startsWith('http')
+  );
+}
+
+const HomeSkeleton: React.FC<{ seoNode: React.ReactNode }> = ({ seoNode }) => (
+  <div className="w-full flex flex-col pb-24">
+    {seoNode}
+    <h1 className="sr-only">CineStream – Watch Movies & TV Series Online in HD</h1>
+
+    {/* Matched-height Hero Skeleton to prevent Desktop & Mobile CLS */}
+    <section
+      aria-label="Loading spotlight"
+      className="relative w-full h-[65vh] sm:h-[75vh] md:h-[85vh] max-h-[900px] overflow-hidden bg-[#07080a]"
+    >
+      <div className="absolute inset-0 skeleton-shimmer opacity-60" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/40 to-black/60" />
+      <div className="absolute inset-0 z-10 flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-12 sm:pb-16 md:pb-20">
+        <div className="max-w-2xl space-y-4">
+          <div className="h-14 sm:h-16 md:h-24 w-64 sm:w-80 rounded-xl bg-white/[0.06]" />
+          <div className="flex gap-2">
+            <div className="h-6 w-14 rounded-lg bg-white/[0.06]" />
+            <div className="h-6 w-16 rounded-lg bg-white/[0.06]" />
+            <div className="h-6 w-12 rounded-lg bg-white/[0.06]" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-full max-w-lg rounded bg-white/[0.05]" />
+            <div className="h-4 w-4/5 max-w-md rounded bg-white/[0.05]" />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <div className="h-11 w-32 rounded-2xl bg-[#e50914]/40" />
+            <div className="h-11 w-32 rounded-2xl bg-white/[0.07]" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Matched-height Carousel Row Skeletons */}
+    {[0, 1, 2].map((rowIdx) => (
+      <section key={rowIdx} className="relative my-5 sm:my-7 md:my-8 px-4 sm:px-6 md:px-12">
+        <div className="h-6 w-40 rounded-lg bg-white/[0.06] mb-3.5" />
+        <div className="flex gap-2.5 sm:gap-4 overflow-hidden py-2 px-1">
+          {[0, 1, 2, 3, 4, 5, 6].map((cardIdx) => (
+            <div
+              key={cardIdx}
+              className="shrink-0 w-[125px] sm:w-[165px] md:w-[200px] aspect-[2/3] rounded-2xl bg-[#101119] border border-white/10 skeleton-shimmer"
+            />
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+);
+
 export const HomeView: React.FC = () => {
   const { navigate } = useRouter();
   const { isBookmarked, toggleBookmark } = useBookmarks();
@@ -71,9 +130,14 @@ export const HomeView: React.FC = () => {
   }, [heroList.length]);
 
   const heroMedia = heroList[heroIndex] || null;
-  const origin = getOrigin() || 'https://cinestream.app';
+  const origin = getOrigin() || 'https://cinestreams.net';
   const heroTitle = heroMedia ? heroMedia.title || heroMedia.name || 'Featured Title' : '';
   const heroType = heroMedia?.media_type === 'tv' ? 'tv' : 'movie';
+  const heroBackdropPath = heroMedia ? heroMedia.backdrop_path || heroMedia.poster_path : null;
+  const heroSrc = heroBackdropPath ? getBackdropUrl(heroBackdropPath, 'w1280') : undefined;
+  const heroSrcSet = isTmdbBackdropPath(heroBackdropPath)
+    ? `${getBackdropUrl(heroBackdropPath, 'w780')} 780w, ${getBackdropUrl(heroBackdropPath, 'w1280')} 1280w`
+    : undefined;
 
   const homeStructuredData = [
     {
@@ -104,8 +168,8 @@ export const HomeView: React.FC = () => {
       canonicalPath="/"
       ogType="website"
       ogImage={
-        heroMedia?.backdrop_path || heroMedia?.poster_path
-          ? getBackdropUrl(heroMedia.backdrop_path || heroMedia.poster_path, 'w1280')
+        heroBackdropPath
+          ? getBackdropUrl(heroBackdropPath, 'w1280')
           : '/pwa-512x512.png'
       }
       structuredData={homeStructuredData}
@@ -113,19 +177,12 @@ export const HomeView: React.FC = () => {
   );
 
   if (loading) {
-    return (
-      <div className="w-full min-h-[70dvh] flex flex-col items-center justify-center gap-3 text-slate-400">
-        {seoNode}
-        <h1 className="sr-only">CineStream – Watch Movies & TV Series Online in HD</h1>
-        <div className="w-8 h-8 border-3 border-[#e50914]/30 border-t-[#e50914] rounded-full animate-spin" />
-        <p className="text-xs font-semibold tracking-wider uppercase text-slate-500">Loading cinema spotlight...</p>
-      </div>
-    );
+    return <HomeSkeleton seoNode={seoNode} />;
   }
 
   if (error) {
     return (
-      <div className="w-full min-h-[60dvh] flex flex-col items-center justify-center gap-4 text-center px-4">
+      <div className="w-full min-h-[75dvh] flex flex-col items-center justify-center gap-4 text-center px-4">
         {seoNode}
         <h1 className="text-lg font-extrabold text-white">CineStream – Movies & TV Series</h1>
         <p className="text-sm text-rose-400 font-semibold">{error}</p>
@@ -151,11 +208,20 @@ export const HomeView: React.FC = () => {
         >
           {/* Backdrop Image & Vignette Gradients */}
           <div className="absolute inset-0 bg-[#07080a]">
-            <img
-              src={getBackdropUrl(heroMedia.backdrop_path || heroMedia.poster_path, 'original')}
-              alt={`${heroTitle} featured backdrop`}
-              className="w-full h-full object-cover object-center scale-105 animate-fade-in"
-            />
+            {heroSrc && (
+              <img
+                src={heroSrc}
+                srcSet={heroSrcSet}
+                sizes="100vw"
+                width={1280}
+                height={720}
+                fetchPriority="high"
+                loading="eager"
+                decoding="async"
+                alt={`${heroTitle} featured backdrop`}
+                className="w-full h-full object-cover object-center scale-105"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/40 to-black/60" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#07080a] via-transparent to-[#07080a]/80" />
           </div>
@@ -163,10 +229,11 @@ export const HomeView: React.FC = () => {
           {/* Hero Content Details */}
           <div className="absolute inset-0 z-10 flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-12 sm:pb-16 md:pb-20">
             <div className="max-w-2xl space-y-3 sm:space-y-4">
-              {/* Media Title / Logo */}
-              <div className="min-h-[48px] sm:min-h-[64px] flex items-center">
+              {/* Media Title / Logo with fixed vertical reservation to prevent CLS */}
+              <div className="h-14 sm:h-16 md:h-24 flex items-center">
                 <MediaLogo
                   as="h1"
+                  size="w300"
                   mediaId={heroMedia.id}
                   mediaType={heroType}
                   titleFallback={heroTitle}
@@ -227,18 +294,24 @@ export const HomeView: React.FC = () => {
                 </button>
               </div>
 
-              {/* Carousel Indicators */}
+              {/* Carousel Indicators (compositor-only transform + opacity) */}
               {heroList.length > 1 && (
-                <div className="flex items-center gap-2 pt-4">
+                <div className="flex items-center gap-1.5 pt-4">
                   {heroList.map((_, idx) => (
                     <button
                       key={idx}
                       onClick={() => setHeroIndex(idx)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        idx === heroIndex ? 'w-8 bg-[#e50914]' : 'w-2 bg-white/30 hover:bg-white/50'
-                      }`}
+                      className="relative w-7 h-2 flex items-center justify-center cursor-pointer"
                       aria-label={`Go to slide ${idx + 1}`}
-                    />
+                    >
+                      <span
+                        className={`block h-1.5 w-full rounded-full origin-center transition-[transform,opacity,background-color] duration-300 ${
+                          idx === heroIndex
+                            ? 'bg-[#e50914] scale-x-100 opacity-100'
+                            : 'bg-white/50 scale-x-[0.28] opacity-60 hover:opacity-90'
+                        }`}
+                      />
+                    </button>
                   ))}
                 </div>
               )}
@@ -296,7 +369,7 @@ export const HomeView: React.FC = () => {
       />
 
       {/* Android App Download Banner (Visible on Large PC Screen View, Hidden on Mobile View) */}
-      <section className="my-10 px-4 sm:px-6 md:px-12 hidden lg:block">
+      <section className="my-10 px-4 sm:px-6 md:px-12 hidden lg:block cv-auto">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-zinc-900 to-emerald-950/70 border border-emerald-500/20 p-6 sm:p-8 md:p-10 shadow-2xl">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
@@ -333,25 +406,37 @@ export const HomeView: React.FC = () => {
               aria-label="Preview CineStream Android App Screenshots"
               className="shrink-0 flex items-center justify-center gap-3 transition-transform hover:scale-105"
             >
-              <div className="w-24 sm:w-28 rounded-2xl overflow-hidden border border-white/20 shadow-2xl -rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
+              <div className="w-24 sm:w-28 aspect-[9/21] rounded-2xl overflow-hidden border border-white/20 shadow-2xl -rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
                 <img
-                  src="/assets/aistudio/CineStream Home & Spotlight.png"
+                  src="/assets/aistudio/CineStream Home & Spotlight.webp"
                   alt="CineStream Android App Home & Spotlight screen"
-                  className="w-full h-auto"
+                  width={540}
+                  height={1260}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              <div className="w-28 sm:w-32 rounded-2xl overflow-hidden border border-emerald-500/40 shadow-2xl z-10 bg-black">
+              <div className="w-28 sm:w-32 aspect-[9/21] rounded-2xl overflow-hidden border border-emerald-500/40 shadow-2xl z-10 bg-black">
                 <img
-                  src="/assets/aistudio/Ultra HD Video Player.png"
+                  src="/assets/aistudio/Ultra HD Video Player.webp"
                   alt="CineStream Android App Ultra HD Video Player screen"
-                  className="w-full h-auto"
+                  width={540}
+                  height={1260}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              <div className="w-24 sm:w-28 rounded-2xl overflow-hidden border border-white/20 shadow-2xl rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
+              <div className="w-24 sm:w-28 aspect-[9/21] rounded-2xl overflow-hidden border border-white/20 shadow-2xl rotate-6 transform hover:rotate-0 transition-transform duration-300 bg-black">
                 <img
-                  src="/assets/aistudio/Seasons & Episodes Selector.png"
+                  src="/assets/aistudio/Seasons & Episodes Selector.webp"
                   alt="CineStream Android App Seasons & Episodes Selector screen"
-                  className="w-full h-auto"
+                  width={540}
+                  height={1260}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </AppLink>
@@ -361,3 +446,4 @@ export const HomeView: React.FC = () => {
     </div>
   );
 };
+

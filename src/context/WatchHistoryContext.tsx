@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { useUser } from '@clerk/react';
+import { useClerkAuth } from './ClerkBridgeContext';
 
 export interface WatchHistoryItem {
   id: number | string;
@@ -78,7 +78,7 @@ function matchesItem(
 }
 
 export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isSignedIn, user, isLoaded } = useUser();
+  const { isSignedIn, user, isLoaded } = useClerkAuth();
   const [history, setHistory] = useState<WatchHistoryItem[]>(() => getLocalHistory());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const hasMigratedRef = useRef(false);
@@ -101,7 +101,7 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const payload = pendingClerkUpdateRef.current;
         pendingClerkUpdateRef.current = null;
         try {
-          await user.update({
+          await user.update?.({
             unsafeMetadata: {
               ...user.unsafeMetadata,
               watchHistory: payload.slice(0, 50), // keep top 50 in clerk
@@ -127,12 +127,12 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (clerkDebounceTimerRef.current && pendingClerkUpdateRef.current && user) {
         clearTimeout(clerkDebounceTimerRef.current);
         const payload = pendingClerkUpdateRef.current;
-        user.update({
+        user.update?.({
           unsafeMetadata: {
             ...user.unsafeMetadata,
             watchHistory: payload.slice(0, 50),
           },
-        }).catch(() => {});
+        })?.catch(() => {});
       }
     };
   }, [user]);
@@ -184,7 +184,7 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
           setHistory(mergedList);
           saveLocalHistory(mergedList);
 
-          await user.update({
+          await user.update?.({
             unsafeMetadata: {
               ...user.unsafeMetadata,
               watchHistory: mergedList,
@@ -336,7 +336,7 @@ export const WatchHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
     saveLocalHistory([]);
     if (isSignedIn && user) {
       try {
-        await user.update({
+        await user.update?.({
           unsafeMetadata: {
             ...user.unsafeMetadata,
             watchHistory: [],

@@ -549,7 +549,7 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const activeYearLabel = selectedYear || 'All Years';
   const activeSortLabel = SORT_OPTIONS.find((s) => s.value === sortBy)?.label || 'Most Popular';
 
-  const origin = getOrigin() || 'https://cinestream.app';
+  const origin = getOrigin() || 'https://cinestreams.net';
   const exploreCanonical = `/explore/${mediaType}`;
   const exploreTitle =
     mediaType === 'movie'

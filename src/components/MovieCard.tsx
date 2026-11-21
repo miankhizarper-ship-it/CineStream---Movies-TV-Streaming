@@ -13,6 +13,16 @@ interface MovieCardProps {
   isAnime?: boolean;
 }
 
+function isTmdbPath(path: string | null | undefined): path is string {
+  return Boolean(
+    path &&
+      path.startsWith('/') &&
+      !path.startsWith('/assets/') &&
+      !path.startsWith('/pwa-') &&
+      !path.startsWith('http')
+  );
+}
+
 export const MovieCard: React.FC<MovieCardProps> = ({
   media,
   mediaType: explicitType,
@@ -23,6 +33,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { showToast } = useToast();
   const [imageError, setImageError] = useState(false);
+  const [overlayReady, setOverlayReady] = useState(false);
 
   const type: 'movie' | 'tv' =
     explicitType ||
@@ -102,13 +113,23 @@ export const MovieCard: React.FC<MovieCardProps> = ({
     }
   };
 
-  const imageSrc =
-    aspect === 'backdrop' && media.backdrop_path
-      ? getImageUrl(media.backdrop_path, 'w780')
-      : getImageUrl(media.poster_path, 'w500');
+  const isBackdrop = aspect === 'backdrop' && Boolean(media.backdrop_path);
+  const rawPath = isBackdrop ? media.backdrop_path : media.poster_path;
+  const imageSrc = isBackdrop
+    ? getImageUrl(rawPath, 'w300')
+    : getImageUrl(rawPath, 'w342');
+  const imageSrcSet = isTmdbPath(rawPath)
+    ? isBackdrop
+      ? `${getImageUrl(rawPath, 'w300')} 300w, ${getImageUrl(rawPath, 'w780')} 780w`
+      : `${getImageUrl(rawPath, 'w185')} 185w, ${getImageUrl(rawPath, 'w342')} 342w`
+    : undefined;
+  const imageSizes = isBackdrop ? '(max-width: 640px) 200px, 300px' : '(max-width: 640px) 150px, 200px';
 
   return (
     <article
+      onMouseEnter={() => {
+        if (!overlayReady) setOverlayReady(true);
+      }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       style={{ touchAction: 'pan-x pan-y' }}
@@ -133,8 +154,13 @@ export const MovieCard: React.FC<MovieCardProps> = ({
         {!imageError ? (
           <img
             src={imageSrc}
+            srcSet={imageSrcSet}
+            sizes={imageSizes}
             alt={`${title}${releaseYear ? ` (${releaseYear})` : ''} ${type === 'tv' ? 'TV series' : 'movie'} poster`}
+            width={isBackdrop ? 300 : 342}
+            height={isBackdrop ? 169 : 513}
             loading="lazy"
+            decoding="async"
             draggable={false}
             referrerPolicy="no-referrer"
             onError={() => setImageError(true)}
@@ -176,68 +202,72 @@ export const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         </button>
 
-        {/* Hover Vignette & Micro-Actions Overlay (Desktop only) */}
-        <div className="hidden md:flex absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/60 to-transparent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 flex-col justify-end p-4 z-20">
-          <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-400 mb-1.5">
-            <span>{matchPercentage}% Match</span>
-            <span className="text-slate-400 font-normal">·</span>
-            <span className="text-slate-300">{releaseYear}</span>
+        {/* Hover Vignette & Micro-Actions Overlay (Desktop only, lazy-mounted on hover) */}
+        {overlayReady && (
+          <div className="hidden md:flex absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/60 to-transparent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 flex-col justify-end p-4 z-20">
+            <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-400 mb-1.5">
+              <span>{matchPercentage}% Match</span>
+              <span className="text-slate-400 font-normal">·</span>
+              <span className="text-slate-300">{releaseYear}</span>
+            </div>
+
+            <div className="h-7 flex items-center mb-1 max-w-[150px] sm:max-w-[180px]">
+              <MediaLogo
+                as="span"
+                size="w185"
+                mediaId={media.id}
+                mediaType={type}
+                titleFallback={title}
+                imgClassName="max-h-6 w-auto object-contain drop-shadow"
+                titleClassName="text-[11px] sm:text-xs font-bold text-white truncate max-w-full"
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-300 mb-3">
+              <span className="font-medium">{releaseYear || 'Cinema'}</span>
+              <span className="uppercase text-[9px] font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/10">
+                {type}
+              </span>
+            </div>
+
+            {/* Action Row */}
+            <div className="flex items-center gap-2 pt-3 border-t border-white/10 pointer-events-auto">
+              <button
+                onClick={handlePlayClick}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-950/70 transition-colors cursor-pointer"
+                title="Watch now"
+                aria-label={`Play ${title}`}
+              >
+                <Play className="w-3.5 h-3.5 fill-white" />
+                <span>Play</span>
+              </button>
+
+              <button
+                onClick={handleBookmarkToggle}
+                className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${
+                  saved
+                    ? 'bg-[#e50914]/25 border-[#e50914] text-rose-400 hover:bg-[#e50914]/40'
+                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                }`}
+                title={saved ? 'Remove from My List' : 'Add to My List'}
+                aria-label={saved ? 'Remove from My List' : 'Add to My List'}
+              >
+                {saved ? <Check className="w-4 h-4 text-rose-400" /> : <Plus className="w-4 h-4" />}
+              </button>
+
+              <button
+                onClick={handleShare}
+                className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors cursor-pointer"
+                title="Share"
+                aria-label="Share media"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-
-          <div className="h-7 flex items-center mb-1 max-w-[150px] sm:max-w-[180px]">
-            <MediaLogo
-              as="span"
-              mediaId={media.id}
-              mediaType={type}
-              titleFallback={title}
-              imgClassName="max-h-6 w-auto object-contain drop-shadow"
-              titleClassName="text-[11px] sm:text-xs font-bold text-white truncate max-w-full"
-            />
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] text-slate-300 mb-3">
-            <span className="font-medium">{releaseYear || 'Cinema'}</span>
-            <span className="uppercase text-[9px] font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/10">
-              {type}
-            </span>
-          </div>
-
-          {/* Action Row */}
-          <div className="flex items-center gap-2 pt-3 border-t border-white/10 pointer-events-auto">
-            <button
-              onClick={handlePlayClick}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-950/70 transition-colors cursor-pointer"
-              title="Watch now"
-              aria-label={`Play ${title}`}
-            >
-              <Play className="w-3.5 h-3.5 fill-white" />
-              <span>Play</span>
-            </button>
-
-            <button
-              onClick={handleBookmarkToggle}
-              className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${
-                saved
-                  ? 'bg-[#e50914]/25 border-[#e50914] text-rose-400 hover:bg-[#e50914]/40'
-                  : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-              }`}
-              title={saved ? 'Remove from My List' : 'Add to My List'}
-              aria-label={saved ? 'Remove from My List' : 'Add to My List'}
-            >
-              {saved ? <Check className="w-4 h-4 text-rose-400" /> : <Plus className="w-4 h-4" />}
-            </button>
-
-            <button
-              onClick={handleShare}
-              className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors cursor-pointer"
-              title="Share"
-              aria-label="Share media"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </article>
   );
 };
+

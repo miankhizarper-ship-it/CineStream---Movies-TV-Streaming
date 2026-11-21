@@ -101,7 +101,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
     };
   }, [id, mediaType]);
 
-  const origin = getOrigin() || 'https://cinestream.app';
+  const origin = getOrigin() || 'https://cinestreams.net';
   const canonicalPath = `/${mediaType}/${id}`;
 
   if (loading) {
@@ -251,7 +251,20 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
         {/* Full Backdrop */}
         <div className="absolute inset-0">
           <img
-            src={getBackdropUrl(details.backdrop_path, 'original')}
+            src={getBackdropUrl(details.backdrop_path, 'w1280')}
+            srcSet={
+              details.backdrop_path &&
+              details.backdrop_path.startsWith('/') &&
+              !details.backdrop_path.startsWith('/assets/')
+                ? `${getBackdropUrl(details.backdrop_path, 'w780')} 780w, ${getBackdropUrl(details.backdrop_path, 'w1280')} 1280w`
+                : undefined
+            }
+            sizes="100vw"
+            width={1280}
+            height={720}
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
             alt={`${title} backdrop image`}
             className="w-full h-full object-cover object-center filter blur-xs scale-105 opacity-35"
           />
@@ -272,11 +285,24 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
 
           <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 items-start">
             {/* Poster Thumbnail */}
-            <div className="w-36 sm:w-48 md:w-60 shrink-0 rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#12131a] relative group">
+            <div className="w-36 sm:w-48 md:w-60 aspect-[2/3] shrink-0 rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#12131a] relative group">
               <img
-                src={getImageUrl(details.poster_path, 'w500')}
+                src={getImageUrl(details.poster_path, 'w342')}
+                srcSet={
+                  details.poster_path &&
+                  details.poster_path.startsWith('/') &&
+                  !details.poster_path.startsWith('/assets/')
+                    ? `${getImageUrl(details.poster_path, 'w342')} 342w, ${getImageUrl(details.poster_path, 'w500')} 500w`
+                    : undefined
+                }
+                sizes="(max-width: 640px) 144px, 240px"
+                width={342}
+                height={513}
+                fetchPriority="high"
+                loading="eager"
+                decoding="async"
                 alt={`${title}${releaseYear ? ` (${releaseYear})` : ''} official poster`}
-                className="w-full aspect-[2/3] object-cover"
+                className="w-full h-full object-cover"
               />
             </div>
 
@@ -291,13 +317,16 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
                 )}
               </div>
 
-              <MediaLogo
-                as="h1"
-                mediaId={id}
-                mediaType={mediaType}
-                titleFallback={title}
-                imgClassName="max-h-16 sm:max-h-20 md:max-h-28 w-auto object-contain drop-shadow-xl"
-              />
+              <div className="min-h-[48px] sm:min-h-[64px] flex items-center">
+                <MediaLogo
+                  as="h1"
+                  size="w300"
+                  mediaId={id}
+                  mediaType={mediaType}
+                  titleFallback={title}
+                  imgClassName="max-h-16 sm:max-h-20 md:max-h-28 w-auto object-contain drop-shadow-xl"
+                />
+              </div>
 
               {details.tagline && (
                 <p className="text-xs sm:text-sm italic text-slate-400 font-light line-clamp-2">
@@ -413,7 +442,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
 
         {/* Cast & Crew Horizontal Scroll */}
         {details.credits?.cast && details.credits.cast.length > 0 && (
-          <section className="group/row">
+          <section className="group/row cv-auto">
             <h2 className="text-base sm:text-lg font-bold text-white mb-3 flex items-center gap-2">
               <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block" />
               Top Billed Cast
@@ -435,7 +464,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
                 className="flex gap-3.5 overflow-x-auto overflow-y-hidden overscroll-y-auto overscroll-x-contain scrollbar-none sm:snap-x sm:snap-proximity py-1 relative z-10 [touch-action:pan-x_pan-y]"
               >
-                {details.credits.cast.slice(0, 16).map((actor) => (
+                {details.credits.cast.slice(0, 14).map((actor) => (
                   <AppLink
                     key={actor.id}
                     to={`/person/${actor.id}`}
@@ -445,9 +474,12 @@ export const DetailsView: React.FC<DetailsViewProps> = ({ id, mediaType }) => {
                       <img
                         src={getImageUrl(actor.profile_path, 'w185')}
                         alt={`${actor.name} portrait`}
+                        width={185}
+                        height={278}
                         draggable={false}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform pointer-events-none select-none"
                         loading="lazy"
+                        decoding="async"
                       />
                     </div>
                     <h3 className="text-xs font-bold text-white truncate group-hover:text-rose-400 transition-colors">

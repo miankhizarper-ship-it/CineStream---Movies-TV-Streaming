@@ -30,43 +30,43 @@ const ANDROID_SCREENSHOTS: AppScreenshot[] = [
     id: 'android-home',
     title: 'Home & Spotlight',
     subtitle: 'Immersive cinematic hero banner with trending highlights and quick actions',
-    imagePath: '/assets/aistudio/CineStream Home & Spotlight.png',
+    imagePath: '/assets/aistudio/CineStream Home & Spotlight.webp',
   },
   {
     id: 'android-details',
     title: 'Title Details & Overview',
     subtitle: 'Comprehensive overview, cast list, and recommendations',
-    imagePath: '/assets/aistudio/Title Details & Overview.png',
+    imagePath: '/assets/aistudio/Title Details & Overview.webp',
   },
   {
     id: 'android-explore',
     title: 'Explore & Category Discovery',
     subtitle: 'Curated genres, release year filters, and trending movie catalogs',
-    imagePath: '/assets/aistudio/Explore & Category Discovery.png',
+    imagePath: '/assets/aistudio/Explore & Category Discovery.webp',
   },
   {
     id: 'android-search',
     title: 'Instant Multi-Search',
     subtitle: 'Lightning-fast predictive search for titles, actors, and directors',
-    imagePath: '/assets/aistudio/Instant Multi-Search.png',
+    imagePath: '/assets/aistudio/Instant Multi-Search.webp',
   },
   {
     id: 'android-player',
     title: 'Ultra HD Video Player',
     subtitle: 'Immersive streaming player with theater dim mode and server switcher',
-    imagePath: '/assets/aistudio/Ultra HD Video Player.png',
+    imagePath: '/assets/aistudio/Ultra HD Video Player.webp',
   },
   {
     id: 'android-episodes',
     title: 'Seasons & Episodes Selector',
     subtitle: 'Compact season tabs and episode lists with thumbnails and durations',
-    imagePath: '/assets/aistudio/Seasons & Episodes Selector.png',
+    imagePath: '/assets/aistudio/Seasons & Episodes Selector.webp',
   },
   {
     id: 'android-watchlist',
     title: 'My Watchlist & Library',
     subtitle: 'Saved movie bookmarks and continue-watching history tracking',
-    imagePath: '/assets/aistudio/My Watchlist & Library.png',
+    imagePath: '/assets/aistudio/My Watchlist & Library.webp',
   },
 ];
 
@@ -76,43 +76,43 @@ const WINDOWS_SCREENSHOTS: AppScreenshot[] = [
     id: 'windows-home',
     title: 'Home & Spotlight',
     subtitle: 'Full-width cinematic spotlight view designed for widescreen PC monitors',
-    imagePath: '/assets/aistudio/home_b3b198ff.png',
+    imagePath: '/assets/aistudio/home_b3b198ff.webp',
   },
   {
     id: 'windows-details',
     title: 'Title Details & Overview',
     subtitle: 'Rich cast billing, movie overview, rating badges, and recommendations',
-    imagePath: '/assets/aistudio/details_8dc1056d.png',
+    imagePath: '/assets/aistudio/details_8dc1056d.webp',
   },
   {
     id: 'windows-explore',
     title: 'Explore & Category Discovery',
     subtitle: 'Grid catalog with instant genre filters, sorting, and 4K media cards',
-    imagePath: '/assets/aistudio/explore_4dddd803.png',
+    imagePath: '/assets/aistudio/explore_4dddd803.webp',
   },
   {
     id: 'windows-search',
     title: 'Instant Multi-Search',
     subtitle: 'Instant search grid results for movies, TV series, and creators',
-    imagePath: '/assets/aistudio/search_8cdaf272.png',
+    imagePath: '/assets/aistudio/search_8cdaf272.webp',
   },
   {
     id: 'windows-player',
     title: 'Ultra HD Video Player',
     subtitle: 'Theater mode player with multi-server failover, resolution selector & hotkeys',
-    imagePath: '/assets/aistudio/player_f77b264d.png',
+    imagePath: '/assets/aistudio/player_f77b264d.webp',
   },
   {
     id: 'windows-episodes',
     title: 'Seasons & Episodes Selector',
     subtitle: 'Comprehensive episode grid and arc preview thumbnails with descriptions',
-    imagePath: '/assets/aistudio/episode_692ff127.png',
+    imagePath: '/assets/aistudio/episode_692ff127.webp',
   },
   {
     id: 'windows-watchlist',
     title: 'My Watchlist & Library',
     subtitle: 'Cloud-synced library across devices with quick bookmark management',
-    imagePath: '/assets/aistudio/watchlist_c827db15.png',
+    imagePath: '/assets/aistudio/watchlist_c827db15.webp',
   },
 ];
 
@@ -137,7 +137,7 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
   const fileUrl = isAndroid ? ANDROID_RELEASE_URL : WINDOWS_RELEASE_URL;
   const currentScreenshots = isAndroid ? ANDROID_SCREENSHOTS : WINDOWS_SCREENSHOTS;
 
-  const origin = getOrigin() || 'https://cinestream.app';
+  const origin = getOrigin() || 'https://cinestreams.net';
   const canonicalPath = isAndroid ? '/download-app' : '/download-app/windows';
   const pageTitle = isAndroid
     ? 'Download CineStream Android APK (v1.0.14) | CineStream'
@@ -202,8 +202,8 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
         ogType="website"
         ogImage={
           isAndroid
-            ? '/assets/aistudio/CineStream Home & Spotlight.png'
-            : '/assets/aistudio/home_b3b198ff.png'
+            ? '/assets/aistudio/CineStream Home & Spotlight.webp'
+            : '/assets/aistudio/home_b3b198ff.webp'
         }
         structuredData={softwareSchema}
       />
@@ -440,6 +440,10 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
                   <img
                     src={screen.imagePath}
                     alt={`${screen.title} – CineStream Android app screenshot`}
+                    width={540}
+                    height={1260}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white">
@@ -466,6 +470,10 @@ export const DownloadAppView: React.FC<DownloadAppViewProps> = ({ platform }) =>
                   <img
                     src={screen.imagePath}
                     alt={`${screen.title} – CineStream Windows desktop app screenshot`}
+                    width={1280}
+                    height={720}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   Film,
   Search,
@@ -7,23 +7,22 @@ import {
   X,
   Home,
   Tv,
-  Smartphone,
   LogIn,
   Download,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import {
-  Show,
-  SignInButton,
-  UserButton,
-} from '@clerk/react';
-import { dark } from '@clerk/ui/themes';
 import { useRouter } from '../context/RouterContext';
-import { CommandPalette } from './CommandPalette';
+import { useClerkAuth } from '../context/ClerkBridgeContext';
+import { useAuthModal } from '../context/AuthModalContext';
 import { AppLink } from './AppLink';
+
+const CommandPalette = lazy(() =>
+  import('./CommandPalette').then((m) => ({ default: m.CommandPalette }))
+);
 
 export const Navbar: React.FC = () => {
   const { route, navigate } = useRouter();
+  const { isSignedIn, UserButtonSlot } = useClerkAuth();
+  const { openSignInModal } = useAuthModal();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
@@ -115,7 +114,14 @@ export const Navbar: React.FC = () => {
             className="flex items-center gap-2 text-base sm:text-lg font-black tracking-tight text-white whitespace-nowrap shrink-0 group focus-visible:outline-none cursor-pointer"
           >
             <div className="w-8 h-8 sm:w-9 sm:h-9 xl:w-8 xl:h-8 rounded-full overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform bg-black/60 xl:bg-black/40 backdrop-blur-xl xl:backdrop-blur-none border border-white/15 xl:border-transparent p-1 xl:p-0">
-              <img src="/assets/aistudio/logo_1fdc68d7.png" alt="CineStream Logo" className="w-full h-full object-cover" />
+              <img
+                src="/assets/aistudio/logo_1fdc68d7.webp"
+                alt="CineStream Logo"
+                width={36}
+                height={36}
+                decoding="async"
+                className="w-full h-full object-cover"
+              />
             </div>
             <span className="font-extrabold tracking-tight bg-gradient-to-r from-white via-white to-slate-200 bg-clip-text text-transparent inline-block text-sm sm:text-base xl:text-lg drop-shadow-md">
               CINE<span className="text-[#e50914]">STREAM</span>
@@ -159,43 +165,21 @@ export const Navbar: React.FC = () => {
               <Search className="w-4 h-4" />
             </button>
 
-            {/* Clerk Authentication in Header */}
-            <Show when="signed-in">
+            {/* Clerk Authentication in Header (deferred until active/needed) */}
+            {isSignedIn && UserButtonSlot ? (
               <div className="flex items-center">
-                <UserButton
-                  appearance={{
-                    theme: dark,
-                    variables: {
-                      colorPrimary: '#e50914',
-                    },
-                    elements: {
-                      avatarBox: 'w-8 h-8 xl:w-9 xl:h-9 rounded-full border border-white/20 hover:border-[#e50914] transition-all cursor-pointer shadow-md shadow-black/40',
-                      userButtonTrigger: 'focus:shadow-none focus:outline-none',
-                    },
-                  }}
-                >
-                  <UserButton.MenuItems>
-                    <UserButton.Action
-                      label="My Watchlist"
-                      labelIcon={<Bookmark className="w-4 h-4 text-[#e50914]" />}
-                      onClick={() => navigate('/mylist')}
-                    />
-                  </UserButton.MenuItems>
-                </UserButton>
+                <UserButtonSlot onMyListClick={() => navigate('/mylist')} />
               </div>
-            </Show>
-
-            <Show when="signed-out">
-              <SignInButton mode="modal">
-                <button
-                  className="px-3.5 py-1.5 rounded-full bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
-                  title="Sign In with Clerk"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>Sign In</span>
-                </button>
-              </SignInButton>
-            </Show>
+            ) : (
+              <button
+                onClick={openSignInModal}
+                className="px-3.5 py-1.5 rounded-full bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                title="Sign In with Clerk"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            )}
 
             {/* Hamburger Menu Toggle (Mobile/Tablet) */}
             <button
@@ -209,87 +193,83 @@ export const Navbar: React.FC = () => {
         </div>
       </header>
 
-      {/* Slide-out Navigation Drawer Menu (Mobile & Tablet Screens) */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <div className="fixed inset-0 z-50 overflow-hidden xl:hidden">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setMobileMenuOpen(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
-            />
+      {/* Slide-out Navigation Drawer Menu (Mobile & Tablet Screens, pure CSS transition) */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden xl:hidden">
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-200"
+          />
 
-            {/* Drawer Panel */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute inset-y-0 right-0 max-w-xs w-full bg-[#0d0e14] border-l border-white/10 shadow-2xl flex flex-col z-10"
-            >
-              {/* Drawer Header */}
-              <div className="p-5 border-b border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-2.5 text-base font-black text-white">
-                  <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center bg-black/40">
-                    <img src="/assets/aistudio/logo_1fdc68d7.png" alt="CineStream Logo" className="w-full h-full object-cover" />
-                  </div>
-                  <span>CINE<span className="text-[#e50914]">STREAM</span></span>
+          <div className="absolute inset-y-0 right-0 max-w-xs w-full bg-[#0d0e14] border-l border-white/10 shadow-2xl flex flex-col z-10 animate-slide-in-right">
+            {/* Drawer Header */}
+            <div className="p-5 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-base font-black text-white">
+                <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center bg-black/40">
+                  <img
+                    src="/assets/aistudio/logo_1fdc68d7.webp"
+                    alt="CineStream Logo"
+                    width={28}
+                    height={28}
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
-                  aria-label="Close menu"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <span>CINE<span className="text-[#e50914]">STREAM</span></span>
               </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
+            {/* Drawer Navigation Links */}
+            <nav className="flex-1 overflow-y-auto p-4 space-y-1.5" aria-label="Mobile navigation">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const active = isActive(link.path);
+                return (
+                  <AppLink
+                    key={link.path}
+                    to={link.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-semibold text-sm transition-all cursor-pointer ${
+                      active
+                        ? 'bg-[#e50914] text-white shadow-lg shadow-rose-950/50'
+                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-slate-400'}`} />
+                      <span>{link.label}</span>
+                    </div>
+                    {link.count !== undefined && link.count > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-black/30 text-white text-xs font-bold tabular-nums">
+                        {link.count}
+                      </span>
+                    )}
+                  </AppLink>
+                );
+              })}
+            </nav>
 
-              {/* Drawer Navigation Links */}
-              <nav className="flex-1 overflow-y-auto p-4 space-y-1.5" aria-label="Mobile navigation">
-                {navLinks.map((link) => {
-                  const Icon = link.icon;
-                  const active = isActive(link.path);
-                  return (
-                    <AppLink
-                      key={link.path}
-                      to={link.path}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-semibold text-sm transition-all cursor-pointer ${
-                        active
-                          ? 'bg-[#e50914] text-white shadow-lg shadow-rose-950/50'
-                          : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-slate-400'}`} />
-                        <span>{link.label}</span>
-                      </div>
-                      {link.count !== undefined && link.count > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-black/30 text-white text-xs font-bold tabular-nums">
-                          {link.count}
-                        </span>
-                      )}
-                    </AppLink>
-                  );
-                })}
-
-              </nav>
-
-              {/* Drawer Footer Info */}
-              <div className="p-4 border-t border-white/10 bg-black/40 text-[11px] text-slate-500 text-center">
-                CineStream v1.0.4 · Cinematic Streaming
-              </div>
-            </motion.div>
+            {/* Drawer Footer Info */}
+            <div className="p-4 border-t border-white/10 bg-black/40 text-[11px] text-slate-500 text-center">
+              CineStream v1.0.4 · Cinematic Streaming
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
-      {/* Global Command Palette */}
-      <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      {/* Global Command Palette (Lazy-loaded on demand) */}
+      {paletteOpen && (
+        <Suspense fallback={null}>
+          <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
+        </Suspense>
+      )}
     </>
   );
 };

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { useUser } from '@clerk/react';
+import { useClerkAuth } from './ClerkBridgeContext';
 import { useAuthModal } from './AuthModalContext';
 import { TMDBMedia } from '../lib/tmdb';
 
@@ -95,7 +95,7 @@ const syncToClerk = async (userObj: any, list: BookmarkItem[]) => {
 };
 
 export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isSignedIn, user, isLoaded } = useUser();
+  const { isSignedIn, user, isLoaded } = useClerkAuth();
   const { openSignInModal } = useAuthModal();
 
   const [watchlist, setWatchlist] = useState<BookmarkItem[]>(() => getLocalWatchlist());
@@ -261,7 +261,7 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (isSignedIn && user) {
       try {
-        await user.update({
+        await user.update?.({
           unsafeMetadata: {
             ...user.unsafeMetadata,
             watchlist: [],

@@ -12,13 +12,21 @@ export const Footer: React.FC = () => {
   }
 
   return (
-    <footer className="hidden md:block w-full bg-[#050608] border-t border-white/[0.08] py-12 px-6 md:px-12 mt-12 text-slate-400">
+    <footer className="hidden md:block w-full bg-[#050608] border-t border-white/[0.08] py-12 px-6 md:px-12 mt-12 text-slate-400 cv-auto">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start justify-between gap-8">
         {/* Brand statement */}
         <div className="max-w-md">
           <AppLink to="/" className="inline-flex items-center gap-2 text-base sm:text-lg font-bold text-white mb-2.5">
             <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden flex items-center justify-center bg-black/40">
-              <img src="/assets/aistudio/logo_1fdc68d7.png" alt="CineStream Logo" className="w-full h-full object-cover" />
+              <img
+                src="/assets/aistudio/logo_1fdc68d7.webp"
+                alt="CineStream Logo"
+                width={28}
+                height={28}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover"
+              />
             </div>
             <span>CINE<span className="text-[#e50914]">STREAM</span></span>
           </AppLink>

@@ -35,7 +35,7 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
     };
   }, [id]);
 
-  const origin = getOrigin() || 'https://cinestream.app';
+  const origin = getOrigin() || 'https://cinestreams.net';
   const canonicalPath = `/person/${id}`;
 
   if (loading) {
@@ -92,7 +92,12 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
   const personDesc =
     truncateDescription(person.biography, 155) ||
     `Explore ${person.name}'s biography, filmography, and ${uniqueCredits.length} movies & TV credits on CineStream.`;
-  const portraitUrl = getImageUrl(person.profile_path, 'w500');
+  const portraitUrl = getImageUrl(person.profile_path, 'w342');
+  const isTmdbPortrait = Boolean(
+    person.profile_path &&
+      person.profile_path.startsWith('/') &&
+      !person.profile_path.startsWith('/assets/')
+  );
 
   const personSchema = {
     '@type': 'Person',
@@ -135,11 +140,22 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
 
       {/* Profile Header */}
       <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 items-start mb-10">
-        <div className="w-32 sm:w-48 rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] shrink-0 shadow-2xl">
+        <div className="w-32 sm:w-48 aspect-[2/3] rounded-2xl overflow-hidden bg-[#12131a] border border-white/[0.08] shrink-0 shadow-2xl">
           <img
             src={portraitUrl}
+            srcSet={
+              isTmdbPortrait
+                ? `${getImageUrl(person.profile_path, 'w342')} 342w, ${getImageUrl(person.profile_path, 'w500')} 500w`
+                : undefined
+            }
+            sizes="(max-width: 640px) 128px, 192px"
+            width={342}
+            height={513}
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
             alt={`${person.name} portrait`}
-            className="w-full aspect-[2/3] object-cover"
+            className="w-full h-full object-cover"
           />
         </div>
 
@@ -190,7 +206,7 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
       </div>
 
       {/* Filmography Credits */}
-      <section>
+      <section className="cv-auto">
         <div className="flex items-baseline justify-between mb-4">
           <h2 className="text-base sm:text-xl font-bold text-white flex items-center gap-2">
             <span className="w-1.5 h-4 sm:h-5 bg-[#e50914] rounded-full inline-block" />
@@ -200,7 +216,7 @@ export const PersonView: React.FC<PersonViewProps> = ({ id }) => {
 
         {uniqueCredits.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-4">
-            {uniqueCredits.slice(0, 30).map((media) => (
+            {uniqueCredits.slice(0, 24).map((media) => (
               <MovieCard key={`credit-${media.id}`} media={media} />
             ))}
           </div>

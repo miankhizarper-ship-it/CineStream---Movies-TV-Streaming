@@ -243,7 +243,7 @@ export const SearchView: React.FC = () => {
       )
     : [];
 
-  const origin = getOrigin() || 'https://cinestream.app';
+  const origin = getOrigin() || 'https://cinestreams.net';
   const trimmedQuery = query.trim();
   const searchTitle = trimmedQuery
     ? `"${trimmedQuery}" – Search Results | CineStream`

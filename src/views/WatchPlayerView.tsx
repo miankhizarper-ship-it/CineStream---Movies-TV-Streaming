@@ -583,7 +583,7 @@ export const WatchPlayerView: React.FC<WatchPlayerViewProps> = ({
     );
   };
 
-  const origin = getOrigin() || 'https://cinestream.app';
+  const origin = getOrigin() || 'https://cinestreams.net';
   const canonicalWatchPath =
     mediaType === 'movie'
       ? `/watch/movie/${id}`

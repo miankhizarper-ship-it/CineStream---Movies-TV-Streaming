@@ -51,9 +51,10 @@ export const MovieRow: React.FC<MovieRowProps> = ({
   };
 
   if (!items || items.length === 0) return null;
+  const visibleItems = items.slice(0, 14);
 
   return (
-    <section className="relative my-5 sm:my-7 md:my-8 px-4 sm:px-6 md:px-12 group/row">
+    <section className="relative my-5 sm:my-7 md:my-8 px-4 sm:px-6 md:px-12 group/row cv-auto">
       {/* Row Header */}
       {title && (
         <div className="flex items-center justify-between mb-2.5 sm:mb-3.5">
@@ -99,7 +100,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({
           style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
           className="flex gap-2.5 sm:gap-4 overflow-x-auto overflow-y-hidden overscroll-y-auto overscroll-x-contain scrollbar-none sm:snap-x sm:snap-proximity py-2 px-1 relative z-10 [touch-action:pan-x_pan-y]"
         >
-          {items.map((item, idx) => (
+          {visibleItems.map((item, idx) => (
             <div
               key={`${item.media_type || mediaType || 'item'}-${item.id}-${idx}`}
               className={`sm:snap-start shrink-0 relative transition-all duration-300 hover:z-30 ${

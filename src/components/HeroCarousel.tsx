@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Info, Plus, Check, Star } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { TMDBMedia, getBackdropUrl } from '../lib/tmdb';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useToast } from '../context/ToastContext';
@@ -119,6 +118,13 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ items }) => {
     }
   };
 
+  const backdropPath = currentItem.backdrop_path;
+  const isTmdb =
+    backdropPath &&
+    backdropPath.startsWith('/') &&
+    !backdropPath.startsWith('/assets/') &&
+    !backdropPath.startsWith('http');
+
   return (
     <section
       onMouseEnter={() => setIsPaused(true)}
@@ -128,22 +134,24 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ items }) => {
       className="relative w-full h-[clamp(260px,38vh,340px)] md:h-[clamp(300px,42vh,400px)] lg:h-[clamp(340px,48vh,480px)] max-h-[480px] overflow-hidden bg-[#07080a] group"
     >
       {/* Background Poster Container */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentItem.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="absolute inset-0 w-full h-full"
-        >
-          <img
-            src={getBackdropUrl(currentItem.backdrop_path, 'original')}
-            alt={title}
-            className="w-full h-full object-cover object-[center_20%]"
-          />
-        </motion.div>
-      </AnimatePresence>
+      <div className="absolute inset-0 w-full h-full">
+        <img
+          src={getBackdropUrl(backdropPath, 'w1280')}
+          srcSet={
+            isTmdb
+              ? `${getBackdropUrl(backdropPath, 'w780')} 780w, ${getBackdropUrl(backdropPath, 'w1280')} 1280w`
+              : undefined
+          }
+          sizes="100vw"
+          width={1280}
+          height={720}
+          fetchPriority="high"
+          loading="eager"
+          decoding="async"
+          alt={title}
+          className="w-full h-full object-cover object-[center_20%]"
+        />
+      </div>
 
       {/* Layered Gradient Overlays for Readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-[#07080a]/60 to-transparent z-10" />
@@ -152,106 +160,106 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ items }) => {
 
       {/* Hero Text & Compact Content Block */}
       <div className="absolute bottom-5 sm:bottom-8 inset-x-0 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 z-20">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentItem.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-2xl space-y-2 sm:space-y-3"
-          >
-            {/* Meta Tags */}
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-300">
-              <span className="flex items-center gap-1 text-amber-400 font-bold px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-[11px]">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span className="tabular-nums">
-                  {currentItem.vote_average ? currentItem.vote_average.toFixed(1) : 'NR'}
-                </span>
+        <div className="max-w-2xl space-y-2 sm:space-y-3">
+          {/* Meta Tags */}
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-300">
+            <span className="flex items-center gap-1 text-amber-400 font-bold px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-[11px]">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <span className="tabular-nums">
+                {currentItem.vote_average ? currentItem.vote_average.toFixed(1) : 'NR'}
               </span>
+            </span>
 
-              <span className="px-2 py-0.5 rounded bg-[#e50914] text-white font-extrabold uppercase tracking-wider text-[9px]">
-                #1 Trending
-              </span>
+            <span className="px-2 py-0.5 rounded bg-[#e50914] text-white font-extrabold uppercase tracking-wider text-[9px]">
+              #1 Trending
+            </span>
 
-              <span aria-hidden="true" className="text-slate-600">·</span>
-              <span className="uppercase text-slate-200 font-bold text-[11px]">
-                {type === 'tv' ? 'TV Series' : 'Movie'}
-              </span>
+            <span aria-hidden="true" className="text-slate-600">·</span>
+            <span className="uppercase text-slate-200 font-bold text-[11px]">
+              {type === 'tv' ? 'TV Series' : 'Movie'}
+            </span>
 
-              <span aria-hidden="true" className="text-slate-600">·</span>
-              <span className="text-[11px]">{(currentItem.release_date || currentItem.first_air_date || '').slice(0, 4)}</span>
-            </div>
+            <span aria-hidden="true" className="text-slate-600">·</span>
+            <span className="text-[11px]">{(currentItem.release_date || currentItem.first_air_date || '').slice(0, 4)}</span>
+          </div>
 
-            {/* Title */}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-xl line-clamp-1 sm:line-clamp-2">
-              {title}
-            </h1>
+          {/* Title */}
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-xl line-clamp-1 sm:line-clamp-2">
+            {title}
+          </h1>
 
-            {/* Overview Excerpt */}
-            <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 leading-relaxed max-w-xl drop-shadow">
-              {currentItem.overview}
-            </p>
+          {/* Overview Excerpt */}
+          <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 leading-relaxed max-w-xl drop-shadow">
+            {currentItem.overview}
+          </p>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2.5 pt-1">
-              <button
-                onClick={handlePlayNow}
-                className="h-10 sm:h-11 px-4 sm:px-5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-rose-950/60 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 btn-sheen"
-              >
-                <Play className="w-4 h-4 fill-white" />
-                <span>Play Now</span>
-              </button>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
+            <button
+              onClick={handlePlayNow}
+              className="h-10 sm:h-11 px-4 sm:px-5 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-rose-950/60 transition-transform hover:scale-105 active:scale-95 flex items-center gap-2 btn-sheen"
+            >
+              <Play className="w-4 h-4 fill-white" />
+              <span>Play Now</span>
+            </button>
 
-              <button
-                onClick={handleDetailsClick}
-                className="h-10 sm:h-11 px-4 sm:px-5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-semibold text-xs sm:text-sm border border-white/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-              >
-                <Info className="w-4 h-4" />
-                <span>Details</span>
-              </button>
+            <button
+              onClick={handleDetailsClick}
+              className="h-10 sm:h-11 px-4 sm:px-5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-semibold text-xs sm:text-sm border border-white/20 transition-transform hover:scale-105 active:scale-95 flex items-center gap-2"
+            >
+              <Info className="w-4 h-4" />
+              <span>Details</span>
+            </button>
 
-              <button
-                onClick={handleBookmarkToggle}
-                className={`h-10 sm:h-11 w-10 sm:w-11 rounded-xl border backdrop-blur-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${
-                  saved
-                    ? 'bg-[#e50914]/30 border-[#e50914] text-rose-300'
-                    : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
-                }`}
-                title={saved ? 'Remove from My List' : 'Add to My List'}
-                aria-label={saved ? 'Remove from My List' : 'Add to My List'}
-              >
-                {saved ? <Check className="w-4 h-4 text-rose-400" /> : <Plus className="w-4 h-4" />}
-              </button>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+            <button
+              onClick={handleBookmarkToggle}
+              className={`h-10 sm:h-11 w-10 sm:w-11 rounded-xl border backdrop-blur-md transition-transform hover:scale-105 active:scale-95 flex items-center justify-center ${
+                saved
+                  ? 'bg-[#e50914]/30 border-[#e50914] text-rose-300'
+                  : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
+              }`}
+              title={saved ? 'Remove from My List' : 'Add to My List'}
+              aria-label={saved ? 'Remove from My List' : 'Add to My List'}
+            >
+              {saved ? <Check className="w-4 h-4 text-rose-400" /> : <Plus className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Slide Indicators */}
+      {/* Slide Indicators (compositor-only scaleX/opacity) */}
       <div className="absolute bottom-4 right-4 sm:right-12 z-20 flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                setCurrentIndex(idx);
-                setProgress(0);
-              }}
-              className="relative h-1.5 rounded-full overflow-hidden transition-all bg-white/30"
-              style={{ width: idx === currentIndex ? '28px' : '10px' }}
-              aria-label={`Go to slide ${idx + 1}`}
-            >
-              {idx === currentIndex && (
-                <div
-                  className="h-full bg-[#e50914] transition-all duration-100 ease-linear"
-                  style={{ width: `${progress}%` }}
-                />
-              )}
-            </button>
-          ))}
+          {slides.map((_, idx) => {
+            const active = idx === currentIndex;
+            return (
+              <button
+                key={idx}
+                onClick={() => {
+                  setCurrentIndex(idx);
+                  setProgress(0);
+                }}
+                className="relative w-7 h-2 flex items-center justify-center cursor-pointer"
+                aria-label={`Go to slide ${idx + 1}`}
+              >
+                <span
+                  className={`relative block h-1.5 w-full rounded-full overflow-hidden bg-white/30 origin-center transition-[transform,opacity] duration-300 ${
+                    active ? 'scale-x-100 opacity-100' : 'scale-x-[0.35] opacity-65 hover:opacity-95'
+                  }`}
+                >
+                  {active && (
+                    <span
+                      className="block w-full h-full bg-[#e50914] origin-left transition-transform duration-100 ease-linear"
+                      style={{ transform: `scaleX(${Math.min(1, Math.max(0, progress / 100))})` }}
+                    />
+                  )}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 };
+

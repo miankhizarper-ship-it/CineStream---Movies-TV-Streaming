@@ -149,8 +149,8 @@ const FALLBACK_MOVIES: TMDBMedia[] = [
     title: 'Project Hail Mary',
     name: 'Project Hail Mary',
     overview: 'A lone astronaut must save Earth from an existential threat while waking up with amnesia on a desperate space mission.',
-    poster_path: '/assets/aistudio/Explore%20%26%20Category%20Discovery.png',
-    backdrop_path: '/assets/aistudio/CineStream%20Home%20%26%20Spotlight.png',
+    poster_path: '/assets/aistudio/Explore%20%26%20Category%20Discovery.webp',
+    backdrop_path: '/assets/aistudio/CineStream%20Home%20%26%20Spotlight.webp',
     media_type: 'movie',
     vote_average: 8.6,
     release_date: '2026-03-15',
@@ -160,8 +160,8 @@ const FALLBACK_MOVIES: TMDBMedia[] = [
     title: 'The Dark Knight',
     name: 'The Dark Knight',
     overview: 'Batman raises the stakes in his war on crime with the help of Lt. Jim Gordon and District Attorney Harvey Dent.',
-    poster_path: '/assets/aistudio/Title%20Details%20%26%20Overview.png',
-    backdrop_path: '/assets/aistudio/Ultra%20HD%20Video%20Player.png',
+    poster_path: '/assets/aistudio/Title%20Details%20%26%20Overview.webp',
+    backdrop_path: '/assets/aistudio/Ultra%20HD%20Video%20Player.webp',
     media_type: 'movie',
     vote_average: 8.5,
     release_date: '2008-07-18',
@@ -171,8 +171,8 @@ const FALLBACK_MOVIES: TMDBMedia[] = [
     title: 'Resident Evil: Retribution',
     name: 'Resident Evil',
     overview: 'Alice fights alongside a resistance movement in the relentless battle against the Umbrella Corporation and the T-virus horde.',
-    poster_path: '/assets/aistudio/My%20Watchlist%20%26%20Library.png',
-    backdrop_path: '/assets/aistudio/Instant%20Multi-Search.png',
+    poster_path: '/assets/aistudio/My%20Watchlist%20%26%20Library.webp',
+    backdrop_path: '/assets/aistudio/Instant%20Multi-Search.webp',
     media_type: 'movie',
     vote_average: 7.5,
     release_date: '2026-01-10',
@@ -182,8 +182,8 @@ const FALLBACK_MOVIES: TMDBMedia[] = [
     title: 'Apocalypse Z: New World',
     name: 'Apocalypse Z: New World',
     overview: 'The Canary Islands become Europe’s last refuge following the outbreak of the TSJ virus. A desperate race for survival.',
-    poster_path: '/assets/aistudio/Explore%20%26%20Category%20Discovery.png',
-    backdrop_path: '/assets/aistudio/CineStream%20Home%20%26%20Spotlight.png',
+    poster_path: '/assets/aistudio/Explore%20%26%20Category%20Discovery.webp',
+    backdrop_path: '/assets/aistudio/CineStream%20Home%20%26%20Spotlight.webp',
     media_type: 'movie',
     vote_average: 6.2,
     release_date: '2026-02-20',
@@ -193,8 +193,8 @@ const FALLBACK_MOVIES: TMDBMedia[] = [
     title: 'Godzilla Minus Zero',
     name: 'Godzilla Minus Zero',
     overview: 'Post-war Japan is pushed into an absolute state of despair when a colossal atomic monster emerges from the deep ocean.',
-    poster_path: '/assets/aistudio/Title%20Details%20%26%20Overview.png',
-    backdrop_path: '/assets/aistudio/Ultra%20HD%20Video%20Player.png',
+    poster_path: '/assets/aistudio/Title%20Details%20%26%20Overview.webp',
+    backdrop_path: '/assets/aistudio/Ultra%20HD%20Video%20Player.webp',
     media_type: 'movie',
     vote_average: 7.8,
     release_date: '2026-04-01',
@@ -204,8 +204,8 @@ const FALLBACK_MOVIES: TMDBMedia[] = [
     name: 'The Last Kingdom',
     title: 'The Last Kingdom',
     overview: 'As Alfred the Great defends his kingdom from Norse invaders, Uhtred—born a Saxon but raised by Vikings—seeks his ancestral birthright.',
-    poster_path: '/assets/aistudio/Seasons%20%26%20Episodes%20Selector.png',
-    backdrop_path: '/assets/aistudio/CineStream%20Home%20%26%20Spotlight.png',
+    poster_path: '/assets/aistudio/Seasons%20%26%20Episodes%20Selector.webp',
+    backdrop_path: '/assets/aistudio/CineStream%20Home%20%26%20Spotlight.webp',
     media_type: 'tv',
     vote_average: 8.4,
     first_air_date: '2015-10-10',
@@ -215,8 +215,8 @@ const FALLBACK_MOVIES: TMDBMedia[] = [
     name: 'The Mentalist',
     title: 'The Mentalist',
     overview: 'A former psychic medium uses his acute observational skills to solve serious crimes as a consultant for the California Bureau of Investigation.',
-    poster_path: '/assets/aistudio/episode_692ff127.png',
-    backdrop_path: '/assets/aistudio/player_f77b264d.png',
+    poster_path: '/assets/aistudio/episode_692ff127.webp',
+    backdrop_path: '/assets/aistudio/player_f77b264d.webp',
     media_type: 'tv',
     vote_average: 8.3,
     first_air_date: '2008-09-23',
@@ -226,8 +226,8 @@ const FALLBACK_MOVIES: TMDBMedia[] = [
     name: 'Naruto Shippuden',
     title: 'Naruto Shippuden',
     overview: 'Naruto Uzumaki returns from his training with Jiraiya with stronger abilities and faces the looming threat of the Akatsuki organization.',
-    poster_path: '/assets/aistudio/search_8cdaf272.png',
-    backdrop_path: '/assets/aistudio/explore_4dddd803.png',
+    poster_path: '/assets/aistudio/search_8cdaf272.webp',
+    backdrop_path: '/assets/aistudio/explore_4dddd803.webp',
     media_type: 'tv',
     vote_average: 8.5,
     first_air_date: '2007-02-15',
@@ -237,8 +237,8 @@ const FALLBACK_MOVIES: TMDBMedia[] = [
     name: 'One Piece',
     title: 'One Piece',
     overview: 'Monkey D. Luffy sets sail with his diverse pirate crew in search of the legendary treasure known as One Piece to become King of the Pirates.',
-    poster_path: '/assets/aistudio/watchlist_c827db15.png',
-    backdrop_path: '/assets/aistudio/home_b3b198ff.png',
+    poster_path: '/assets/aistudio/watchlist_c827db15.webp',
+    backdrop_path: '/assets/aistudio/home_b3b198ff.webp',
     media_type: 'tv',
     vote_average: 8.7,
     first_air_date: '1999-10-20',
@@ -326,12 +326,18 @@ async function fetchTMDB<T>(
  */
 export function getImageUrl(
   path: string | null | undefined,
-  size: 'w92' | 'w154' | 'w185' | 'w342' | 'w500' | 'w780' | 'original' = 'w500'
+  size: 'w92' | 'w154' | 'w185' | 'w300' | 'w342' | 'w500' | 'w780' | 'original' = 'w500'
 ): string {
   if (!path) {
     return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450"><rect fill="%2312131a" width="300" height="450"/><text fill="%23475569" font-family="sans-serif" font-size="16" x="50%" y="50%" text-anchor="middle">No Image</text></svg>';
   }
-  if (path.startsWith('http://') || path.startsWith('https://')) {
+  if (
+    path.startsWith('http://') ||
+    path.startsWith('https://') ||
+    path.startsWith('/assets/') ||
+    path.startsWith('/pwa-') ||
+    path.startsWith('/favicon')
+  ) {
     return path;
   }
   return `${IMAGE_BASE_URL}/${size}${path}`;
@@ -344,7 +350,13 @@ export function getBackdropUrl(
   if (!path) {
     return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720"><rect fill="%2307080a" width="1280" height="720"/><text fill="%23334155" font-family="sans-serif" font-size="24" x="50%" y="50%" text-anchor="middle">No Backdrop</text></svg>';
   }
-  if (path.startsWith('http://') || path.startsWith('https://')) {
+  if (
+    path.startsWith('http://') ||
+    path.startsWith('https://') ||
+    path.startsWith('/assets/') ||
+    path.startsWith('/pwa-') ||
+    path.startsWith('/favicon')
+  ) {
     return path;
   }
   return `${IMAGE_BASE_URL}/${size}${path}`;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bookmark, Trash2, Play, History, LogIn, RefreshCw } from 'lucide-react';
-import { useUser, SignInButton } from '@clerk/react';
+import { useClerkAuth } from '../context/ClerkBridgeContext';
+import { useAuthModal } from '../context/AuthModalContext';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useRouter } from '../context/RouterContext';
@@ -22,7 +23,8 @@ function formatTime(seconds?: number): string {
 }
 
 export const MyListView: React.FC = () => {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded } = useClerkAuth();
+  const { openSignInModal } = useAuthModal();
   const { navigate } = useRouter();
   const {
     watchlist,
@@ -146,12 +148,13 @@ export const MyListView: React.FC = () => {
             </div>
           </div>
 
-          <SignInButton mode="modal">
-            <button className="px-5 py-2 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-950/60 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Sign In with Clerk</span>
-            </button>
-          </SignInButton>
+          <button
+            onClick={openSignInModal}
+            className="px-5 py-2 rounded-xl bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-950/60 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>Sign In with Clerk</span>
+          </button>
         </div>
       )}
 

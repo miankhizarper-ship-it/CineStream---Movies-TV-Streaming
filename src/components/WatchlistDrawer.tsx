@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bookmark, X, Play, Trash2, ArrowRight, LogIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useUser } from '@clerk/react';
+import { useClerkAuth } from '../context/ClerkBridgeContext';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useQuickView } from '../context/QuickViewContext';
 import { useRouter } from '../context/RouterContext';
@@ -10,7 +10,7 @@ import { useAuthModal } from '../context/AuthModalContext';
 import { getImageUrl } from '../lib/tmdb';
 
 export const WatchlistDrawer: React.FC = () => {
-  const { isSignedIn } = useUser();
+  const { isSignedIn } = useClerkAuth();
   const { openSignInModal } = useAuthModal();
   const { isWatchlistPanelOpen, closeWatchlistPanel } = useQuickView();
   const { bookmarks, removeBookmark } = useBookmarks();

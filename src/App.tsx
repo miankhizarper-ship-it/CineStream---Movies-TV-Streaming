@@ -1,12 +1,15 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ClerkProvider } from '@clerk/clerk-react';
-import { dark } from '@clerk/themes';
+import { ClerkProvider } from '@clerk/react';
+import { ui } from '@clerk/ui';
+import { dark } from '@clerk/ui/themes';
 import { RouterProvider, useRouter } from './context/RouterContext';
 import { ToastProvider } from './context/ToastContext';
+import { AuthModalProvider } from './context/AuthModalContext';
 import { WatchlistProvider } from './context/WatchlistContext';
 import { WatchHistoryProvider } from './context/WatchHistoryContext';
 import { Navbar } from './components/Navbar';
+import { SignInModal } from './components/SignInModal';
 import { Footer } from './components/Footer';
 import { PhantomGhost } from './components/PhantomGhost';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -101,26 +104,30 @@ const MainContent: React.FC = () => {
 export default function App() {
   return (
     <ClerkProvider
+      ui={ui}
       publishableKey={CLERK_PUBLISHABLE_KEY}
       appearance={{
-        baseTheme: dark,
+        theme: dark,
         variables: {
           colorPrimary: '#e50914',
           colorBackground: '#0d0e14',
-          colorInputBackground: '#161822',
-          colorText: '#f8fafc',
-          colorInputText: '#ffffff',
+          colorInput: '#161822',
+          colorForeground: '#f8fafc',
+          colorInputForeground: '#ffffff',
         },
       }}
     >
       <ToastProvider>
-        <WatchlistProvider>
-          <WatchHistoryProvider>
-            <RouterProvider>
-              <MainContent />
-            </RouterProvider>
-          </WatchHistoryProvider>
-        </WatchlistProvider>
+        <AuthModalProvider>
+          <WatchlistProvider>
+            <WatchHistoryProvider>
+              <RouterProvider>
+                <MainContent />
+                <SignInModal />
+              </RouterProvider>
+            </WatchHistoryProvider>
+          </WatchlistProvider>
+        </AuthModalProvider>
       </ToastProvider>
     </ClerkProvider>
   );

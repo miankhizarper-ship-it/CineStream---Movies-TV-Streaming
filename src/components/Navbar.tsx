@@ -13,12 +13,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  SignedIn,
-  SignedOut,
+  Show,
   SignInButton,
   UserButton,
-} from '@clerk/clerk-react';
-import { dark } from '@clerk/themes';
+} from '@clerk/react';
+import { dark } from '@clerk/ui/themes';
 import { useRouter } from '../context/RouterContext';
 import { CommandPalette } from './CommandPalette';
 import { AppLink } from './AppLink';
@@ -161,11 +160,11 @@ export const Navbar: React.FC = () => {
             </button>
 
             {/* Clerk Authentication in Header */}
-            <SignedIn>
+            <Show when="signed-in">
               <div className="flex items-center">
                 <UserButton
                   appearance={{
-                    baseTheme: dark,
+                    theme: dark,
                     variables: {
                       colorPrimary: '#e50914',
                     },
@@ -184,9 +183,9 @@ export const Navbar: React.FC = () => {
                   </UserButton.MenuItems>
                 </UserButton>
               </div>
-            </SignedIn>
+            </Show>
 
-            <SignedOut>
+            <Show when="signed-out">
               <SignInButton mode="modal">
                 <button
                   className="px-3.5 py-1.5 rounded-full bg-[#e50914] hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-950/50 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
@@ -196,7 +195,7 @@ export const Navbar: React.FC = () => {
                   <span>Sign In</span>
                 </button>
               </SignInButton>
-            </SignedOut>
+            </Show>
 
             {/* Hamburger Menu Toggle (Mobile/Tablet) */}
             <button

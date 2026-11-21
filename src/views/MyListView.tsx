@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bookmark, Trash2, Play, History, LogIn, RefreshCw } from 'lucide-react';
-import { useUser, SignInButton } from '@clerk/clerk-react';
+import { useUser, SignInButton } from '@clerk/react';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { useRouter } from '../context/RouterContext';
